@@ -1,9 +1,12 @@
-import React, { useState } from 'react'
+import React, { useContext, useState } from 'react'
+import { Link } from 'react-router-dom'
 import MyInput from "../components/ui/input/MyInput.tsx";
 import MyButton from "../components/ui/button/MyButton.tsx";
 import { SelectList } from "../components/ui/select/Select.tsx";
+import { AuthContext } from '../context/index.ts';
 
 const Registration = () => {
+    const {isAuth, setIsAuth} = useContext(AuthContext);
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -49,8 +52,7 @@ const Registration = () => {
         <MyButton type="submit" className="submit-button">
           Зарегистрироваться
         </MyButton>
-        <div className="have-account" onClick={() => {console.log("Navigate to login page");
-        }}>Уже есть аккаунт (вход)</div>
+        <Link className="text-btn" to="/login">Уже есть аккаунт (вход)</Link>
       </form>
     </div>
   )
