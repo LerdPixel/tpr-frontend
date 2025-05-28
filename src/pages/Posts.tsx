@@ -66,9 +66,9 @@ const Posts = () => {
       <PostList
         remove={removePost}
         posts={sortedAndSearchedPosts}
-        title={"Посты про ???"}
+        title={"Студенты"}
       />
-      <div ref={lastElement} style={{ height: 20, background: "red" }}></div>
+      <div ref={lastElement} ></div>
       {isLoading && (
         <div
           style={{ display: "flex", justifyContent: "center", marginTop: 50 }}

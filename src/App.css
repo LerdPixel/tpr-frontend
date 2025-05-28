@@ -13,7 +13,16 @@
     font-family: "Poppins", sans-serif;
 }
 
-.form-body {
+.centered-body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  padding: 15px;
+  background: hsla(0, 0%, 95%, 0.602);
+  overflow: hidden;
+}
+/* body {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -21,7 +30,7 @@
   padding: 15px;
   background: hsla(0, 0%, 95%, 0.602);;
   overflow: hidden;
-}
+} */
 
 .container {
   max-width: 450px;

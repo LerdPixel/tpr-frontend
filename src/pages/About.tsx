@@ -2,10 +2,18 @@ import React from 'react'
 
 const About = () => {
   return (
-    <h1>
-        This is a training react app
+    <div style={{
+      minHeight: "80vh",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center"
+    }}>
+    <h1 style={{ textAlign: "center" , fontSize: "2.5rem", color: "#333"}}>
+        Это приложение для управления курсом по нечёткой логике и нечетким множествам
     </h1>
+    </div>
   )
+
 }
 
 export default About
