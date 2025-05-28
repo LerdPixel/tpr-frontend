@@ -1,6 +1,7 @@
 @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap");
 
 #root {
+    margin-top: 50px;
     display: flex;
     flex-direction: column; 
     align-items: center;
@@ -22,15 +23,6 @@
   background: hsla(0, 0%, 95%, 0.602);
   overflow: hidden;
 }
-/* body {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100vh;
-  padding: 15px;
-  background: hsla(0, 0%, 95%, 0.602);;
-  overflow: hidden;
-} */
 
 .container {
   max-width: 450px;
@@ -77,8 +69,22 @@
   margin-top: 10px;
 }
 
+.navbar-logreg {
+   position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 32px;
+    background: #204d8c;
+    z-index: 1000;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
 .navbar {
-    position: fixed;
+   position: fixed;
     top: 0;
     left: 0;
     width: 100vw;
