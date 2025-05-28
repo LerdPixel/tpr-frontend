@@ -1,0 +1,31 @@
+.myInput {
+  width: 100%;
+  padding: 8px 15px 8px 15px;
+  border: 1px solid #DCDCDC;
+  border-radius: 8px;
+  background: hsla(0, 0%, 95%, 0.602);
+  font-size: 16px;
+  transition: border-color 0.2s;
+  appearance: none;
+  cursor: pointer;
+  margin-top: 15px;
+}
+.myInput:focus {
+  border-color: #0078d4;
+  outline: none;
+}
+.myInput::placeholder {
+  color: #AEAEAE;
+  opacity: 0.7;
+}
+.myInput:disabled {
+  background: #f0f0f0;
+  cursor: not-allowed;
+}
+.myInput:disabled::placeholder {
+  color: #ccc;
+  opacity: 1;
+}
+.myInputError {
+  border-color: red;
+}

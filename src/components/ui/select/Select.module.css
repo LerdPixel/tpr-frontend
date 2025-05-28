@@ -1,0 +1,66 @@
+/* Styles for the Select component */
+
+.selectContainer {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+  max-width: 300px;
+}
+
+.selectInput {
+  width: 100%;
+  padding: 8px 36px 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: grey;
+  font-size: 16px;
+  transition: border-color 0.2s;
+  appearance: none;
+  cursor: pointer;
+}
+
+.selectInput:focus {
+  border-color: #0078d4;
+  outline: none;
+}
+
+.selectArrow {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  pointer-events: none;
+  transform: translateY(-50%);
+  font-size: 18px;
+  color: #888;
+}
+
+.selectDropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-top: none;
+  border-radius: 0 0 4px 4px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  z-index: 10;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.selectOption {
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.selectOption:hover,
+.selectOptionActive {
+  background: #f0f4fa;
+}
+
+.selectOptionSelected {
+  background: #e6f0ff;
+  font-weight: 500;
+}
