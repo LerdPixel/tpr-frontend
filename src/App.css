@@ -13,7 +13,7 @@
     font-family: "Poppins", sans-serif;
 }
 
-body {
+.form-body {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -73,10 +73,11 @@ body {
     top: 0;
     left: 0;
     width: 100vw;
-    height: 50px;
+    height: 56px;
     display: flex;
     align-items: center;
-    padding: 0 15px;
+    justify-content: space-between;
+    padding: 0 32px;
     background: #204d8c;
     z-index: 1000;
     box-shadow: 0 2px 8px rgba(0,0,0,0.06);
@@ -132,3 +133,51 @@ body {
     text-decoration: none;
     font-size: 17px;
 }
+
+.post {
+    display: flex;
+    padding: 15px;
+    margin-top: 15px;
+    border: 2px solid teal;
+    justify-content: space-between;
+    align-items: center;
+
+}
+.post__btns {
+    display: flex;
+}
+
+.post-enter {
+    transform: translateX(-350px);
+}
+  
+.post-enter-active {
+    transform: translateX(0px);
+    transition: all 500ms ease-in;
+}
+
+.post-exit {
+    opacity: 1;
+}
+
+.post-exit-active {
+    transform: translateX(-350px);
+    transition: all 500ms ease-in;
+}
+
+.page__wrapper {
+    margin-top: 30px;
+    display: flex;
+}
+
+.page {
+    padding: 10px;
+    border: 1px solid teal;
+    cursor: pointer;
+}
+
+.page__current {
+    border: 2px solid orange;
+    font-weight: bold;
+}
+

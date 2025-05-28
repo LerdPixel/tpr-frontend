@@ -1,0 +1,16 @@
+.post_btns {
+    padding: 0.5em 1em;
+    border-radius: 0.5em;
+    transition: 0.5s;
+}
+
+.post_btns:hover {
+    box-shadow: 3px 3px;
+    transform: scale(1.02);
+}
+
+.post_btns:active {
+    transition: 10ms;
+    box-shadow: 1px 1px;
+    background-color: rgb(212, 111, 111);
+}
