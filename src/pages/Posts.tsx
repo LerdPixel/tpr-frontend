@@ -1,15 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 import PostService from "../API/PostService.ts";
-import Loader from "../components/UIc/Loader/loader.tsx";
-import MyModal from "../components/UIc/MyModal/MyModal.tsx";
-import PostFilter from "../components/UIc/PostFilter";
-import PostForm from "../components/UIc/PostForm";
-import PostList from "../components/UIc/PostList";
-import MyButton from "../components/UIc/button/MyButton.tsx";
+import Loader from "../components/ui/Loader/loader.tsx";
+import MyModal from "../components/ui/MyModal/MyModal.tsx";
+import PostFilter from "../components/PostFilter.tsx";
+import PostForm from "../components/PostForm.tsx";
+import PostList from "../components/PostList.tsx";
+import MyButton from "../components/ui/button/MyButton.tsx";
 import { useFetching } from "../hooks/useFetching.ts";
 import { usePosts } from "../hooks/usePosts.ts";
-import {type IPost} from "../components/UIc/interfaces/IPost.ts";
-import Pagination from "../components/UIc/pagination/Pagination.tsx";
+import { type IPost } from "../components/ui/interfaces/IPost.tsx";
+import Pagination from "../components/ui/pagination/Pagination.tsx";
 import { getPageCount } from "../utils/pages.ts";
 import { Outlet } from "react-router-dom";
 import { useObserver } from "../hooks/useObserver.ts";
@@ -32,7 +32,7 @@ const Posts = () => {
   });
 
   useObserver(lastElement, page < totalPages, isLoading, () => {
-    setPage(page + 1)
+    setPage(page + 1);
   });
 
   useEffect(() => {
@@ -68,7 +68,7 @@ const Posts = () => {
         posts={sortedAndSearchedPosts}
         title={"Студенты"}
       />
-      <div ref={lastElement} ></div>
+      <div ref={lastElement}></div>
       {isLoading && (
         <div
           style={{ display: "flex", justifyContent: "center", marginTop: 50 }}

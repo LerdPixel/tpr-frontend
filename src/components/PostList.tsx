@@ -1,6 +1,6 @@
 import { TransitionGroup } from "react-transition-group";
-import { CSSTransitionWithRef } from "./CSSTransitionUpgrade/CSSTransitionWithRef.tsx";
-import {type IPost} from "./interfaces/IPost.ts";
+import { CSSTransitionWithRef } from "./ui/CSSTransitionUpgrade/CSSTransitionWithRef.tsx";
+import { type IPost } from "./ui/interfaces/IPost.tsx";
 import PostItem from "./PostItem.tsx";
 
 interface Props {

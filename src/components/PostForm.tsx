@@ -1,7 +1,7 @@
 import { useState } from "react";
-import MyButton from "./button/MyButton.tsx";
-import MyInput from "./input/MyInput.tsx";
-import {type IPost} from "./interfaces/IPost.ts";
+import MyButton from "./ui/button/MyButton.tsx";
+import MyInput from "./ui/input/MyInput.tsx";
+import { type IPost } from "./ui/interfaces/IPost.tsx";
 
 interface PostFormProps {
   create: (a: IPost) => void;

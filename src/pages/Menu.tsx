@@ -8,7 +8,7 @@ const menuItems = [
   {label : "Группы", link: "/groups"},
   {label : "Студенты", link: "/users"},
   {label : "Лекции", link: "/lectures"},
-  {label : "Ведомость", link: "/report"},
+  {label : "Ведомость", link: "/gradesheet"},
 ];
 
 const Menu: React.FC = () => {

@@ -1,9 +1,9 @@
-import React from 'react'
 
 const About = () => {
   return (
     <div style={{
       minHeight: "80vh",
+      maxWidth: "80vh",
       display: "flex",
       alignItems: "center",
       justifyContent: "center"
@@ -15,5 +15,4 @@ const About = () => {
   )
 
 }
-
 export default About
