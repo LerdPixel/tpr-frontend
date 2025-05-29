@@ -6,7 +6,7 @@ const menuItems = [
   {label : "Тесты", link: "/tests"},
   {label : "Лабораторные работы", link: "/labs"},
   {label : "Группы", link: "/groups"},
-  {label : "Студенты", link: "/students"},
+  {label : "Студенты", link: "/users"},
   {label : "Лекции", link: "/lectures"},
   {label : "Ведомость", link: "/report"},
 ];

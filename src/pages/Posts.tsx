@@ -54,7 +54,7 @@ const Posts = () => {
     <div className="App">
       <Outlet />
       <MyButton style={{ marginTop: 30 }} onClick={() => setModal(true)}>
-        Создать объявление
+        Добавить пользователя
       </MyButton>
       <MyModal visible={modal} setVisible={setModal}>
         <PostForm create={createPost} />

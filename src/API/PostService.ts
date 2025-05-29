@@ -19,4 +19,8 @@ export default class PostService {
     const response = await axios.get('/api/posts/' + id + '/comments/');
     return response;
   }
+  static async getUsers() {
+    const response = await axios.get('/api/users/');
+    return response;
+  }
 }

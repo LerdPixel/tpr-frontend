@@ -7,8 +7,8 @@ import Posts from '../pages/Posts.tsx'
 
 
 export const privatRoutes = [
-    {path: '/posts', element: <Posts/>,  exact: true},
-    {path: '/posts/:id', element: <PostIdPage/>,  exact: true},
+    {path: '/users', element: <Posts/>,  exact: true},
+    {path: '/users/:id', element: <PostIdPage/>,  exact: true},
     {path: '/menu', element: <Menu/>,  exact: true},    
     {path: '/about', element: <About/>,  exact: true},
 ]
