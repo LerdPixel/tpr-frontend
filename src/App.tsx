@@ -1,4 +1,4 @@
-import  './App.css'
+import  './styles/App.css'
 import { useEffect, useState } from 'react';
 import AppRouter from './components/AppRouter.tsx';
 import Navbar from './components/UI/Navbar/Navbar.tsx';

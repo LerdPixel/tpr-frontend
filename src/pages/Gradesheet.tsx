@@ -1,5 +1,5 @@
 import Table from "../components/ui/table/Table.tsx"
-
+import cl from "../styles/gradesheet.module.css"
 
 const Gradesheet = () => {
   const columnLabels = ['A', 'B', 'C'];
@@ -11,14 +11,19 @@ const Gradesheet = () => {
   ];
 
   return (
-    <div className="p-4">
-      <h1 className="text-xl font-bold mb-4">Labeled Matrix Table</h1>
+    
+    <div className={cl.gradesheet_body}>
+      <div className={cl.gradesheet_header}>
+        <h1 className="">Ведомость группы</h1>
+      </div>
       <Table
+        tableCl={cl.table}
         matrix={matrix}
         rowLabels={rowLabels}
         columnLabels={columnLabels}
       />
     </div>
+
   );
 };
 

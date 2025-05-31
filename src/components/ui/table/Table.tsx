@@ -1,13 +1,14 @@
 import React from 'react';
+import styles from "./table.module.css"
 
-const Table = ({ matrix, rowLabels, columnLabels }) => {
+const Table = ({ matrix, rowLabels, columnLabels, tableCl }) => {
   return (
-    <table className="table-auto border-collapse border border-gray-400">
-      <thead>
+    <table className={`${styles.table} ${tableCl}`}>
+      <thead className={styles.head}>
         <tr>
-          <th className="border border-gray-400 px-4 py-2"></th>
+          <th className={styles.th}></th>
           {columnLabels.map((label, index) => (
-            <th key={index} className="border border-gray-400 px-4 py-2">
+            <th key={index} className={styles.th}>
               {label}
             </th>
           ))}
@@ -16,14 +17,9 @@ const Table = ({ matrix, rowLabels, columnLabels }) => {
       <tbody>
         {matrix.map((row, rowIndex) => (
           <tr key={rowIndex}>
-            <th className="border border-gray-400 px-4 py-2">
-              {rowLabels[rowIndex]}
-            </th>
+            <th className={styles.th}>{rowLabels[rowIndex]}</th>
             {row.map((value, colIndex) => (
-              <td
-                key={colIndex}
-                className="border border-gray-400 px-4 py-2 text-center"
-              >
+              <td key={colIndex} className={styles.td}>
                 {value}
               </td>
             ))}
