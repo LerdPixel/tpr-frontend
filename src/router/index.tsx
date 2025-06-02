@@ -5,6 +5,7 @@ import Registration from '../pages/registration.tsx';
 import PostIdPage from '../pages/PostIdPage.tsx'
 import Posts from '../pages/Posts.tsx'
 import Gradesheet from '../pages/Gradesheet.tsx';
+import QuestionCreator from '../pages/Test.tsx';
 
 
 export const privatRoutes = [
@@ -12,7 +13,8 @@ export const privatRoutes = [
     {path: '/users/:id', element: <PostIdPage/>,  exact: true},
     {path: '/menu', element: <Menu/>,  exact: true},    
     {path: '/about', element: <About/>,  exact: true},
-    {path: '/gradesheet', element: <Gradesheet/>,  exact: true}
+    {path: '/gradesheet', element: <Gradesheet/>,  exact: true},
+    {path: '/tests', element: <QuestionCreator/>,  exact: true},
 ]
 export const publicRoutes = [
     {path: '/registration', element: <Registration/>,  exact: true},

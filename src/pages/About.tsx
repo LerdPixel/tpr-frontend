@@ -11,6 +11,9 @@ const About = () => {
     <h1 style={{ textAlign: "center" , fontSize: "2.5rem", color: "#333"}}>
         Это приложение для управления курсом по нечёткой логике и нечетким множествам
     </h1>
+    <h1 class="text-3xl font-bold italic underline">
+    Hello world!
+  </h1>
     </div>
   )
 
