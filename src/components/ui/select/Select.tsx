@@ -10,6 +10,7 @@ interface SelectListProps {
   options: Option[];
   placeholder?: string;
   onChange?: (value: string) => void;
+  textColor? : string;
 }
 
 export const SelectList: React.FC<SelectListProps> = ({
