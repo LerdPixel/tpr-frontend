@@ -2,14 +2,25 @@
     width: 100%;
 }
 .gradesheet_header {
-    width: fit-content;
+    width: max-content;
     margin: auto;
     display: flex;
     justify-content: center;
     background-color: #D9D9D9;
     padding: 0.8rem 4rem;
 }
+.header_label {
+    padding: 0.5vh 5px;
+    font-size: 25px;
+}
+.select_block {
+    padding: 0.5vh 5px;
+}
 .table {
     margin-left: 8vw;
     margin-top: 0.8vh;
 }
+.my_color {
+    color: black;
+}
+

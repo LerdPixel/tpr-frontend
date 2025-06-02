@@ -17,6 +17,7 @@ export const SelectList: React.FC<SelectListProps> = ({
   options,
   placeholder = "Select an option",
   onChange,
+  textColor,
 }) => {
   const [selected, setSelected] = React.useState<string>("");
 
@@ -28,10 +29,11 @@ export const SelectList: React.FC<SelectListProps> = ({
   return (
     <div className={classes.selectContainer}>
       <select
-        className={classes.selectInput}
+        className={`${textColor} ${classes.selectInput}`}
         value={selected}
         onChange={handleChange}
       >
+        
         <option value="" disabled>
           {placeholder}
         </option>

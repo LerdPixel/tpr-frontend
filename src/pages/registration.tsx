@@ -41,6 +41,7 @@ const Registration = () => {
         <MyInput placeholder="Email" value={formData.email} onChange={e => handleChange("email", e.target.value)} />
         <MyInput type="password" placeholder="Пароль" value={formData.password} onChange={e => handleChange("password", e.target.value)}  />
         <MyInput type="password" placeholder="Повторите пароль" value={formData.confirmPassword} onChange={e => handleChange("confirmPassword", e.target.value)}  />
+        <div className="select_container">
         <SelectList 
           options={[
             { label: "Семинарист", value: "Семинарист" },
@@ -50,9 +51,8 @@ const Registration = () => {
           ]}
           onChange={value => handleChange("group", value)}
           placeholder = "Группа"
-        >
-
-        </SelectList>
+        />
+        </div>
 
         <MyButton type="submit" className="submit-button">
           Зарегистрироваться
