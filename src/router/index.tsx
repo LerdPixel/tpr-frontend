@@ -5,7 +5,7 @@ import Registration from '../pages/registration.tsx';
 import PostIdPage from '../pages/PostIdPage.tsx'
 import Posts from '../pages/Posts.tsx'
 import Gradesheet from '../pages/Gradesheet.tsx';
-import QuestionCreator from '../pages/Test.tsx';
+import QuestionCreator from '../components/Test.tsx';
 
 
 export const privatRoutes = [
