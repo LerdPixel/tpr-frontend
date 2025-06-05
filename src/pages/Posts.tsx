@@ -77,7 +77,7 @@ const Posts = () => {
           <Loader />{" "}
         </div>
       )}
-      <Pagination page={page} changePage={changePage} totalPages={totalPages} />
+      {/* <Pagination page={page} changePage={changePage} totalPages={totalPages} /> */}
     </div>
   );
 };

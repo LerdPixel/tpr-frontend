@@ -8,7 +8,7 @@ const PostItem = (props) => {
   function getRandomInt(max: number) {
     return Math.floor(Math.random() * max);
   }
-  const GetGroup = useMemo(() => {
+  const GetGroup2 = useMemo(() => {
     const firstLet = ["Б", "C", "М"];
     return (
       firstLet[getRandomInt(firstLet.length)] +
@@ -16,6 +16,10 @@ const PostItem = (props) => {
       "-" +
       String(getRandomInt(999))
     );
+  }, []);
+  const GetGroup = useMemo(() => {
+    const initialList = ["Б23-677", "Б23-807", "C22-793", "М24-102"];
+    return initialList[getRandomInt(initialList.length)];
   }, []);
   return (
     <div className="post" ref={props.ref}>

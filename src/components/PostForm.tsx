@@ -22,15 +22,15 @@ const PostForm = ({ create }: PostFormProps) => {
         value={post.title}
         onChange={(e) => setPost({ ...post, title: e.target.value })}
         type="text"
-        placeholder="Название"
+        placeholder="ФИО"
       />
       <MyInput
         value={post.body}
         onChange={(e) => setPost({ ...post, body: e.target.value })}
         type="text"
-        placeholder="Описание"
+        placeholder="Группа"
       />
-      <MyButton onClick={addNewPost}>Создать пост</MyButton>
+      <MyButton onClick={addNewPost}>Создать студента</MyButton>
     </form>
   );
 };

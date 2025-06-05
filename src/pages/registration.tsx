@@ -29,6 +29,8 @@ const Registration = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     console.log("Form submitted:", formData);
+    setIsAuth(true);
+    localStorage.setItem('auth', 'true')
   };
   return (
     <div className="container">

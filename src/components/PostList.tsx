@@ -11,12 +11,12 @@ interface Props {
 
 const PostList = ({ posts, title, remove }: Props) => {
   if (!posts.length) {
-    return <h1 style={{ textAlign: "center" }}>Постов нет</h1>;
+    return <h1 style={{ textAlign: "center" }}>Студентов нет</h1>;
   }
 
   return (
     <div>
-      <h1 style={{ textAlign: "center" }}>{title}</h1>
+      <h1 style={{ textAlign: "center", fontSize: "40px", fontWeight: "bolder"}}>{title}</h1>
       <TransitionGroup>
         {posts.map((post, index) => (
           <CSSTransitionWithRef

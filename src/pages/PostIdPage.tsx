@@ -22,7 +22,7 @@ const PostIdPage = () => {
   }, []);
   return (
     <div>
-      <h1>You've opened the post page with ID = {params.id}</h1>
+      <h1>Студент с id: {params.id}</h1>
       {isLoading ? (
         <Loader />
       ) : (

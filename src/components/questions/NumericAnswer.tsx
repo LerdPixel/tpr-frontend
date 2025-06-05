@@ -1,10 +1,17 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import styles from '../../styles/QuestionCreator.module.css';
 
 
 const NumericAnswer = () => {
-  const [answer, setAnswer] = useState('1.23');
+  const [answer, setAnswer] = useState('');
   const [tolerance, setTolerance] = useState('2');
+
+  const handleNumericInput = (value, setter) => {
+    //setter(value.replace(',', '.'))
+    setter(parseInt(value.toString().replace(',', '.')))
+    console.log(value);
+    
+  }
 
   return (
     <div className={styles.numericBlock}>
@@ -13,7 +20,7 @@ const NumericAnswer = () => {
         <input
           type="number"
           value={answer}
-          onChange={(e) => setAnswer(e.target.value)}
+          onChange={(e) => handleNumericInput(e.target.value, setAnswer)}
           className={styles.numericInput}
         />
       </div>
@@ -22,7 +29,7 @@ const NumericAnswer = () => {
         <input
           type="text"
           value={tolerance}
-          onChange={(e) => setTolerance(e.target.value)}
+          onChange={(e) => handleNumericInput(e.target.value, setTolerance)}
           className={styles.numericInput}
         />
         <span className={styles.percent}>%</span>

@@ -11,7 +11,8 @@ const Login = () => {
     return () => document.body.classList.remove("centered-body");
   }, []);
 
-    const {isAuth, setIsAuth} = useContext(AuthContext);
+  const {isAuth, setIsAuth} = useContext(AuthContext);
+  
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -34,7 +35,7 @@ const Login = () => {
         <form onSubmit={handleSubmit} >
           <h1 className="title">Вход</h1>
 
-          <MyInput placeholder="Email" value={formData.email} onChange={e => handleChange(e, "email", e.target.value)} />
+          <MyInput placeholder="Email" value={formData.email} onChange={e => handleChange("email", e.target.value)} />
           <MyInput type="password" placeholder="Пароль" value={formData.password} onChange={e => handleChange("password", e.target.value)}  />
           <MyButton type="submit" className="submit-button">
             Войти
@@ -43,9 +44,6 @@ const Login = () => {
               <Link className="text-btn" to="/registration">Регистрация</Link>
               <Link className="text-btn" to="/registration">Восстановить пароль</Link>
           </div>
-          
-          
-
         </form>
       </div>
     </div>
