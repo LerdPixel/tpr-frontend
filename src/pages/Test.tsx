@@ -23,7 +23,7 @@ type QuestionType = keyof typeof questionTypes;
 const QuestionCreator = () => {
   const [questionType, setQuestionType] = useState<QuestionType>('single');
 
-  const [points, setPoints] = useState();
+  const [points, setPoints] = useState(1);
 
 
 

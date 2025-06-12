@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net">
+  <diagram name="ER Diagram - Ночной клуб" id="1">
+    <mxGraphModel dx="1104" dy="619" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <!-- Гость -->
+        <mxCell id="guest" value="Гость\n- ID_Гостя (PK)\n- Имя\n- Возраст" style="shape=swimlane;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="40" width="160" height="100" as="geometry"/>
+        </mxCell>
+
+        <!-- Сотрудник -->
+        <mxCell id="employee" value="Сотрудник\n- ID_Сотрудника (PK)\n- Имя\n- Должность" style="shape=swimlane;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="280" y="40" width="180" height="100" as="geometry"/>
+        </mxCell>
+
+        <!-- Бар -->
+        <mxCell id="bar" value="Бар\n- ID_Бара (PK)\n- Название" style="shape=swimlane;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="280" y="200" width="160" height="80" as="geometry"/>
+        </mxCell>
+
+        <!-- Напиток -->
+        <mxCell id="drink" value="Напиток\n- ID_Напитка (PK)\n- Название\n- Цена\n- Алк." style="shape=swimlane;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="320" width="160" height="100" as="geometry"/>
+        </mxCell>
+
+        <!-- Заказ -->
+        <mxCell id="order" value="Заказ\n- ID_Заказа (PK)\n- Время\n- Сумма" style="shape=swimlane;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="180" width="160" height="80" as="geometry"/>
+        </mxCell>
+
+        <!-- Смена -->
+        <mxCell id="shift" value="Смена\n- ID_Смены (PK)\n- Начало\n- Конец\n- Оплата" style="shape=swimlane;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="520" y="40" width="160" height="100" as="geometry"/>
+        </mxCell>
+
+        <!-- Музыкальное выступление -->
+        <mxCell id="music" value="Выступление\n- ID_Выступления (PK)\n- Время\n- Жанр" style="shape=swimlane;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="520" y="200" width="160" height="80" as="geometry"/>
+        </mxCell>
+
+        <!-- Связи -->
+        <mxCell id="e1" style="endArrow=block" edge="1" source="guest" target="order" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e2" style="endArrow=block" edge="1" source="order" target="drink" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e3" style="endArrow=block" edge="1" source="employee" target="shift" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e4" style="endArrow=block" edge="1" source="employee" target="bar" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e5" style="endArrow=block" edge="1" source="employee" target="music" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e6" style="endArrow=block" edge="1" source="guest" target="bar" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
+
+
+digraph SemanticNetwork {
+    rankdir=LR;
+    node [shape=ellipse, style=filled, fillcolor=lightblue, fontname="Helvetica"];
+    edge [fontname="Helvetica", fontsize=10];
+    
+    // Узлы (6 понятий)
+    Ресторан;
+    ПозицияМеню [label="Позиция меню"];
+    Посетитель;
+    Заказ;
+    Персонал;
+    Счет;
+    
+    // Связи (6 отношений)
+    Ресторан -> ПозицияМеню [label="предлагает", xlabel="1:N"];
+    Посетитель -> Заказ [label="делает", xlabel="1:N"];
+    Заказ -> ПозицияМеню [label="включает", xlabel="N:M"];
+    Персонал -> Посетитель [label="обслуживает", xlabel="1:N"];
+    Персонал -> Заказ [label="выполняет", xlabel="1:N"];
+    Заказ -> Счет [label="формирует", xlabel="1:1"];
+    
+    // Оптимизация расположения
+    { rank=same; Ресторан; ПозицияМеню }
+    { rank=same; Посетитель; Заказ; Счет }
+}
+
+
+digraph ER_Diagram {
+    rankdir=LR;
+    node [shape=box, style=rounded];
+    
+    // Сущности
+    Restaurant [label="Ресторан"];
+    MenuItem [label="блюдо"];
+    Visitor [label="Посетитель"];
+    Order [label="Заказ"];
+    Staff [label="Персонал"];
+    Bill [label="Счёт"];
+    
+    // Связи
+    node [shape=diamond, height=0.7, width=1.2, fixedsize=true];
+    
+    offers [label="предлагает"];
+    includes [label="включает"];
+    makes [label="делает"];
+    serves [label="обслуживает"];
+    executes [label="выполняет"];
+    forms [label="формирует"];
+    
+    node [shape=ellipse, height=0.5, width=1, fixedsize=false];
+    
+    people [label="имя\nномер бейджа"];
+    people2 [label="имя"];
+     data1 [label="дата\nсумма"];
+     building [label="Адрес"];
+     dish [label="Позиция меню"];
+     n2 [label="Номер"];
+    // Кардинальности
+    people -> Staff [dir=none]
+    people2 -> Visitor [dir=none]
+    n2 -> Order [dir=none]
+    data1 -> Bill [dir=none]
+    building -> Restaurant [dir=none]
+    dish -> MenuItem [dir=none]
+    
+    Restaurant -> offers [dir=none, taillabel="1", headlabel="N"];
+    offers -> MenuItem [dir=none];
+    
+    Order -> includes [dir=none, taillabel="N", headlabel="M"];
+    includes -> MenuItem [dir=none];
+    
+    Visitor -> makes [dir=none, taillabel="1", headlabel="N"];
+    makes -> Order [dir=none];
+    
+    Staff -> serves [dir=none, taillabel="1", headlabel="N"];
+    serves -> Visitor [dir=none];
+    
+    Staff -> executes [dir=none, taillabel="1", headlabel="N"];
+    executes -> Order [dir=none];
+    
+    Order -> forms [dir=none, taillabel="1", headlabel="1"];
+    forms -> Bill [dir=none];
+    
+    // Выравнивание
+    { rank=same; Restaurant; offers; MenuItem }
+    { rank=same; Visitor; makes; Order; forms; Bill }
+    { rank=same; Staff; serves; executes }
+}

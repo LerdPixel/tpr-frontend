@@ -1,11 +1,11 @@
-import React, { useContext, useState } from 'react'
+import React, { useContext, useState, type FC } from 'react'
 import MyInput from "../components/ui/input/MyInput.tsx";
 import MyButton from "../components/ui/button/MyButton.tsx";
 import { AuthContext } from '../context/index.ts';
 import { Link } from 'react-router-dom'
 import { useEffect } from "react";
 
-const Login = () => {
+const Login: FC = () => {
   useEffect(() => {
     document.body.classList.add("centered-body");
     return () => document.body.classList.remove("centered-body");
