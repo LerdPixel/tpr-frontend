@@ -1,15 +1,17 @@
 import React, { useContext } from 'react'
 import { Link } from 'react-router-dom'
-import { AuthContext } from '../../../context/index.ts'
+import { AuthContext, Context } from '../../../context/index.ts'
 import LogoutPng from '../../../imgs/door.png';
 import { useNavigate } from "react-router-dom";
+import { observer } from 'mobx-react-lite';
 
 const Navbar = () => {
   const navigate = useNavigate();
   const {isAuth, setIsAuth} = useContext(AuthContext);
+  const {store} = useContext(Context);
   const logout = () => {
-    setIsAuth(false);
-    localStorage.removeItem('auth')
+    console.log("logout");
+    store.logout();
   }
   return (
     <div className='navbar'>
@@ -21,7 +23,7 @@ const Navbar = () => {
         </div>
       </div>
       <div className='navbar__right'>
-        {isAuth ?
+        {store.isAuth ?
          <>
             <span className='navbar__user'>Фамилия И.О.</span>
             <button className='navbar__logout-btn' onClick={logout} title="Выйти">
@@ -42,4 +44,4 @@ const Navbar = () => {
   )
 }
 
-export default Navbar;
+export default observer(Navbar);

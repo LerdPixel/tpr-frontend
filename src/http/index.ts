@@ -1,11 +1,11 @@
 import type { AxiosRequestConfig } from 'axios'
 import axios from 'axios'
 
-export const API_AUTH_URL = 'http://localhost:8080'
+export const API_URL = 'http://localhost:8080'
 
 const $api = axios.create({
     withCredentials : true,
-    baseURL : API_AUTH_URL
+    baseURL : API_URL
 })
 
 $api.interceptors.request.use((config) => {

@@ -1,23 +1,22 @@
 import React, { useContext, useState, type FC } from 'react'
 import MyInput from "../components/ui/input/MyInput.tsx";
 import MyButton from "../components/ui/button/MyButton.tsx";
-import { AuthContext } from '../context/index.ts';
+import { Context } from '../context/index.ts';
 import { Link } from 'react-router-dom'
 import { useEffect } from "react";
+import { observer } from 'mobx-react-lite';
 
 const Login: FC = () => {
   useEffect(() => {
     document.body.classList.add("centered-body");
     return () => document.body.classList.remove("centered-body");
-  }, []);
-
-  const {isAuth, setIsAuth} = useContext(AuthContext);
-  
+  }, []);  
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
-
+  const {store} = useContext(Context)
+  
   const handleChange = (field: string, value: string | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }));
 
@@ -25,8 +24,8 @@ const Login: FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Form submitted:", formData);
-    setIsAuth(true);
+    store.login(formData.email, formData.password)
+    store.setAuth(true);
     localStorage.setItem('auth', 'true')
   };
   return (
@@ -50,4 +49,4 @@ const Login: FC = () => {
   )
 }
 
-export default Login
+export default observer(Login);

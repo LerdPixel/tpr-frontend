@@ -66,6 +66,74 @@
   </diagram>
 </mxfile>
 
+digraph ER_Diagram {
+    rankdir=LR;
+    node [shape=box, style=rounded];
+    
+    // Сущности
+    Restaurant [label="Ресторан"];
+    MenuItem [label="Блюдо"];
+    Visitor [label="Посетитель"];
+    Order [label="Заказ"];
+    Staff [label="Сотрудник"];
+    Bill [label="Счёт"];
+    human [label="Человек"];
+    // Связи
+    node [shape=diamond, height=0.7, width=1.2, fixedsize=true];
+    
+    offers [label="предлагает"];
+    includes [label="включает"];
+    makes [label="делает"];
+    executes [label="выполняет"];
+    forms [label="формирует"];
+    is1 [label="является"];
+    is2 [label="является"];
+    node [shape=ellipse, height=0.5, width=1, fixedsize=false];
+    
+    
+    people [label="должность\nномер бейджа"];
+    people2 [label="номер бонусной карты"];
+    name [label="ФИО"]
+     data1 [label="дата\nсумма"];
+     building [label="Адрес"];
+     dish [label="Стоимость"];
+     n2 [label="Номер"];
+    // Кардинальности
+    people -> Staff [dir=none]
+    people2 -> Visitor [dir=none]
+    n2 -> Order [dir=none]
+    data1 -> Bill [dir=none]
+    building -> Restaurant [dir=none]
+    dish -> MenuItem [dir=none]
+    name -> human [dir=none]
+    
+    Restaurant -> offers [dir=none, label="1"];
+    offers -> MenuItem [dir=none, label="N"];
+    
+    Order -> includes [dir=none, label="N"];
+    includes -> MenuItem [dir=none, label="M"];
+    
+    Visitor -> makes [dir=none, label="1"];
+    makes -> Order [dir=none, label="N"];
+    
+    Staff -> executes [dir=none, label="1"];
+    executes -> Order [dir=none, label="N"];
+    
+    Order -> forms [dir=none, label="1"];
+    forms -> Bill [dir=none, label="1"];
+    
+    Visitor -> is1 [dir=none, label="1"];
+    is1 -> human [dir=none, label="1"];
+    
+    Staff -> is2 [dir=none, label="1"];
+    is2 -> human [dir=none, label="1"];
+    
+    // Выравнивание
+    {rank = same; Staff; human; Visitor}
+    //{ rank=same; Restaurant; offers; MenuItem }
+    //{ rank=same; Visitor; makes ; Order; executes;  Staff}
+    // { rank=same; Staff; executes }
+}
 
 digraph SemanticNetwork {
     rankdir=LR;
@@ -154,4 +222,74 @@ digraph ER_Diagram {
     { rank=same; Restaurant; offers; MenuItem }
     { rank=same; Visitor; makes; Order; forms; Bill }
     { rank=same; Staff; serves; executes }
+}
+
+
+digraph ER_Diagram {
+    rankdir=LR;
+    node [shape=box, style=rounded];
+    
+    // Сущности
+    Restaurant [label="Ресторан"];
+    MenuItem [label="Блюдо"];
+    Visitor [label="Посетитель"];
+    Order [label="Заказ"];
+    Staff [label="Сотрудник"];
+    Bill [label="Счёт"];
+    human [label="Человек"];
+    // Связи
+    node [shape=diamond, height=0.7, width=1.2, fixedsize=true];
+    
+    offers [label="предлагает"];
+    includes [label="включает"];
+    makes [label="делает"];
+    executes [label="выполняет"];
+    forms [label="формирует"];
+    is1 [label="является"];
+    is2 [label="является"];
+    node [shape=ellipse, height=0.5, width=1, fixedsize=false];
+    
+    
+    people [label="должность\nномер бейджа"];
+    people2 [label="номер бонусной карты"];
+    name [label="ФИО"]
+     data1 [label="дата\nсумма"];
+     building [label="Адрес"];
+     dish [label="Стоимость"];
+     n2 [label="Номер"];
+    // Кардинальности
+    people -> Staff [dir=none]
+    people2 -> Visitor [dir=none]
+    n2 -> Order [dir=none]
+    data1 -> Bill [dir=none]
+    building -> Restaurant [dir=none]
+    dish -> MenuItem [dir=none]
+    name -> human [dir=none]
+    
+    Restaurant -> offers [dir=none, label="1"];
+    offers -> MenuItem [dir=none, label="N"];
+    
+    Order -> includes [dir=none, label="N"];
+    includes -> MenuItem [dir=none, label="M"];
+    
+    Visitor -> makes [dir=none, label="1"];
+    makes -> Order [dir=none, label="N"];
+    
+    Staff -> executes [dir=none, label="1"];
+    executes -> Order [dir=none, label="N"];
+    
+    Order -> forms [dir=none, label="1"];
+    forms -> Bill [dir=none, label="1"];
+    
+    Visitor -> is1 [dir=none, label="1"];
+    is1 -> human [dir=none, label="1"];
+    
+    Staff -> is2 [dir=none, label="1"];
+    is2 -> human [dir=none, label="1"];
+    
+    // Выравнивание
+    {rank = same; Staff; human; Visitor}
+    //{ rank=same; Restaurant; offers; MenuItem }
+    //{ rank=same; Visitor; makes ; Order; executes;  Staff}
+    // { rank=same; Staff; executes }
 }

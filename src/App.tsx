@@ -1,31 +1,29 @@
 import  './styles/App.css'
-import { useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
 import AppRouter from './components/AppRouter.tsx';
-import Navbar from './components/UI/Navbar/Navbar.tsx';
+import Navbar from './components/ui/Navbar/Navbar.tsx';
 import { BrowserRouter } from "react-router";
-import { AuthContext } from './context/index.ts';
-
+import { AuthContext, Context } from './context/index.ts';
+import {observer} from 'mobx-react-lite'
 
 const App = () => {
-    const [isAuth, setIsAuth] = useState(false);
-    const [isLoading, setIsLoading] = useState(true);
+    const {store} = useContext(Context)
     useEffect(() => {
-        if(localStorage.getItem('auth')) {
-            setIsAuth(true)
+        if(localStorage.getItem('token')) {
+            store.checkAuth()
         } 
-        setIsLoading(false)
+        store.setLoading(false)
     }, [])
     return (
         <AuthContext.Provider value={{
-            isAuth,
-            setIsAuth,
-            isLoading
+            store
         }}>
             <BrowserRouter>
+                <h1>{store.isAuth ? `user ${store.user.email}` : ''}</h1>
                 <Navbar/> 
                 <AppRouter/>
             </BrowserRouter>
         </AuthContext.Provider>  
     );
 }
-export default App;
+export default observer(App);
