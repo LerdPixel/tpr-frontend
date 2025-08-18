@@ -16,10 +16,8 @@ const Login: FC = () => {
     password: "",
   });
   const {store} = useContext(Context)
-  
   const handleChange = (field: string, value: string | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-
   };
 
   const handleSubmit = (e: React.FormEvent) => {

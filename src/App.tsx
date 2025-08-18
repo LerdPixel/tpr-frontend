@@ -9,7 +9,7 @@ import {observer} from 'mobx-react-lite'
 const App = () => {
     const {store} = useContext(Context)
     useEffect(() => {
-        if(localStorage.getItem('token')) {
+        if(localStorage.getItem('ref_token')) {
             store.checkAuth()
         } 
         store.setLoading(false)
@@ -19,7 +19,6 @@ const App = () => {
             store
         }}>
             <BrowserRouter>
-                <h1>{store.isAuth ? `user ${store.user.email}` : ''}</h1>
                 <Navbar/> 
                 <AppRouter/>
             </BrowserRouter>

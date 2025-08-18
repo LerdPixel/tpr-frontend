@@ -3,15 +3,39 @@ import { Link } from 'react-router-dom'
 import MyInput from "../components/ui/input/MyInput.tsx";
 import MyButton from "../components/ui/button/MyButton.tsx";
 import { SelectList } from "../components/ui/select/Select.tsx";
-import { AuthContext } from '../context/index.ts';
+import { Context } from '../context/index.ts';
+import { observer } from 'mobx-react-lite';
+import { useFetching } from "../hooks/useFetching.ts";
+import axios from "axios";
+
+interface Group {
+  id: number;
+  name: string;
+  created_at: string;
+}
+
+
 
 const Registration = () => {
-
+  const [error, setError] = useState<string | null>(null);
+  const {store} = useContext(Context)
+  const [groups, setGroups] = useState<Group[]>([]);
+  const [fetchingGroupList, isLoading, postError] = useFetching(async () => {
+      const responce = await store.getGroupList();
+      setGroups([...responce.data]);
+  });
+  async function printGroups() {
+    let responce = await axios.get("/server/groups")
+    console.log(responce.data);
+    
+  }
   useEffect(() => {
+    axios.get<Group[]>("/server/groups").then((res) => setGroups(res.data)).catch(() => setError("Не удалось загрузить список групп"));
+  }, []);
+  /*useEffect(() => {
     document.body.classList.add("centered-body");
     return () => document.body.classList.remove("centered-body");
-  }, []);
-    const {isAuth, setIsAuth} = useContext(AuthContext);
+  }, []);*/
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -28,15 +52,16 @@ const Registration = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Form submitted:", formData);
-    setIsAuth(true);
+    console.log("Form submitted:", groups);
+    store.setAuth(true);
     localStorage.setItem('auth', 'true')
   };
+  
   return (
     <div className="container">
       <form onSubmit={handleSubmit} >
         <h1 className="title">Регистрация</h1>
-
+        {error && <p className="text-red-500 text-sm">{error}</p>}
         <MyInput placeholder="Имя" value={formData.firstName} onChange={e => handleChange("firstName", e.target.value)} />
         <MyInput placeholder="Фамилия" value={formData.lastName} onChange={e => handleChange("lastName", e.target.value)}  />
         <MyInput placeholder="Отчество" value={formData.patronymic} onChange={e => handleChange("patronymic", e.target.value)}  />
@@ -55,14 +80,27 @@ const Registration = () => {
           placeholder = "Группа"
         />
         </div>
-
+        <select
+          value={formData.group}
+          onChange={(e) => handleChange("group", e.target.value)}
+          className="w-full border p-2 rounded-lg"
+          required
+        >
+          <option value="">Выберите группу</option>
+          {Array.isArray(groups) && groups.map((g) => (
+            <option key={g.id} value={g.id}>
+              {g.name}
+            </option>
+          ))}
+        </select>
         <MyButton type="submit" className="submit-button">
           Зарегистрироваться
         </MyButton>
         <Link className="text-btn" to="/login">Уже есть аккаунт (вход)</Link>
+          <button onClick={printGroups}>ГРУППЫ</button>
       </form>
     </div>
   )
 }
 
-export default Registration
+export default observer(Registration)

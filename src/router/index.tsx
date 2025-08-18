@@ -6,6 +6,7 @@ import PostIdPage from "../pages/PostIdPage.tsx";
 import Posts from "../pages/Posts.tsx";
 import Gradesheet from "../pages/Gradesheet.tsx";
 import QuestionCreator from "../pages/Test.tsx";
+import GradesheetCreation from "../pages/GradesheetCreation.tsx";
 
 export const privatRoutes = [
   { path: "/users", element: <Posts />, exact: true },
@@ -14,6 +15,7 @@ export const privatRoutes = [
   { path: "/about", element: <About />, exact: true },
   { path: "/gradesheet", element: <Gradesheet />, exact: true },
   { path: "/tests", element: <QuestionCreator />, exact: true },
+  { path: "/gradesheet_creation", element: <GradesheetCreation />, exact: true },
 ];
 export const publicRoutes = [
   { path: "/registration", element: <Registration />, exact: true },

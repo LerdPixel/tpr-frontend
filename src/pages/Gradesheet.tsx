@@ -4,6 +4,7 @@ import cl from "../styles/gradesheet.module.css"
 import EditableTable from "../components/ui/table/EditableTable.tsx";
 import AdvancedTable from "../components/ui/table/AdvancedTable.tsx";
 import { SelectList } from "../components/ui/select/Select.tsx";
+import {Link} from 'react-router-dom'
 
 const Gradesheet = () => {
   const [groupsData, setGroupsData] = useState([
@@ -92,6 +93,7 @@ const Gradesheet = () => {
           tableCl={cl.table}
         />
       }
+      <Link className='submit-button' to="/gradesheet_creation">Создать дисциплину</Link>
     </div>
       
 

@@ -28,6 +28,7 @@ export default class Store {
             const response = await AuthService.login(email, password);
             console.log(response)
             localStorage.setItem('token', response.data.accessToken);
+            localStorage.setItem('ref_token', response.data.refreshToken);
             this.setAuth(true);
             //this.setUser(response.data.user);
         } catch(e) {
@@ -48,10 +49,22 @@ export default class Store {
         }
     }
     async checkAuth() {
+        if (localStorage.getItem("ref_token")) {
+            console.log("ref_token " + localStorage.getItem("ref_token"));
+            
+            try {
+                const response = await AuthService.refresh(localStorage.getItem("ref_token"))
+                localStorage.setItem('token', response.data.accessToken);
+                this.setAuth(true);
+            } catch (e) {
+                console.log(e.response?.data?.message);            
+            }
+        }
+    }
+    async getGroupList() {
         try {
-            const response = await axios.get<AuthResponse>(`${API_URL}/auth/refresh`, {withCredentials : true})
-            localStorage.setItem('token', response.data.accessToken);
-            this.setAuth(true);
+            const response = await AuthService.groupList()
+            return response
         } catch (e) {
             console.log(e.response?.data?.message);            
         }
