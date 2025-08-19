@@ -11,6 +11,7 @@ const Login: FC = () => {
     document.body.classList.add("centered-body");
     return () => document.body.classList.remove("centered-body");
   }, []);  
+  const [error, setError] = useState()
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -22,7 +23,12 @@ const Login: FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    store.login(formData.email, formData.password)
+    try {
+      store.login(formData.email, formData.password)
+    } catch(e) {
+      setError(e.response?.data?.details)
+      return
+    }
     store.setAuth(true);
     localStorage.setItem('auth', 'true')
   };
@@ -42,6 +48,7 @@ const Login: FC = () => {
               <Link className="text-btn" to="/registration">Восстановить пароль</Link>
           </div>
         </form>
+        {error && <p className="text-red-500 text-sm">{error}</p>}
       </div>
     </div>
   )

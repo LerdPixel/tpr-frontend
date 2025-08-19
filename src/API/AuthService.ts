@@ -1,15 +1,23 @@
 import $api from "@/http";
+import type { RegData } from "@/models/IUser";
 import type { AuthResponse } from "@/models/response/AuthResponse";
 import axios from "axios";
 
 export default class AuthService {
     static async login(email: string, password: string) {
-        const response = await axios.post('/api/auth/login', {email, password},  { withCredentials: true });
+        const response = await axios.post('/api/auth/login', {email, password},  { withCredentials: true }).catch(function(error) {
+          console.log(error.response.data);
+        })
         return response
     }
-    static async registration(email: string, first_name: string, group_id: number, last_name: string, password: string, patronymic: string, role: string): Promise<AxiosResponse<AuthResponse>> {
-        return $api.post<AuthResponse>('/api/auth/register', {email, password, first_name, group_id, last_name, patronymic, role})
-    }
+    static async registration(regData : RegData) {
+        console.log("res form");
+        console.log(regData);
+         const response = await axios.post('/api/auth/register', regData, { withCredentials: true })//.catch(function(error) {
+        //   console.log(error.response.data);
+        // })
+        return response
+    } //{regData.email, regData.first_name, regData.group_id, regData.last_name, regData.password, regData.patronymic, regData.role}
     static async refresh(refresh_token : string) {
         const response = await axios.get("/api/auth/refresh", {
             params : {

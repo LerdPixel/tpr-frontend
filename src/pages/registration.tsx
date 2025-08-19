@@ -24,10 +24,6 @@ const Registration = () => {
       const responce = await store.getGroupList();
       setGroups(responce.data);
   });
-  async function printGroups() {
-    let responce = await axios.get("/api/groups/").catch(() => setError("Не удалось загрузить список групп"))
-    console.log(groups);
-  }
   useEffect(() => {
     //axios.get<Group[]>("/api/groups/").then((res) => setGroups(res.data)).catch(() => setError("Не удалось загрузить список групп"));
     fetchingGroupList()
@@ -54,9 +50,25 @@ const Registration = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    try {
+      store.registration({
+        "email": formData.email,
+        "first_name": formData.firstName,
+        "group_id": Number(formData.group),
+        "last_name": formData.lastName,
+        "password": formData.password,
+        "patronymic": formData.patronymic,
+        "role": formData.group == "1" ? "seminarist" : "student",
+      })
+    } catch(e) {
+      console.log(e.response);
+    }
     console.log("Form submitted:", formData);
+    if (formData.password != formData.confirmPassword) {
+      setError("Вы должны повторить свой пароль")
+      return
+    }
     store.setAuth(true);
-    localStorage.setItem('auth', 'true')
   };
   
   return (

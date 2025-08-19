@@ -1,5 +1,5 @@
 import AuthService from "@/API/AuthService";
-import type { IUser } from "@/models/IUser";
+import type { IUser, RegData } from "@/models/IUser";
 import type { AuthResponse } from "@/models/response/AuthResponse";
 import {makeAutoObservable} from "mobx"
 import axios from 'axios'
@@ -26,6 +26,18 @@ export default class Store {
     async login(email : string, password : string) {
         try {
             const response = await AuthService.login(email, password);
+            console.log(response)
+            localStorage.setItem('token', response.data.accessToken);
+            localStorage.setItem('ref_token', response.data.refreshToken);
+            this.setAuth(true);
+            //this.setUser(response.data.user);
+        } catch(e) {
+            console.log(e.response?.data?.message);
+        }
+    }
+    async registration(regData: RegData) {
+        try {
+            const response = await AuthService.registration(regData);
             console.log(response)
             localStorage.setItem('token', response.data.accessToken);
             localStorage.setItem('ref_token', response.data.refreshToken);
