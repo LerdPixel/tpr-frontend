@@ -2,7 +2,7 @@ import axios from "axios"
 
 export default class PostService {
   static async getAll(limit = 10, page = 1) {
-    const response = await axios.get('/api/posts', {
+    const response = await axios.get('/placeholder/posts', {
       params : {
         _limit : limit,
         _page : page
@@ -11,16 +11,16 @@ export default class PostService {
     return response;
   }
   static async getById(id : string) {
-    const response = await axios.get('/api/posts/' + id);
+    const response = await axios.get('/placeholder/posts/' + id);
     return response;
   }
 
   static async getCommentsByPostId(id : string) {
-    const response = await axios.get('/api/posts/' + id + '/comments/');
+    const response = await axios.get('/placeholder/posts/' + id + '/comments/');
     return response;
   }
   static async getUsers() {
-    const response = await axios.get('/api/users/');
+    const response = await axios.get('/placeholder/users/');
     return response;
   }
 }

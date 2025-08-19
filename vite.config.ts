@@ -13,17 +13,22 @@ export default defineConfig({
   },
   server: {
     proxy: {
+      // Бэкенд antonvz.ru
       '/api': {
-        target: 'https://jsonplaceholder.typicode.com',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, '')
-      },
-      '/server': { // добавляем второй прокси
         target: 'http://antonvz.ru:8080',
         changeOrigin: true,
         secure: false,
-        rewrite: (path) => path.replace(/^\/server/, '')
-      }
+        // /api/groups  ->  http://antonvz.ru:8080/groups
+        // /api/auth/... ->  http://antonvz.ru:8080/auth/...
+        rewrite: (p) => p.replace(/^\/api/, ''),
+      },
+
+      // Если нужен jsonplaceholder — перенеси его на другой префикс, чтобы не конфликтовать:
+      '/placeholder': {
+        target: 'https://jsonplaceholder.typicode.com',
+        changeOrigin: true,
+        rewrite: (p) => p.replace(/^\/placeholder/, ''),
+      },
     }
   }
 })

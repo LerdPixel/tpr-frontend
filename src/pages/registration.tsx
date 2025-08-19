@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react'
+import React, { forwardRef, useContext, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import MyInput from "../components/ui/input/MyInput.tsx";
 import MyButton from "../components/ui/button/MyButton.tsx";
@@ -22,15 +22,17 @@ const Registration = () => {
   const [groups, setGroups] = useState<Group[]>([]);
   const [fetchingGroupList, isLoading, postError] = useFetching(async () => {
       const responce = await store.getGroupList();
-      setGroups([...responce.data]);
+      setGroups(responce.data);
   });
   async function printGroups() {
-    let responce = await axios.get("/server/groups")
-    console.log(responce.data);
-    
+    let responce = await axios.get("/api/groups/").catch(() => setError("Не удалось загрузить список групп"))
+    console.log(groups);
   }
   useEffect(() => {
-    axios.get<Group[]>("/server/groups").then((res) => setGroups(res.data)).catch(() => setError("Не удалось загрузить список групп"));
+    //axios.get<Group[]>("/api/groups/").then((res) => setGroups(res.data)).catch(() => setError("Не удалось загрузить список групп"));
+    fetchingGroupList()
+    document.body.classList.add("centered-body");
+    return () => document.body.classList.remove("centered-body");
   }, []);
   /*useEffect(() => {
     document.body.classList.add("centered-body");
@@ -52,7 +54,7 @@ const Registration = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Form submitted:", groups);
+    console.log("Form submitted:", formData);
     store.setAuth(true);
     localStorage.setItem('auth', 'true')
   };
@@ -70,34 +72,17 @@ const Registration = () => {
         <MyInput type="password" placeholder="Повторите пароль" value={formData.confirmPassword} onChange={e => handleChange("confirmPassword", e.target.value)}  />
         <div className="select_container">
         <SelectList 
-          options={[
-            { label: "Семинарист", value: "Семинарист" },
-            { label: "Б14-889", value: "Б14-889" },
-            { label: "Б22-228", value: "Б22-228" },
-            { label: "Б22-229", value: "Б22-229" }
-          ]}
+          options={
+            groups.map((g) => ({label: g.name, value : g.id}))
+          }
           onChange={value => handleChange("group", value)}
           placeholder = "Группа"
         />
         </div>
-        <select
-          value={formData.group}
-          onChange={(e) => handleChange("group", e.target.value)}
-          className="w-full border p-2 rounded-lg"
-          required
-        >
-          <option value="">Выберите группу</option>
-          {Array.isArray(groups) && groups.map((g) => (
-            <option key={g.id} value={g.id}>
-              {g.name}
-            </option>
-          ))}
-        </select>
         <MyButton type="submit" className="submit-button">
           Зарегистрироваться
         </MyButton>
         <Link className="text-btn" to="/login">Уже есть аккаунт (вход)</Link>
-          <button onClick={printGroups}>ГРУППЫ</button>
       </form>
     </div>
   )
