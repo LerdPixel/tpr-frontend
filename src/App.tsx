@@ -9,9 +9,7 @@ import {observer} from 'mobx-react-lite'
 const App = () => {
     const {store} = useContext(Context)
     useEffect(() => {
-        console.log(store.getCookie("refresh"));
-        store.refresh()
-        store.setLoading(false)
+        store.refresh().finally(() => {store.setLoading(false)})
     }, [])
     return (
         <AuthContext.Provider value={{

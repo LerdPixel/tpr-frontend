@@ -6,7 +6,7 @@ import Loader from './ui/Loader/loader.tsx';
 import { HardDriveDownload } from 'lucide-react';
 import { observer } from 'mobx-react-lite';
 
-const  AppRouter = () => {
+const AppRouter = () => {
   const {store} = useContext(Context);
   if (store.isLoading) {
     return <><Loader/></>
