@@ -29,7 +29,6 @@ const Login: FC = () => {
       setError(e.response?.data?.details)
       return
     }
-    store.setAuth(true);
     localStorage.setItem('auth', 'true')
   };
   return (

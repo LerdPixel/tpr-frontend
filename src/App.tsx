@@ -9,9 +9,8 @@ import {observer} from 'mobx-react-lite'
 const App = () => {
     const {store} = useContext(Context)
     useEffect(() => {
-        if(localStorage.getItem('ref_token')) {
-            store.checkAuth()
-        } 
+        console.log(store.getCookie("refresh"));
+        store.refresh()
         store.setLoading(false)
     }, [])
     return (

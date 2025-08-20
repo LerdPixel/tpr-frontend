@@ -4,13 +4,27 @@ import type { AuthResponse } from "@/models/response/AuthResponse";
 import {makeAutoObservable} from "mobx"
 import axios from 'axios'
 import { API_URL } from "@/http";
+import { useCookies } from 'react-cookie';
+import { Cookies } from "react-cookie";
+
+interface CookieSetOptions {
+  path?: string;
+  expires?: Date;
+  maxAge?: number;
+  domain?: string;
+  secure?: boolean;
+  httpOnly?: boolean;
+  sameSite?: boolean | "lax" | "strict" | "none";
+}
 
 export default class Store {
     user = {} as IUser;
     isAuth = false;
     isLoading = true;
+    private cookies: Cookies;
     
     constructor() {
+        this.cookies = new Cookies();
         makeAutoObservable(this);
     }
     setLoading(bool: boolean) {
@@ -23,54 +37,58 @@ export default class Store {
         this.user = user;
     }
 
+    getCookie(name: string): string | undefined {
+        return this.cookies.get(name);
+    }
+
+    setCookie(name: string, value: any, options?: CookieSetOptions): void {
+        this.cookies.set(name, value, { path: "/", ...options });
+    }
+
+    removeCookie(name: string, options?: CookieSetOptions): void {
+        this.cookies.remove(name, { path: "/", ...options });
+    }
+    private authHendler(response) {
+        console.log(response)
+        if (response.status == 200) {
+            this.setAuth(true);
+            localStorage.setItem('token', response.data.access_token);
+            this.setCookie('refresh', response.data.refresh_token);
+        }        
+    }
     async login(email : string, password : string) {
         try {
-            const response = await AuthService.login(email, password);
-            console.log(response)
-            localStorage.setItem('token', response.data.accessToken);
-            localStorage.setItem('ref_token', response.data.refreshToken);
-            this.setAuth(true);
-            //this.setUser(response.data.user);
+            const response = await AuthService.login(email, password).catch((e) => {
+                console.log(response);
+            });
+            this.authHendler(response)
+            console.log("my_cookie:  ", this.getCookie("refresh"));
+            return response.status
         } catch(e) {
             console.log(e.response?.data?.message);
         }
     }
+
     async registration(regData: RegData) {
         try {
-            const response = await AuthService.registration(regData);
-            console.log(response)
-            localStorage.setItem('token', response.data.accessToken);
-            localStorage.setItem('ref_token', response.data.refreshToken);
-            this.setAuth(true);
-            //this.setUser(response.data.user);
+            const response = await AuthService.registration(regData).catch((e) => {
+                console.log(response);
+            });
+            this.authHendler(response)
         } catch(e) {
             console.log(e.response?.data?.message);
         }
     }
     logout() {
-        try {
-            //const response = await AuthService.login(email, password);
-            //console.log(response)
-            this.setAuth(false);
-            localStorage.removeItem('auth')
-            console.log("logouting");
-            
-            //this.setUser(response.data.user);
-        } catch(e) {
-            //console.log(e.response?.data?.message);
-        }
+        this.setAuth(false);
+        localStorage.removeItem('auth')
+        this.removeCookie("refresh")
     }
-    async checkAuth() {
-        if (localStorage.getItem("ref_token")) {
-            console.log("ref_token " + localStorage.getItem("ref_token"));
-            
-            try {
-                const response = await AuthService.refresh(localStorage.getItem("ref_token"))
-                localStorage.setItem('token', response.data.accessToken);
-                this.setAuth(true);
-            } catch (e) {
-                console.log(e.response?.data?.message);            
-            }
+    async refresh() {
+        let refresh_token = this.getCookie("refresh")
+        if (refresh_token) {
+            const response = await AuthService.refresh(refresh_token)
+            this.authHendler(response)
         }
     }
     async getGroupList() {
