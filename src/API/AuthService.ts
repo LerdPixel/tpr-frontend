@@ -20,7 +20,7 @@ export default class AuthService {
     } //{regData.email, regData.first_name, regData.group_id, regData.last_name, regData.password, regData.patronymic, regData.role}
     static async refresh(refresh_token : string) {
         const response = await axios.post<AuthResponse>("/api/auth/refresh", {refresh_token}).catch((e) => {
-            console.log(e.response.data);
+            return Promise.reject(e);
         })
         return response
     }

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useContext } from "react";
 import PostService from "../API/PostService.ts";
 import Loader from "../components/ui/Loader/loader.tsx";
 import MyModal from "../components/ui/MyModal/MyModal.tsx";
@@ -13,6 +13,7 @@ import Pagination from "../components/ui/pagination/Pagination.tsx";
 import { getPageCount } from "../utils/pages.ts";
 import { Outlet } from "react-router-dom";
 import { useObserver } from "../hooks/useObserver.ts";
+import { Context } from '../context/index.ts';
 
 const Posts = () => {
   const [posts, setPosts] = useState([]);
@@ -23,6 +24,7 @@ const Posts = () => {
   const [page, setPage] = useState(1);
   const sortedAndSearchedPosts = usePosts(posts, filter.sort, filter.query);
   const lastElement = useRef();
+  const {store} = useContext(Context)
 
   const [fetching, isLoading, postError] = useFetching(async () => {
     const responce = await PostService.getAll(limit, page);
@@ -50,9 +52,16 @@ const Posts = () => {
   const changePage = (page) => {
     setPage(page);
   };
+  async function getPending() {
+    const responce = await store.getPending()
+    console.log(responce);
+  }
   return (
     <div className="App">
       <Outlet />
+      <MyButton onClick={() => getPending()}>
+        Нажмика
+      </MyButton>
       <MyButton style={{ marginTop: 30 }} onClick={() => setModal(true)}>
         Добавить пользователя
       </MyButton>

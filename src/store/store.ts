@@ -1,6 +1,6 @@
 import AuthService from "@/API/AuthService";
 import type { IUser, RegData } from "@/models/IUser";
-import type { AuthResponse } from "@/models/response/AuthResponse";
+import AdminService  from "@/API/AdminService";
 import {makeAutoObservable} from "mobx"
 import axios from 'axios'
 import { API_URL } from "@/http";
@@ -82,6 +82,7 @@ export default class Store {
     logout() {
         this.setAuth(false);
         localStorage.removeItem('auth')
+        localStorage.removeItem('token')
         this.removeCookie("refresh")
     }
     async refresh() {
@@ -98,5 +99,13 @@ export default class Store {
         } catch (e) {
             console.log(e.response?.data?.message);            
         }
+    }
+    async getPending() {
+        const access_token = localStorage.getItem("token")
+        if (access_token == null) {
+            this.refresh() 
+        }
+        const response = await AdminService.getPending(access_token)
+        return response
     }
 }
