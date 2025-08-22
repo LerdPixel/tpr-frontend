@@ -1,34 +1,29 @@
-import { TransitionGroup } from "react-transition-group";
-import { CSSTransitionWithRef } from "./ui/CSSTransitionUpgrade/CSSTransitionWithRef.tsx";
-import { type IPost } from "./ui/interfaces/IPost.tsx";
-import PostItem from "./PostItem.tsx";
+import { type IStudent } from "./ui/interfaces/IStudent.tsx";
+import Student from "./Student.tsx";
+import styles from "./styles/PostList.module.css";
 
 interface Props {
-  posts: IPost[];
+  posts: IStudent[];
   title: string;
-  remove?: (post: IPost) => void;
+  remove?: (student: IStudent) => void;
+  approve?: (student: IStudent) => void;
 }
 
-const PostList = ({ posts, title, remove }: Props) => {
+const PostList = ({ posts, title, remove, approve }: Props) => {
   if (!posts.length) {
     return <h1 style={{ textAlign: "center" }}>Студентов нет</h1>;
   }
 
   return (
-    <div>
-      <h1 style={{ textAlign: "center", fontSize: "40px", fontWeight: "bolder"}}>{title}</h1>
-      <TransitionGroup>
-        {posts.map((post, index) => (
-          <CSSTransitionWithRef
-            key={post.id}
-            timeout={500}
-            classNames="post"
-            node
-          >
-            <PostItem remove={remove} number={index + 1} post={post} />
-          </CSSTransitionWithRef>
-        ))}
-      </TransitionGroup>
+    <div className={styles.studentTable}>
+      <h1 className={styles.studentTitle}>{title}</h1>
+      <table>
+        <tbody>
+          {posts.map((student, index) => (
+            <Student key={student.id || index} student={student} remove={remove} approve={approve} />
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 };

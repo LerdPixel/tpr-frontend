@@ -8,7 +8,7 @@ import PostList from "../components/PostList.tsx";
 import MyButton from "../components/ui/button/MyButton.tsx";
 import { useFetching } from "../hooks/useFetching.ts";
 import { usePosts } from "../hooks/usePosts.ts";
-import { type IPost } from "../components/ui/interfaces/IPost.tsx";
+import { type IStudent } from "../components/ui/interfaces/IStudent.tsx";
 import Pagination from "../components/ui/pagination/Pagination.tsx";
 import { getPageCount } from "../utils/pages.ts";
 import { Outlet } from "react-router-dom";
@@ -27,9 +27,16 @@ const Posts = () => {
   const {store} = useContext(Context)
 
   const [fetching, isLoading, postError] = useFetching(async () => {
-    const responce = await PostService.getAll(limit, page);
-    setPosts([...posts, ...responce.data]);
-    const totalCount = responce.headers["x-total-count"];
+    const responce = await store.getPending();
+    let totalCount;
+    if (Array.isArray(responce.data)) {
+      setPosts([...responce.data]);
+      totalCount = responce.data.length;
+    }
+    else {
+      setPosts([...posts])
+      totalCount = 0
+    }
     setTotalPages(getPageCount(totalCount, limit));
   });
 
@@ -41,14 +48,18 @@ const Posts = () => {
     fetching();
   }, [page]);
 
-  const createPost = (newPost: IPost) => {
+  const createPost = (newPost: IStudent) => {
     setPosts([...posts, newPost]);
     setModal(false);
   };
-  const removePost = (post: IPost) => {
-    setPosts(posts.filter((p: IPost) => p.id !== post.id));
+  const removeStudent = (student: IStudent) => {
+    store.delete(student.id)
+    setPosts(posts.filter((p: IStudent) => p.id !== student.id));
   };
-
+  const approveStudent = (student: IStudent) => {
+    store.approve(student.id)
+    setPosts(posts.filter((p: IStudent) => p.id !== student.id));
+  }
   const changePage = (page) => {
     setPage(page);
   };
@@ -73,7 +84,8 @@ const Posts = () => {
         <h1 style={{ color: "red" }}>Произошла ошибка в {postError}</h1>
       )}
       <PostList
-        remove={removePost}
+        remove={removeStudent}
+        approve={approveStudent}
         posts={sortedAndSearchedPosts}
         title={"Студенты"}
       />

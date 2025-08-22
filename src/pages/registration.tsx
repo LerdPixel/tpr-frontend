@@ -7,6 +7,7 @@ import { Context } from '../context/index.ts';
 import { observer } from 'mobx-react-lite';
 import { useFetching } from "../hooks/useFetching.ts";
 import axios from "axios";
+import { set } from 'mobx';
 
 interface Group {
   id: number;
@@ -25,7 +26,6 @@ const Registration = () => {
       setGroups(responce.data);
   });
   useEffect(() => {
-    //axios.get<Group[]>("/api/groups/").then((res) => setGroups(res.data)).catch(() => setError("Не удалось загрузить список групп"));
     fetchingGroupList()
     document.body.classList.add("centered-body");
     return () => document.body.classList.remove("centered-body");
@@ -48,10 +48,14 @@ const Registration = () => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      store.registration({
+    if (formData.password != formData.confirmPassword) {
+      setError("Вы должны повторить свой пароль")
+      return
+    }
+    let response;
+    response = await store.registration({
         "email": formData.email,
         "first_name": formData.firstName,
         "group_id": Number(formData.group),
@@ -59,16 +63,17 @@ const Registration = () => {
         "password": formData.password,
         "patronymic": formData.patronymic,
         "role": formData.group == "1" ? "seminarist" : "student",
-      })
-    } catch(e) {
-      console.log(e.response);
+    })
+    if (response.status == 201) {
+      store.writeTokens(response)
+      store.setAuth(true)
+    } else if (response.status == 400) {
+      if (response.data.details == "Key: 'UserSignUpInput.Email' Error:Field validation for 'Email' failed on the 'email' tag")
+        setError("Email введён в неправильном формате")
+    } else {
+      setError(response.data.details)
     }
-    console.log("Form submitted:", formData);
-    if (formData.password != formData.confirmPassword) {
-      setError("Вы должны повторить свой пароль")
-      return
-    }
-    store.setAuth(true);
+    
   };
   
   return (

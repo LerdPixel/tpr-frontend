@@ -1,0 +1,12 @@
+.studentTitle {
+  text-align: center;
+  font-size: 22px;
+  font-weight: bold;
+  background: #eee;
+  padding: 10px;
+}
+
+.studentTable table {
+  width: 100%;
+  border-collapse: collapse;
+}
