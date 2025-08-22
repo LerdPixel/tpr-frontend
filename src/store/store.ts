@@ -113,12 +113,11 @@ export default class Store {
         }
     }
     async getGroupList() {
-        try {
-            const response = await AuthService.groupList()
-            return response
-        } catch (e) {
-            console.log(e.response?.data?.message);            
-        }
+        const response = await AuthService.groupList().catch((e) => {
+            console.log(e.response)
+            return e.response
+        })
+        return response
     }
     async getPending() {
         const access_token = localStorage.getItem("token")
@@ -133,7 +132,7 @@ export default class Store {
         if (access_token == null) {
             this.refresh() 
         }
-        const response = await axios.post(`/api/admin/users/${id}/approve`, {
+        const response = await axios.patch(`/api/admin/users/${id}/approve`, {
             headers: { Authorization: `Bearer ${access_token}` }
         }).catch(this.errorHandler)
         return response

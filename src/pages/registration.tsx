@@ -22,8 +22,15 @@ const Registration = () => {
   const {store} = useContext(Context)
   const [groups, setGroups] = useState<Group[]>([]);
   const [fetchingGroupList, isLoading, postError] = useFetching(async () => {
-      const responce = await store.getGroupList();
-      setGroups(responce.data);
+      const response = await store.getGroupList();
+      if (response.status == 200) {
+        console.log("OK");
+        console.log(response);
+        setGroups(response.data);
+      }
+      else {
+        setError("Ошибка подключения к серверу")
+      }
   });
   useEffect(() => {
     fetchingGroupList()
@@ -88,13 +95,14 @@ const Registration = () => {
         <MyInput type="password" placeholder="Пароль" value={formData.password} onChange={e => handleChange("password", e.target.value)}  />
         <MyInput type="password" placeholder="Повторите пароль" value={formData.confirmPassword} onChange={e => handleChange("confirmPassword", e.target.value)}  />
         <div className="select_container">
-        <SelectList 
+          {isLoading &&
+        <SelectList
           options={
             groups.map((g) => ({label: g.name, value : g.id}))
           }
           onChange={value => handleChange("group", value)}
           placeholder = "Группа"
-        />
+        /> }
         </div>
         <MyButton type="submit" className="submit-button">
           Зарегистрироваться
