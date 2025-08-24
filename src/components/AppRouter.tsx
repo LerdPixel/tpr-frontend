@@ -26,7 +26,7 @@ const AppRouter = () => {
           publicRoutes.map(route => 
             <Route element={route.element} path = {route.path} key={route.path}/>
         )}
-       <Route path="/*" element={<Navigate replace to="/registration" />} />
+       <Route path="/*" element={<Navigate replace to="/login" />} />
     </Routes>
   )
 }

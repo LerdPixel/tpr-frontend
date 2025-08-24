@@ -9,12 +9,12 @@ const PostIdPage = () => {
   const [post, setPost] = useState([]);
   const [comments, setComments] = useState([]);
   const [fetchPostById, isLoading, error] = useFetching(async (id) => {
-    const responce = await PostService.getById(id);
-    setPost(responce.data);
+    const response = await PostService.getById(id);
+    setPost(response.data);
   });
   const [fetchComments, isComLoading, comError] = useFetching(async (id) => {
-    const responce = await PostService.getCommentsByPostId(id);
-    setComments(responce.data);
+    const response = await PostService.getCommentsByPostId(id);
+    setComments(response.data);
   });
   useEffect(() => {
     fetchPostById(params.id);

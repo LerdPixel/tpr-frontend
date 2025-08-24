@@ -2,16 +2,15 @@ import { type IStudent } from "./ui/interfaces/IStudent.tsx";
 import Student from "./Student.tsx";
 import styles from "./styles/PostList.module.css";
 
-interface Props {
-  posts: IStudent[];
+interface Props<T> {
+  posts: T[];
   title: string;
-  remove?: (student: IStudent) => void;
-  approve?: (student: IStudent) => void;
+  renderItem: (item: T, index: number) => React.ReactNode;
 }
 
-const PostList = ({ posts, title, remove, approve }: Props) => {
+const PostList = <T,>({ posts, title, renderItem, ...props }: Props<T>) => {
   if (!posts.length) {
-    return <h1 style={{ textAlign: "center" }}>Студентов нет</h1>;
+    return <h1 style={{ textAlign: "center" }}>Ничего не было найдено</h1>;
   }
 
   return (
@@ -19,8 +18,8 @@ const PostList = ({ posts, title, remove, approve }: Props) => {
       <h1 className={styles.studentTitle}>{title}</h1>
       <table>
         <tbody>
-          {posts.map((student, index) => (
-            <Student key={student.id || index} student={student} remove={remove} approve={approve} />
+          {posts.map((post, index) => (
+            renderItem(post, index)
           ))}
         </tbody>
       </table>

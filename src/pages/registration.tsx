@@ -1,4 +1,4 @@
-import React, { forwardRef, useContext, useEffect, useState } from 'react'
+import React, { useContext, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import MyInput from "../components/ui/input/MyInput.tsx";
 import MyButton from "../components/ui/button/MyButton.tsx";
@@ -6,27 +6,22 @@ import { SelectList } from "../components/ui/select/Select.tsx";
 import { Context } from '../context/index.ts';
 import { observer } from 'mobx-react-lite';
 import { useFetching } from "../hooks/useFetching.ts";
-import axios from "axios";
-import { set } from 'mobx';
-
-interface Group {
-  id: number;
-  name: string;
-  created_at: string;
-}
-
-
+import type {IGroup} from '../components/ui/interfaces/IGroup.tsx'
 
 const Registration = () => {
   const [error, setError] = useState<string | null>(null);
   const {store} = useContext(Context)
-  const [groups, setGroups] = useState<Group[]>([]);
+  const [groups, setGroups] = useState<IGroup[]>([]);
   const [fetchingGroupList, isLoading, postError] = useFetching(async () => {
       const response = await store.getGroupList();
       if (response.status == 200) {
         console.log("OK");
         console.log(response);
-        setGroups(response.data);
+        if (Array.isArray(response.data))
+          setGroups(response.data);
+        else {
+          setError("Ошибка загрузки данных")
+        }
       }
       else {
         setError("Ошибка подключения к серверу")
@@ -77,6 +72,9 @@ const Registration = () => {
     } else if (response.status == 400) {
       if (response.data.details == "Key: 'UserSignUpInput.Email' Error:Field validation for 'Email' failed on the 'email' tag")
         setError("Email введён в неправильном формате")
+      else {
+        setError(response.data.details)
+      }
     } else {
       setError(response.data.details)
     }
@@ -95,7 +93,7 @@ const Registration = () => {
         <MyInput type="password" placeholder="Пароль" value={formData.password} onChange={e => handleChange("password", e.target.value)}  />
         <MyInput type="password" placeholder="Повторите пароль" value={formData.confirmPassword} onChange={e => handleChange("confirmPassword", e.target.value)}  />
         <div className="select_container">
-          {isLoading &&
+          {!isLoading &&
         <SelectList
           options={
             groups.map((g) => ({label: g.name, value : g.id}))

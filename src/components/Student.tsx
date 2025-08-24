@@ -1,24 +1,30 @@
 import { MoreVertical } from "lucide-react"; // иконка троеточия
 import { useState } from "react";
 import styles from "./styles/Student.module.css";
+import SmartImg from "./ui/SmartImg/SmartImg";
 import type { IStudent } from "./ui/interfaces/IStudent";
+
 import DisApprovedImg from "../imgs/disapproved.png"
 import DeleteImg from "../imgs/trash-bin.png"
 import HoverDeleteImg from "../imgs/trash.png"
 import HoverCheckImg from "../imgs/accept.png"
 import CheckMarkImg from "../imgs/check_mark.png"
-import SmartImg from "./ui/SmartImg/SmartImg";
+import StudentImg from "../imgs/user.png";
+import SeminaristImg from "../imgs/seminarist.png";
+
 
 const StudentAva = (student : IStudent) => {
     if (student.is_approved) {
-        return <img src="../imgs/approved.png"></img>
+        if (student.group_id == 1)
+          return <img src={SeminaristImg}></img>
+        return <img src={StudentImg}></img>
     }
     else {
         return <img src={DisApprovedImg}></img>
     }
 }
 
-const Student = ({ student, remove, approve }) => {
+const Student = ({ student, remove, approve, groupFromId }) => {
     const [open, setOpen] = useState(false);
 
     const studentName = () =>
@@ -30,7 +36,7 @@ const Student = ({ student, remove, approve }) => {
       <td className={styles.studentInfo}>
         <div className={styles.studentName}>{studentName()}</div>
         {student.group_id && (
-          <div className={styles.studentGroup}>{student.group_id}</div>
+          <div className={styles.studentGroup}>{groupFromId(student.group_id)}</div>
         )}
       </td>
     {student.is_approved || <td>

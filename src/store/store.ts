@@ -7,6 +7,8 @@ import { API_URL } from "@/http";
 import { useCookies } from 'react-cookie';
 import { Cookies } from "react-cookie";
 import { Cog } from "lucide-react";
+import type {Group, IGroup} from '../components/ui/interfaces/IGroup.tsx'
+import type { IStudent } from "@/components/ui/interfaces/IStudent.tsx";
 
 interface CookieSetOptions {
   path?: string;
@@ -23,7 +25,6 @@ export default class Store {
     isAuth = false;
     isLoading = true;
     private cookies: Cookies;
-    
     constructor() {
         this.cookies = new Cookies();
         makeAutoObservable(this);
@@ -114,7 +115,6 @@ export default class Store {
     }
     async getGroupList() {
         const response = await AuthService.groupList().catch((e) => {
-            console.log(e.response)
             return e.response
         })
         return response
@@ -132,7 +132,9 @@ export default class Store {
         if (access_token == null) {
             this.refresh() 
         }
-        const response = await axios.patch(`/api/admin/users/${id}/approve`, {
+        const response = await axios.patch(`/server/admin/users/${id}/approve`,
+            null,
+        {
             headers: { Authorization: `Bearer ${access_token}` }
         }).catch(this.errorHandler)
         return response
@@ -142,8 +144,89 @@ export default class Store {
         if (access_token == null) {
             this.refresh() 
         }
-        const response = await axios.delete(`/api/admin/users/${id}`, {
+        const response = await axios.delete(`/server/admin/users/${id}`, {
             headers: { Authorization: `Bearer ${access_token}` }
+        }).catch(this.errorHandler)
+        return response
+    }
+    async getStudents(group_id : number) {
+        const access_token = localStorage.getItem("token")
+        if (access_token == null) {
+            this.refresh() 
+        }
+        const response = await axios.get(`/server/groups/${group_id}/students`, {
+            headers: { Authorization: `Bearer ${access_token}` }
+        }).catch(this.errorHandler)
+        return response
+    }
+    async updateUser(id : number, user : IStudent) {
+        const access_token = localStorage.getItem("token")
+        if (access_token == null) {
+            this.refresh() 
+        }
+        const response = await axios.put(`/server/admin/users/${id}`, user, 
+        {
+            headers: { Authorization: `Bearer ${access_token}` }
+        }).catch(this.errorHandler)
+        return response
+    }
+    async deleteGroup(group_id : number) {
+        const access_token = localStorage.getItem("token")
+        if (access_token == null) {
+            this.refresh() 
+        }
+        const response = await axios.delete(`/server/admin/groups/${group_id}`, 
+        {
+            headers: { Authorization: `Bearer ${access_token}` }
+        }).catch(this.errorHandler)
+        return response
+    }
+    async updateGroup(group : IGroup) {
+        const access_token = localStorage.getItem("token")
+        if (access_token == null) {
+            this.refresh() 
+        }
+        const response = await axios.put(`/server/admin/groups/${group.id}`, 
+        group,
+        {
+            headers: { Authorization: `Bearer ${access_token}` }
+        }).catch(this.errorHandler)
+        return response
+    }
+    async archiveGroup(group_id : number) {
+        const access_token = localStorage.getItem("token")
+        if (access_token == null) {
+            this.refresh() 
+        }
+        const response = await axios.post(`/server/admin/groups/${group_id}/archive`, 
+            null,
+        {
+            headers: { Authorization: `Bearer ${access_token}` }
+        }).catch(this.errorHandler)
+        return response
+    }
+    async unArchiveGroup(group_id : number) {
+        const access_token = localStorage.getItem("token")
+        if (access_token == null) {
+            this.refresh() 
+        }
+        const response = await axios.post(`/server/admin/groups/${group_id}/unarchive`, 
+            null,
+        {
+            headers: { Authorization: `Bearer ${access_token}` }
+        }).catch(this.errorHandler)
+        return response
+    }
+    async createGroup(group) {
+        const access_token = localStorage.getItem("token")
+        if (access_token == null) {
+            this.refresh() 
+        }
+        const response = await axios.post(`/server/admin/groups`, 
+        group,
+        {
+            headers: { Authorization: `Bearer ${access_token}` },
+            withCredentials: true
         }).catch(this.errorHandler)
         return response
     }

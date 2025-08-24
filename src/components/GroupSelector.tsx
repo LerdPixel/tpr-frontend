@@ -1,8 +1,8 @@
 import React from "react";
-import type { Group } from "../pages/GradesheetCreation.tsx";
+import type { IGroup } from "../pages/GradesheetCreation.tsx";
 
 interface Props {
-  groups: Group[];
+  groups: IGroup[];
   selectedGroups: number[];
   setSelectedGroups: (ids: number[]) => void;
 }

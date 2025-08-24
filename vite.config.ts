@@ -14,13 +14,13 @@ export default defineConfig({
   server: {
     proxy: {
       // Бэкенд antonvz.ru
-      '/api': {
-        target: 'http://antonvz.ru:8080',
+      '/server': {
+        target: 'http://antonvz.ru:8080/api/v1',
         changeOrigin: true,
         secure: false,
         // /api/groups  ->  http://antonvz.ru:8080/groups
         // /api/auth/... ->  http://antonvz.ru:8080/auth/...
-        rewrite: (p) => p.replace(/^\/api/, ''),
+        rewrite: (p) => p.replace(/^\/server/, ''),
       },
 
       // Если нужен jsonplaceholder — перенеси его на другой префикс, чтобы не конфликтовать:
