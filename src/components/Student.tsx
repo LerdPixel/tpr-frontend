@@ -39,13 +39,12 @@ const Student = ({ student, remove, approve, groupFromId }) => {
           <div className={styles.studentGroup}>{groupFromId(student.group_id)}</div>
         )}
       </td>
-    {student.is_approved || <td>
-        <SmartImg onClick={() => approve(student)} InitialImage={CheckMarkImg} HoverImage={HoverCheckImg} className={styles.ava}></SmartImg>
-    </td>}
     <td>
         <SmartImg InitialImage={DeleteImg} HoverImage={HoverDeleteImg} className={styles.ava} onClick={() => remove(student)}></SmartImg>
     </td>
-
+    {student.is_approved || <td>
+        <SmartImg onClick={() => approve(student)} InitialImage={CheckMarkImg} HoverImage={HoverCheckImg} className={styles.ava}></SmartImg>
+    </td>}
       {/* <td className={styles.studentActions}>
         <button
           className={styles.moreBtn}

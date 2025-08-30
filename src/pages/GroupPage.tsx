@@ -7,8 +7,10 @@ import type {IGroup} from '../components/ui/interfaces/IGroup.tsx'
 import styles from "./GroupsPage.module.css"
 import GroupItem from "@/components/Group.tsx";
 import { useFetching } from "../hooks/useFetching.ts";
+import { useNavigate } from "react-router-dom";
 
 export default function GroupsPage() {
+    const navigate = useNavigate();
     const [groups, setGroups] = useState<IGroup[]>([]);
     const [loading, setLoading] = useState(true);
     const {store} = useContext(Context)
@@ -93,7 +95,7 @@ export default function GroupsPage() {
     }
   };
   const goToGroupStudents = (id : number) => {
-
+    navigate(`/users/${id}`)
   }
 
   if (loading) return <div className={styles.loading}>Загрузка…</div>;

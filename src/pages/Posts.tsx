@@ -20,7 +20,7 @@ const Posts = () => {
   console.log(params);
   
   const [posts, setPosts] = useState([]);
-  const [filter, setFilter] = useState({ sort: "", query: "" });
+  const [filter, setFilter] = useState({ sort: "", filter: {pending : false, groups : []} });
   const [modal, setModal] = useState(false);
   const [totalPages, setTotalPages] = useState(0);
   const [limit, setLimit] = useState(10);
@@ -31,14 +31,13 @@ const Posts = () => {
   const {store} = useContext(Context)
 
   const [fetching, isLoading, postError] = useFetching(async () => {
-    const response = await store.getGroupList();
-    if (response.status == 200) {
-      if (Array.isArray(response.data)) {
-        setGroups(response.data);
-        console.log(response.data);
-        
-      } else {
-        console.log("Ошибка загрузки данных")
+    if (groups.length == 0) {
+      const response = await store.getGroupList();
+      if (response.status == 200) {
+        if (Array.isArray(response.data)) {
+          setGroups(response.data);
+          console.log(response.data);
+        }
       }
     }
     const pendingStudents = await getPending()
@@ -50,6 +49,9 @@ const Posts = () => {
   });
 
   useEffect(() => {
+    if ('id' in params) {
+      
+    }
     fetching();
   }, [page]);
 

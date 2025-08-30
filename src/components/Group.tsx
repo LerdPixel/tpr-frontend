@@ -1,4 +1,3 @@
-import { MoreVertical } from "lucide-react"; // иконка троеточия
 import { useState } from "react";
 //import styles from "./styles/Student.module.css";
 import type { IGroup } from "./ui/interfaces/IGroup";
@@ -18,10 +17,12 @@ interface Props {
   busyId: number | null;
   onRename: (id: number, name: string) => Promise<void>;
   onArchive: (id: number, archived: boolean) => Promise<void>;
+  onClick?: (id: number) => void;
 }
-export default function GroupItem({ group, busyId, onRename, onArchive }: Props) {
+export default function GroupItem({ group, busyId, onRename, onArchive, onClick }: Props) {
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(group.name);
+  const [hovered, setHover] = useState(false)
 
   const save = async () => {
     if (!name.trim() || name.trim() === group.name) {
@@ -36,7 +37,9 @@ export default function GroupItem({ group, busyId, onRename, onArchive }: Props)
   const isArchived = !!group.archived_at;
 
   return (
-    <tr key={group.id} className={`${styles.item} ${isArchived ? styles.archived : ""}`} >
+    <tr key={group.id} 
+      className={`${styles.item} ${hovered ? styles.hoveredItem : ""} ${isArchived ? styles.archived : ""}`} 
+    >
       {editing ? (
         <td className={styles.editRow}>
           <input
@@ -67,7 +70,12 @@ export default function GroupItem({ group, busyId, onRename, onArchive }: Props)
         </td>
       ) : (
         <>
-          <td className={styles.info}>
+          <td       
+            onMouseEnter={() => setHover(true)}
+            onMouseLeave={() => setHover(false)} 
+            className={styles.info} 
+            onClick={() => onClick(group.id)}
+          >
             <span className={styles.name}>{group.name}</span>
             <span className={styles.date}>
               {new Date(group.created_at).toLocaleDateString()}
@@ -96,49 +104,3 @@ export default function GroupItem({ group, busyId, onRename, onArchive }: Props)
     </tr>
   );
 }
-
-
-// const Group = ({ group, onClick} : Props) => {
-//     const [open, setOpen] = useState(false);
-
-//     const studentName = () =>
-//         `${student.last_name} ${student.first_name} ${student.patronymic}`;
-
-//   return (
-//     <tr className={styles.studentRow}>
-//       <td className={styles.studentIcon}>{StudentAva(student)}</td>
-//       <td className={styles.studentInfo}>
-//         <div className={styles.studentName}>{studentName()}</div>
-//         {student.group_id && (
-//           <div className={styles.studentGroup}>{student.group_id}</div>
-//         )}
-//       </td>
-//     {student.is_approved || <td>
-//         <SmartImg onClick={() => approve(student)} InitialImage={CheckMarkImg} HoverImage={HoverCheckImg} className={styles.ava}></SmartImg>
-//     </td>}
-//     <td>
-//         <SmartImg InitialImage={DeleteImg} HoverImage={HoverDeleteImg} className={styles.ava} onClick={() => remove(student)}></SmartImg>
-//     </td>
-
-//       {/* <td className={styles.studentActions}>
-//         <button
-//           className={styles.moreBtn}
-//           onClick={() => setOpen((prev) => !prev)}
-//         >
-//           <MoreVertical size={20} />
-//         </button>
-//         {open && (
-//           <ul className={styles.dropdown}>
-//             <li>Утвердить</li>
-//             <li>Сделать семинаристом</li>
-//             <li className={styles.delete} onClick={() => remove(student)}>
-//               Удалить
-//             </li>
-//           </ul>
-//         )}
-//       </td> */}
-//     </tr>
-//   );
-// };
-
-//export default Student;
