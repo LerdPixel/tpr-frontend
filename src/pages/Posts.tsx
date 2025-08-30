@@ -8,52 +8,58 @@ import MyButton from "../components/ui/button/MyButton.tsx";
 import { useFetching } from "../hooks/useFetching.ts";
 import { usePosts } from "../hooks/usePosts.ts";
 import { type IStudent } from "../components/ui/interfaces/IStudent.tsx";
-import { type Group } from "../components/ui/interfaces/IGroup.tsx";
+import { type IGroup } from "../components/ui/interfaces/IGroup.tsx";
 import { getPageCount } from "../utils/pages.ts";
 import { Outlet, useParams } from "react-router-dom";
 import { useObserver } from "../hooks/useObserver.ts";
 import { Context } from '../context/index.ts';
 import Student from "../components/Student.tsx"
 
+function idsFromGroups(groups : IGroup[]) {
+  return groups.map(gr => gr.id)
+}
+
 const Posts = () => {
-  const params = useParams();
-  console.log(params);
-  
+  const params = useParams();  
   const [posts, setPosts] = useState([]);
-  const [filter, setFilter] = useState({ sort: "", filter: {pending : false, groups : []} });
+  const [filter, setFilter] = useState({ sort: "", query : ""});
+  const [receive, setReceive] = useState({pending : !("id" in params) , groups : ("id" in params ? [Number(params.id)] : [])})
   const [modal, setModal] = useState(false);
   const [totalPages, setTotalPages] = useState(0);
   const [limit, setLimit] = useState(10);
   const [page, setPage] = useState(1);
-  const [groups, setGroups] = useState<Group[]>([])
+  const [groups, setGroups] = useState<IGroup[]>([])
   const sortedAndSearchedPosts = usePosts(posts, filter.sort, filter.query);
   const lastElement = useRef();
   const {store} = useContext(Context)
 
   const [fetching, isLoading, postError] = useFetching(async () => {
-    if (groups.length == 0) {
-      const response = await store.getGroupList();
-      if (response.status == 200) {
-        if (Array.isArray(response.data)) {
-          setGroups(response.data);
-          console.log(response.data);
-        }
-      }
+    const response = await store.getGroupList();
+    if (response.status == 200 && Array.isArray(response.data)) {
+      setGroups(response.data);
+      if (receive.groups.length == 0)
+        setReceive(prev => ({...prev, groups: idsFromGroups(response.data)}));
     }
-    const pendingStudents = await getPending()
-    const students = await usersFromGroups(response.data)
-    setPosts([...pendingStudents, ...students])
-  });
+  })
+  useEffect(() => {
+    fetching();
+  }, [params]);
+  useEffect(() => {
+    const fetchUsers = async () => {
+      const pendingStudents = receive.pending ? await getPending() : [];
+      console.log("useEFFECT Receive ", receive);
+      const students = await usersFromGroups(receive.groups);
+      setPosts([...pendingStudents, ...students]);
+    };
+    if (!isLoading)
+      fetchUsers()
+  }, [receive])
+
   useObserver(lastElement, page < totalPages, isLoading, () => {
     setPage(page + 1);
   });
 
-  useEffect(() => {
-    if ('id' in params) {
-      
-    }
-    fetching();
-  }, [page]);
+
 
   const createPost = (newPost: IStudent) => {
     setPosts([...posts, newPost]);
@@ -83,8 +89,8 @@ const Posts = () => {
   }
   const usersFromGroups = async (selectedGroups) => {
     let newPosts = []
-    for (const group of selectedGroups) {
-      const response = await store.getStudents(group.id) 
+    for (const id of selectedGroups) {
+      const response = await store.getStudents(id) 
       if (response.status == 200) {
         if (response.data != null) {
           newPosts.push(...response.data)
@@ -96,12 +102,15 @@ const Posts = () => {
   return (
     <div className="App">
       <Outlet />
-      <MyButton onClick={() => usersFromGroups(groups)}>
+      <MyButton onClick={() => setReceive({pending : false, groups : idsFromGroups(groups)})}>
         Все студенты
       </MyButton>
-      <MyButton style={{ marginTop: 30 }} onClick={() => setModal(true)}>
+      <MyButton style={{ marginTop: 30 }} onClick={() => setReceive({pending : true, groups : []})}>
+        Неподтверждённые
+      </MyButton>      
+      {/* <MyButton style={{ marginTop: 30 }} onClick={() => setModal(true)}>
         Добавить пользователя
-      </MyButton>
+      </MyButton> */}
       <MyModal visible={modal} setVisible={setModal}>
         <PostForm create={createPost} />
       </MyModal>
