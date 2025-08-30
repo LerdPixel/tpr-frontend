@@ -92,6 +92,9 @@ export default function GroupsPage() {
       setCreating(false);
     }
   };
+  const goToGroupStudents = (id : number) => {
+
+  }
 
   if (loading) return <div className={styles.loading}>Загрузка…</div>;
 
@@ -123,6 +126,7 @@ export default function GroupsPage() {
             busyId={busyId}
             onRename={handleRename}
             onArchive={handleArchive}
+            onClick={goToGroupStudents}
             ></GroupItem>)
             }>
         </PostList>

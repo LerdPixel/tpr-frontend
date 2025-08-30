@@ -11,7 +11,7 @@ import GroupsPage from "@/pages/GroupPage.tsx";
 
 export const privatRoutes = [
   { path: "/users", element: <Posts />, exact: true },
-  { path: "/users/:id", element: <PostIdPage />, exact: true },
+  { path: "/users/:id", element: <Posts />, exact: true },
   { path: "/menu", element: <Menu />, exact: true },
   { path: "/about", element: <About />, exact: true },
   { path: "/gradesheet", element: <Gradesheet />, exact: true },

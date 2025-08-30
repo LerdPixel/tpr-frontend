@@ -10,12 +10,15 @@ import { usePosts } from "../hooks/usePosts.ts";
 import { type IStudent } from "../components/ui/interfaces/IStudent.tsx";
 import { type Group } from "../components/ui/interfaces/IGroup.tsx";
 import { getPageCount } from "../utils/pages.ts";
-import { Outlet } from "react-router-dom";
+import { Outlet, useParams } from "react-router-dom";
 import { useObserver } from "../hooks/useObserver.ts";
 import { Context } from '../context/index.ts';
 import Student from "../components/Student.tsx"
 
 const Posts = () => {
+  const params = useParams();
+  console.log(params);
+  
   const [posts, setPosts] = useState([]);
   const [filter, setFilter] = useState({ sort: "", query: "" });
   const [modal, setModal] = useState(false);
@@ -30,26 +33,17 @@ const Posts = () => {
   const [fetching, isLoading, postError] = useFetching(async () => {
     const response = await store.getGroupList();
     if (response.status == 200) {
-      if (Array.isArray(response.data))
+      if (Array.isArray(response.data)) {
         setGroups(response.data);
-      else {
+        console.log(response.data);
+        
+      } else {
         console.log("Ошибка загрузки данных")
       }
     }
-    const response2 = await store.getPending();
-    let totalCount;
-    if (Array.isArray(response2.data)) {
-      setPosts([...response2.data]);
-      totalCount = response2.data.length;
-    }
-    else {
-      setPosts([...posts])
-      totalCount = 0
-    }
-
-    console.log(groups);
-    
-    setTotalPages(getPageCount(totalCount, limit));
+    const pendingStudents = await getPending()
+    const students = await usersFromGroups(response.data)
+    setPosts([...pendingStudents, ...students])
   });
   useObserver(lastElement, page < totalPages, isLoading, () => {
     setPage(page + 1);
@@ -69,7 +63,7 @@ const Posts = () => {
   };
   const approveStudent = (student: IStudent) => {
     store.approve(student.id)
-    setPosts(posts.filter((p: IStudent) => p.id !== student.id));
+    setPosts(posts.filter((p: IStudent) => p.id !== student.id).concat([{...student, is_approved : true}]));
   }
   const groupFromId = (id : number) => {
     const found = groups.find((el) => el.id == id)
@@ -78,24 +72,24 @@ const Posts = () => {
     }
     return "Группа не найдена"
   }
-  async function getPending() {
-    const response = await store.getPending()
-    console.log(response);
+  const getPending = async () => {
+    const response2 = await store.getPending();
+    if (Array.isArray(response2.data)) {
+      return response2.data
+    }
+    return []
   }
   const usersFromGroups = async (selectedGroups) => {
-    console.log("pending", posts);
-    
-    const response = await store.getPending()
-    let newPosts = response.data == null ? [] : response.data
+    let newPosts = []
     for (const group of selectedGroups) {
       const response = await store.getStudents(group.id) 
       if (response.status == 200) {
         if (response.data != null) {
-          newPosts = [...newPosts, ...response.data]
+          newPosts.push(...response.data)
         } 
       }
     }
-    setPosts(newPosts)
+    return newPosts
   }
   return (
     <div className="App">

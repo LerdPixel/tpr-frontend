@@ -1,20 +1,17 @@
 import React, { useState } from "react";
+import type {IGroup} from '../components/ui/interfaces/IGroup.tsx'
 import SectionSetup from "../components/SectionSetup.tsx";
 import FinalSectionSetup from "../components/FinalSectionSetup.tsx";
 import type { FinalColumn } from "../components/FinalSectionSetup.tsx";
 import GradeTable from "../components/GradeTable.tsx";
 import GroupSelector from "../components/GroupSelector.tsx";
 
-export interface Student {
+export interface IStudent {
   id: number;
   name: string;
   groupId: number;
 }
 
-export interface Group {
-  id: number;
-  name: string;
-}
 const GradesheetCreation = () => {
    const [courseName, setCourseName] = useState("");
   const [section1Lessons, setSection1Lessons] = useState(0);
@@ -23,16 +20,16 @@ const GradesheetCreation = () => {
   const [section2Max, setSection2Max] = useState(0);
   const [finalColumns, setFinalColumns] = useState<FinalColumn[]>([]);
 
-  const [selectedGroups, setSelectedGroups] = useState<number[]>([]);
+  const [selectedGroups, setSelectedGroups] = useState<IGroup[]>([]);
 
   // Пример данных
-  const groups: Group[] = [
-    { id: 1, name: "Группа A" },
-    { id: 2, name: "Группа B" },
-    { id: 3, name: "Группа C" },
+  const groups: IGroup[] = [
+    { id: 1, name: "Группа A", created_at : "" },
+    { id: 2, name: "Группа B", created_at : "" },
+    { id: 3, name: "Группа C", created_at : "" },
   ];
 
-  const allStudents: Student[] = [
+  const allStudents: IStudent[] = [
     { id: 1, name: "Иванов Иван", groupId: 1 },
     { id: 2, name: "Петров Петр", groupId: 1 },
     { id: 3, name: "Сидоров Сидор", groupId: 2 },
@@ -40,7 +37,7 @@ const GradesheetCreation = () => {
     { id: 5, name: "Кузнецова Мария", groupId: 3 },
   ];
 
-  const students = allStudents.filter(st => selectedGroups.includes(st.groupId));
+  const students = allStudents.filter(st => selectedGroups.map(gr => gr.id).includes(st.groupId));
 
   const totalMax =
     section1Max +
@@ -66,7 +63,6 @@ const GradesheetCreation = () => {
 
       <GroupSelector
         groups={groups}
-        selectedGroups={selectedGroups}
         setSelectedGroups={setSelectedGroups}
       />
 
