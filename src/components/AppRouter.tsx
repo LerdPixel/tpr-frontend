@@ -18,7 +18,7 @@ const AppRouter = () => {
           privatRoutes.map(route => 
             <Route element={route.element} path = {route.path} key={route.path}/>
         )}
-        <Route path="/*" element={<Navigate replace to="/about" />}/>
+        <Route path="/*" element={<Navigate replace to="/news" />}/>
       </Routes>
         :
     <Routes>

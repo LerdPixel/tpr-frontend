@@ -1,0 +1,301 @@
+/* Страница */
+.page {
+  background: #f3f4f6;
+  min-height: 100vh;
+  padding: 24px 16px 60px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Заголовок как на скрине */
+.titleBar {
+  width: 100%;
+  max-width: 850px;
+  text-align: center;
+  font-size: 32px;
+  font-weight: 800;
+  background: #d7d8db;
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin-bottom: 28px;
+}
+
+/* Список карточек */
+.list {
+  width: 100%;
+  max-width: 720px;
+}
+
+/* Карточка новости */
+.card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin: 14px 0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.cardHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.cardTitle {
+  font-size: 18px;
+  font-weight: 800;
+  margin: 0;
+}
+
+.cardDesc {
+  color: #6b7280;
+  margin: 8px 0 6px;
+  line-height: 1.4;
+}
+
+/* ссылки внутри карточки */
+.linksRow {
+  margin-top: 4px;
+}
+
+.link {
+  color: #2563eb;
+  text-decoration: underline;
+}
+
+/* группы под карточкой */
+.groupsRow {
+  margin-top: 6px;
+  color: #111827;
+}
+
+/* Кнопка меню (⋮) и дропдаун */
+.menu {
+  position: relative;
+}
+
+.menuBtn {
+  border: none;
+  background: transparent;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 8px;
+}
+
+.menuBtn:hover {
+  background: #f3f4f6;
+}
+
+.menuDropdown {
+  position: absolute;
+  right: 0;
+  top: 28px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+  padding: 6px;
+  min-width: 160px;
+  z-index: 10;
+}
+
+.menuItem {
+  width: 100%;
+  text-align: left;
+  padding: 8px 10px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.menuItem:hover {
+  background: #f3f4f6;
+}
+
+/* Нижняя панель: поиск + кнопка */
+.controlsRow {
+  width: 100%;
+  max-width: 720px;
+  display: grid;
+  grid-template-columns: 1fr 240px;
+  gap: 18px;
+  margin-top: 24px;
+  align-items: center;
+}
+
+.searchBox {
+  position: relative;
+}
+
+.searchInput {
+  width: 100%;
+  font-size: 18px;
+  font-weight: 800;
+  color: #9ca3af;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  outline: none;
+  padding: 10px 44px 10px 10px;
+}
+
+.searchInput::placeholder {
+  color: #9ca3af;
+}
+
+.searchIcon {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 20px;
+}
+
+.addBtn {
+  background: #0b5cb8;
+  color: #fff;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.addBtn:hover {
+  filter: brightness(0.95);
+}
+
+/* ---------- Модалка ---------- */
+.modalBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(17, 24, 39, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+}
+
+.modalContent {
+  background: #fff;
+  width: 100%;
+  max-width: 760px;
+  border-radius: 16px;
+  padding: 18px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.25);
+}
+
+/* ---------- Форма ---------- */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.formTitle {
+  margin: 0 0 4px;
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-weight: 600;
+}
+
+.input, .textarea, .select {
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 14px;
+  outline: none;
+  background: #fff;
+}
+
+.textarea {
+  resize: vertical;
+}
+
+.attachBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.attachLabel {
+  font-weight: 700;
+}
+
+.attachControls {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+
+.radio {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.fileRow, .selectRow {
+  display: flex;
+}
+
+.groupsBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.groupsTitle {
+  font-weight: 700;
+}
+
+.groupList {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.groupCheck {
+  display: inline-flex;
+  gap: 6px;
+  background: #f3f4f6;
+  padding: 6px 10px;
+  border-radius: 10px;
+}
+
+.formActions {
+  margin-top: 6px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.btnPrimary {
+  background: #0b5cb8;
+  color: #fff;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.btnGhost {
+  background: #eef2f7;
+  color: #111827;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+}

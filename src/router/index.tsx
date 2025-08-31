@@ -2,12 +2,12 @@ import About from "../pages/About.tsx";
 import Login from "../pages/login.tsx";
 import Menu from "../pages/Menu.tsx";
 import Registration from "../pages/registration.tsx";
-import PostIdPage from "../pages/PostIdPage.tsx";
 import Posts from "../pages/Posts.tsx";
 import Gradesheet from "../pages/Gradesheet.tsx";
 import QuestionCreator from "../pages/Test.tsx";
 import GradesheetCreation from "../pages/GradesheetCreation.tsx";
 import GroupsPage from "@/pages/GroupPage.tsx";
+import News from "@/pages/News.tsx"
 
 export const privatRoutes = [
   { path: "/users", element: <Posts />, exact: true },
@@ -18,8 +18,10 @@ export const privatRoutes = [
   { path: "/tests", element: <QuestionCreator />, exact: true },
   { path: "/gradesheet_creation", element: <GradesheetCreation />, exact: true },
   { path: "/groups", element: <GroupsPage />, exact: true },
+  { path: "/news", element: <News />, exact: true},
 ];
 export const publicRoutes = [
   { path: "/registration", element: <Registration />, exact: true },
   { path: "/login", element: <Login />, exact: true },
+  { path: "/news", element: <News />, exact: true},
 ];
