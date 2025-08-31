@@ -19,7 +19,9 @@ interface CookieSetOptions {
   httpOnly?: boolean;
   sameSite?: boolean | "lax" | "strict" | "none";
 }
+export const roleToId = () => {
 
+}
 export default class Store {
     user = {} as IUser;
     isAuth = false;
@@ -229,5 +231,33 @@ export default class Store {
             withCredentials: true
         }).catch(this.errorHandler)
         return response
+    }
+    async editUser(user : IStudent) {
+        try {
+            const access_token = localStorage.getItem("token");
+            if (!access_token) throw new Error("Нет токена авторизации");
+
+            const response = await axios.put(
+                `/server/admin/users/${user.id}`,
+                {
+                    created_at: user.created_at,
+                    email: user.email,
+                    first_name: user.first_name,
+                    group_id: Number(user.group_id),
+                    id : user.id,
+                    is_approved : user.is_approved,
+                    last_name: user.last_name,
+                    patronymic: user.patronymic,
+                    role_id: Number(user.role_id),
+                },
+                {
+                    headers: { Authorization: `Bearer ${access_token}` }
+                }
+            );
+            return response.data;
+        } catch (error: any) {
+            console.error("Ошибка при обновлении пользователя", error);
+            throw error;
+        }
     }
 }

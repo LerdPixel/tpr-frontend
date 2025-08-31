@@ -1,65 +1,88 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import styles from "./styles/UserForm.module.css";
 import { type IStudent } from "./ui/interfaces/IStudent.tsx";
+import { SelectList } from "./ui/select/Select.tsx";
+import type { IGroup } from "./ui/interfaces/IGroup.tsx";
 
 
 interface Props {
   user: IStudent;
   onSave: (updatedUser: IStudent) => void;
+  groups: IGroup[];
 }
 
-const UserForm: React.FC<Props> = ({ user, onSave }) => {
-  const [form, setForm] = useState<IStudent>(user);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setForm((prev) => ({
-      ...prev,
-      [name]: name === "group_id" ? Number(value) : value, // group_id → число
-    }));
+const UserForm: React.FC<Props> = ({ user, onSave, groups }) => {
+  const [formData, setFormData] = useState<IStudent>({ ...user });
+  useEffect(() => {
+    setFormData({ ...user });
+  }, [user])
+  const handleChange = (field: keyof IStudent, value: string | number) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave(form);
+    onSave(formData);
+    console.log(formData);
+    
   };
-
   return (
     <form onSubmit={handleSubmit} className={styles.form}>
       <label>
         Email:
-        <input className={styles.formInput} type="email" name="email" value={form.email} onChange={handleChange} />
+        <input
+          className={styles.formInput}
+          type="email"
+          value={formData.email}
+          onChange={(e) => handleChange("email", e.target.value)}
+          disabled
+        />
       </label>
+     <br />
 
       <label>
         Имя:
-        <input className={styles.formInput} type="text" name="first_name" value={form.first_name} onChange={handleChange} />
+        <input
+        className={styles.formInput}
+          type="text"
+          value={formData.first_name}
+          onChange={(e) => handleChange("first_name", e.target.value)}
+        />
       </label>
+      <br />
 
       <label>
         Фамилия:
-        <input  className={styles.formInput} type="text" name="last_name" value={form.last_name} onChange={handleChange} />
+        <input
+        className={styles.formInput}
+          type="text"
+          value={formData.last_name}
+          onChange={(e) => handleChange("last_name", e.target.value)}
+        />
       </label>
+      <br />
 
       <label>
         Отчество:
-        <input className={styles.formInput} type="text" name="patronymic" value={form.patronymic} onChange={handleChange} />
+        <input
+        className={styles.formInput}
+          type="text"
+          value={formData.patronymic}
+          onChange={(e) => handleChange("patronymic", e.target.value)}
+        />
       </label>
-
+      <br />
       <label>
         Группа:
-        <input  className={styles.formInput} type="number" name="group_id" value={form.group_id} onChange={handleChange} />
+        <SelectList
+        className={styles.formInput}
+          name="group_id"
+          options={groups.map((g) => ({ label: g.name, value: g.id }))}
+          value={formData.group_id}
+          onChange={(value) => handleChange("group_id", value)}
+          placeholder="Выберите группу"
+        />
       </label>
-
-      <label>
-        Роль:
-        <select  className={styles.formSelect} name="role" value={form.role} onChange={handleChange}>
-          <option value="student">Студент</option>
-          <option value="teacher">Преподаватель</option>
-          <option value="admin">Админ</option>
-        </select>
-      </label>
-
       <button type="submit" className={styles.btn}>Сохранить</button>
     </form>
   );

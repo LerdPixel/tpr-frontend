@@ -24,7 +24,7 @@ const Posts = () => {
   const params = useParams();  
   const initialReceive = {pending : !("id" in params) , groups : ("id" in params ? [Number(params.id)] : [])}
   const [selectedUser, setSelectedUser] = useState<IStudent | null>(null);
-  const [posts, setPosts] = useState([]);
+  const [posts, setPosts] = useState<IStudent>([]);
   const [filter, setFilter] = useState({ sort: "", query : ""});
   const [receive, setReceive] = useState(initialReceive)
   const [modal, setModal] = useState(false);
@@ -106,6 +106,10 @@ const Posts = () => {
     setSelectedUser(student)
     setModal(true)
   }
+  const editUser = async (student : IStudent) => {
+    store.editUser(student)
+    setPosts((prev) => prev.map((st) => (st.id === student.id ? {...st, ...student} : st)))
+  }
   return (
     <div className="App">
       <Outlet />
@@ -120,7 +124,7 @@ const Posts = () => {
       </MyButton> */}
       {selectedUser &&
       <MyModal visible={modal} setVisible={setModal}>
-        <UserForm user={selectedUser} onSave={(student) => {}} />
+        <UserForm user={selectedUser} onSave={editUser} groups ={groups}/>
       </MyModal>
       }
       <PostFilter filter={filter} setFilter={setFilter} />
