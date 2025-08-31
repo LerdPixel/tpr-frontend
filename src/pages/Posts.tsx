@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useContext } from "react";
+import { useEffect, useRef, useState, useContext, useMemo } from "react";
 import Loader from "../components/ui/Loader/loader.tsx";
 import MyModal from "../components/ui/MyModal/MyModal.tsx";
 import PostFilter from "../components/PostFilter.tsx";
@@ -22,7 +22,7 @@ function idsFromGroups(groups : IGroup[]) {
 
 const Posts = () => {
   const params = useParams();  
-  const initialReceive = {pending : !("id" in params) , groups : ("id" in params ? [Number(params.id)] : [])}
+  const initialReceive = {pending : !("id" in params) , groups : ("id" in params ? [Number(params.id)] : []), archived : false}
   const [selectedUser, setSelectedUser] = useState<IStudent | null>(null);
   const [posts, setPosts] = useState<IStudent>([]);
   const [filter, setFilter] = useState({ sort: "", query : ""});
@@ -34,34 +34,44 @@ const Posts = () => {
   const [groups, setGroups] = useState<IGroup[]>([])
   const sortedAndSearchedPosts = usePosts(posts, filter.sort, filter.query);
   const lastElement = useRef();
+  const [groupsLoader, setGroupsLoader] = useState(true);
+  const [postError, setPostError] = useState();
   const {store} = useContext(Context)
-
-  const [fetching, isLoading, postError] = useFetching(async () => {
-    const response = await store.getGroupList();
-    if (response.status == 200 && Array.isArray(response.data)) {
-      setGroups(response.data);
-      if (receive.groups.length == 0)
-        setReceive(prev => ({...prev, groups: idsFromGroups(response.data)}));
-    }
-  })
+  const notArchivedGroups = useMemo(() => groups.filter(gr => !("archived_at" in gr))
+  , [groups])
+  // const [fetching, isLoading, postError] = useFetching(async () => {
+  //   const response = await store.getGroupList();
+  //   if (response.status == 200 && Array.isArray(response.data)) {
+  //     setGroups(response.data);
+  //     if (receive.groups.length == 0)
+  //       setReceive(prev => ({...prev, groups: idsFromGroups(response.data)}));
+  //   }
+  // })
   useEffect(() => {
-    fetching();
+    const fetching = async () => {
+      const response = await store.getGroupList();
+      if (response.status == 200 && Array.isArray(response.data)) {
+        setGroups(response.data);
+        if (receive.groups.length == 0)
+          setReceive(prev => ({...prev, groups: idsFromGroups(response.data)}));
+      }
+    }
+    fetching()
+    .catch((e) => setPostError(e.message))
+    .finally(() => setGroupsLoader(false))
   }, [params]);
   useEffect(() => {
     const fetchUsers = async () => {
       const pendingStudents = receive.pending ? await getPending() : [];
       console.log("useEFFECT Receive ", receive);
-      const students = await usersFromGroups(receive.groups);
-      setPosts([...pendingStudents, ...students]);
-    };
-    if (!isLoading)
+      if (Array.isArray(receive.groups)) {
+        const students = await usersFromGroups(receive.archived ? receive.groups : receive.groups.filter(gr => !("archived_at" in groupFromId(gr))));
+        setPosts([...pendingStudents, ...students]);
+      }
+    };    
+    if (!groupsLoader)
       fetchUsers()
-  }, [receive])
-
-  useObserver(lastElement, page < totalPages, isLoading, () => {
-    setPage(page + 1);
-  });
-
+  }, [receive, groupsLoader])
 
 
   const createPost = (newPost: IStudent) => {
@@ -79,10 +89,11 @@ const Posts = () => {
   const groupFromId = (id : number) => {
     const found = groups.find((el) => el.id == id)
     if (found != undefined) {
-      return found.name
+      return found
     }
-    return "Группа не найдена"
+    return undefined
   }
+  const groupNameFromId = (id : number) => groupFromId(id) == undefined ? "Группа не найдена" : groupFromId(id).name
   const getPending = async () => {
     const response2 = await store.getPending();
     if (Array.isArray(response2.data)) {
@@ -107,16 +118,17 @@ const Posts = () => {
     setModal(true)
   }
   const editUser = async (student : IStudent) => {
+    setModal(false)
     store.editUser(student)
     setPosts((prev) => prev.map((st) => (st.id === student.id ? {...st, ...student} : st)))
   }
   return (
     <div className="App">
       <Outlet />
-      <MyButton onClick={() => setReceive({pending : false, groups : idsFromGroups(groups)})}>
+      <MyButton onClick={() => setReceive({...receive, pending : false, groups : idsFromGroups(groups) })}>
         Все студенты
       </MyButton>
-      <MyButton style={{ marginTop: 30 }} onClick={() => setReceive({pending : true, groups : []})}>
+      <MyButton style={{ marginTop: 30 }} onClick={() => setReceive({...receive, pending : true, groups : []})}>
         Неподтверждённые
       </MyButton>      
       {/* <MyButton style={{ marginTop: 30 }} onClick={() => setModal(true)}>
@@ -124,7 +136,7 @@ const Posts = () => {
       </MyButton> */}
       {selectedUser &&
       <MyModal visible={modal} setVisible={setModal}>
-        <UserForm user={selectedUser} onSave={editUser} groups ={groups}/>
+        <UserForm user={selectedUser} onSave={editUser} groups={notArchivedGroups}/>
       </MyModal>
       }
       <PostFilter filter={filter} setFilter={setFilter} />
@@ -135,11 +147,11 @@ const Posts = () => {
         posts={sortedAndSearchedPosts}
         title="Студенты"
         renderItem={(student, index) => (
-          <Student key={student.id} student={student} remove={removeStudent} approve={approveStudent} groupFromId={groupFromId} onClick={clickOnStudent}/>
+          <Student key={student.id} student={student} remove={removeStudent} approve={approveStudent} groupFromId={groupNameFromId} onClick={clickOnStudent}/>
         )}
       />
       <div ref={lastElement}></div>
-      {isLoading && (
+      {groupsLoader && (
         <div
           style={{ display: "flex", justifyContent: "center", marginTop: 50 }}
         >
