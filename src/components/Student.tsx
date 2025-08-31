@@ -13,18 +13,18 @@ import StudentImg from "../imgs/user.png";
 import SeminaristImg from "../imgs/seminarist.png";
 
 
-const StudentAva = (student : IStudent) => {
+const StudentAva = (student : IStudent, ...props) => {
     if (student.is_approved) {
         if (student.group_id == 1)
-          return <img src={SeminaristImg}></img>
-        return <img src={StudentImg}></img>
+          return <img src={SeminaristImg} {...props}></img>
+        return <img src={StudentImg} {...props}></img>
     }
     else {
-        return <img src={DisApprovedImg}></img>
+        return <img src={DisApprovedImg} {...props}></img>
     }
 }
 
-const Student = ({ student, remove, approve, groupFromId }) => {
+const Student = ({ student, remove, approve, groupFromId, onClick }) => {
     const [open, setOpen] = useState(false);
 
     const studentName = () =>
@@ -33,7 +33,7 @@ const Student = ({ student, remove, approve, groupFromId }) => {
   return (
     <tr className={styles.studentRow}>
       <td className={styles.studentIcon}>{StudentAva(student)}</td>
-      <td className={styles.studentInfo}>
+      <td className={styles.studentInfo} onClick={() => onClick(student)}>
         <div className={styles.studentName}>{studentName()}</div>
         {student.group_id && (
           <div className={styles.studentGroup}>{groupFromId(student.group_id)}</div>

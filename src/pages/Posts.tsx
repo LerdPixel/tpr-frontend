@@ -14,6 +14,7 @@ import { Outlet, useParams } from "react-router-dom";
 import { useObserver } from "../hooks/useObserver.ts";
 import { Context } from '../context/index.ts';
 import Student from "../components/Student.tsx"
+import UserForm from "@/components/UserForm.tsx";
 
 function idsFromGroups(groups : IGroup[]) {
   return groups.map(gr => gr.id)
@@ -21,9 +22,11 @@ function idsFromGroups(groups : IGroup[]) {
 
 const Posts = () => {
   const params = useParams();  
+  const initialReceive = {pending : !("id" in params) , groups : ("id" in params ? [Number(params.id)] : [])}
+  const [selectedUser, setSelectedUser] = useState<IStudent | null>(null);
   const [posts, setPosts] = useState([]);
   const [filter, setFilter] = useState({ sort: "", query : ""});
-  const [receive, setReceive] = useState({pending : !("id" in params) , groups : ("id" in params ? [Number(params.id)] : [])})
+  const [receive, setReceive] = useState(initialReceive)
   const [modal, setModal] = useState(false);
   const [totalPages, setTotalPages] = useState(0);
   const [limit, setLimit] = useState(10);
@@ -99,6 +102,10 @@ const Posts = () => {
     }
     return newPosts
   }
+  const clickOnStudent = (student : IStudent) => {
+    setSelectedUser(student)
+    setModal(true)
+  }
   return (
     <div className="App">
       <Outlet />
@@ -111,9 +118,11 @@ const Posts = () => {
       {/* <MyButton style={{ marginTop: 30 }} onClick={() => setModal(true)}>
         Добавить пользователя
       </MyButton> */}
+      {selectedUser &&
       <MyModal visible={modal} setVisible={setModal}>
-        <PostForm create={createPost} />
+        <UserForm user={selectedUser} onSave={(student) => {}} />
       </MyModal>
+      }
       <PostFilter filter={filter} setFilter={setFilter} />
       {postError && (
         <h1 style={{ color: "red" }}>Произошла ошибка в {postError}</h1>
@@ -122,7 +131,7 @@ const Posts = () => {
         posts={sortedAndSearchedPosts}
         title="Студенты"
         renderItem={(student, index) => (
-          <Student key={student.id} student={student} remove={removeStudent} approve={approveStudent} groupFromId={groupFromId} />
+          <Student key={student.id} student={student} remove={removeStudent} approve={approveStudent} groupFromId={groupFromId} onClick={clickOnStudent}/>
         )}
       />
       <div ref={lastElement}></div>
