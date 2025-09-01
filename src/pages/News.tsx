@@ -77,7 +77,9 @@ export default function NewsPage() {
     setEditing(item);
     setModalOpen(true);
   };
-
+  const removeNewsItem = (id: number) => {
+    setNews(prev => prev.filter((item) => item.id != id))
+  };
   const handleSave = (payload: Omit<News, "id"> & { id?: number }) => {
     if (payload.id) {
       setNews((prev) =>
@@ -105,6 +107,7 @@ export default function NewsPage() {
             testId={n.testId}
             groupNames={n.groupIds.map((id) => groupsById[id]).filter(Boolean)}
             onEdit={openEdit}
+            remove={removeNewsItem}
           />
         ))}
       </div>

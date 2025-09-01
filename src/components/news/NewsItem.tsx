@@ -9,6 +9,7 @@ interface Props {
   testId?: number;
   groupNames: string[];
   onEdit: (id: number) => void;
+  remove: (id: number) => void;
 }
 
 export default function NewsItem({
@@ -19,6 +20,7 @@ export default function NewsItem({
   testId,
   groupNames,
   onEdit,
+  remove,
 }: Props) {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
@@ -49,6 +51,9 @@ export default function NewsItem({
             <div className={styles.menuDropdown}>
               <button className={styles.menuItem} onClick={() => onEdit(id)}>
                 Редактировать
+              </button>
+              <button className={styles.menuItem} onClick={() => remove(id)}>
+                Удалить
               </button>
               {/* при желании можно добавить Удалить */}
             </div>
