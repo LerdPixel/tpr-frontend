@@ -23,7 +23,6 @@ export const roleToId = () => {
 
 }
 export default class Store {
-    user = {} as IUser;
     isAuth = false;
     isLoading = true;
     private cookies: Cookies;
@@ -78,6 +77,18 @@ export default class Store {
         if (error.response.status == 404) {
             return "page not found"
         }
+    }
+    async getUserInfo() {
+        const access_token = localStorage.getItem("token")
+        if (access_token == null) {
+            this.refresh() 
+        }
+        const response = await axios.get('/server/auth/me', {
+            headers: { Authorization: `Bearer ${access_token}` }
+        }).catch((e) => {
+            this.errorHandler(e)
+        })
+        return response.data
     }
     async login(email : string, password : string) {
         try {

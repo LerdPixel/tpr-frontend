@@ -1,4 +1,4 @@
-import React, { useContext } from 'react'
+import React, { useContext, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { AuthContext, Context } from '../../../context/index.ts'
 import LogoutPng from '../../../imgs/door.png';
@@ -7,12 +7,28 @@ import { observer } from 'mobx-react-lite';
 
 const Navbar = () => {
   const navigate = useNavigate();
-  const {isAuth, setIsAuth} = useContext(AuthContext);
   const {store} = useContext(Context);
+  const [userInfo, setUserInfo] = useState(store.userInfo)
+  const [userLoading, setUserLoading] = useState(true)
   const logout = () => {
     console.log("logout");
     store.logout();
   }
+  useEffect(() => {
+    const fetching = async () => {
+      setUserLoading(true)
+      try {
+        const response = await store.getUserInfo()
+        setUserInfo(response)
+      } catch (e) {
+        console.log(e.data);
+      } finally {
+        setUserLoading(false)
+      }
+    }
+    if (store.isAuth)
+      fetching()
+  }, [store.isAuth])
   return (
     <div className='navbar'>
       <div className='navbar__left' >
@@ -25,7 +41,7 @@ const Navbar = () => {
       <div className='navbar__right'>
         {store.isAuth ?
          <>
-            <span className='navbar__user'>Фамилия И.О.</span>
+            {userLoading || Object.keys(userInfo).length == 0 || <span className='navbar__user'>{`${userInfo.last_name} ${userInfo.first_name.substring(0, 1)}.${userInfo.patronymic.substring(0, 1)}.`}</span>}
             <button className='navbar__logout-btn' onClick={logout} title="Выйти">
               <img src={LogoutPng} 
                 alt="Logout"

@@ -23,5 +23,4 @@ export const privatRoutes = [
 export const publicRoutes = [
   { path: "/registration", element: <Registration />, exact: true },
   { path: "/login", element: <Login />, exact: true },
-  { path: "/news", element: <News />, exact: true},
 ];
