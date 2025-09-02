@@ -4,7 +4,7 @@ import type { IGroup } from "./ui/interfaces/IGroup";
 import Edit from "../imgs/editing.png"
 import EditHover from "../imgs/edit.png"
 import SmartImg from "./ui/SmartImg/SmartImg";
-import styles from "../pages/GroupsPage.module.css";
+import styles from "../styles/GroupsPage.module.css";
 
 interface Props {
     group : IGroup,

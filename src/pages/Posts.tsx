@@ -15,6 +15,8 @@ import { useObserver } from "../hooks/useObserver.ts";
 import { Context } from '../context/index.ts';
 import Student from "../components/Student.tsx"
 import UserForm from "@/components/UserForm.tsx";
+import styles from "@/styles/Posts.module.css";
+
 
 function idsFromGroups(groups : IGroup[]) {
   return groups.map(gr => gr.id)
@@ -123,7 +125,7 @@ const Posts = () => {
     setPosts((prev) => prev.map((st) => (st.id === student.id ? {...st, ...student} : st)))
   }
   return (
-    <div className="App">
+    <div className={styles.wrapper}>
       <Outlet />
       <MyButton onClick={() => setReceive({...receive, pending : false, groups : idsFromGroups(groups) })}>
         Все студенты

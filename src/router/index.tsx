@@ -8,6 +8,8 @@ import QuestionCreator from "../pages/Test.tsx";
 import GradesheetCreation from "../pages/GradesheetCreation.tsx";
 import GroupsPage from "@/pages/GroupPage.tsx";
 import News from "@/pages/News.tsx"
+import Tests from "@/pages/Tests.tsx"
+
 
 export const privatRoutes = [
   { path: "/users", element: <Posts />, exact: true },
@@ -23,4 +25,6 @@ export const privatRoutes = [
 export const publicRoutes = [
   { path: "/registration", element: <Registration />, exact: true },
   { path: "/login", element: <Login />, exact: true },
+  { path: "/tests", element: <Tests />, exact: true},
+
 ];

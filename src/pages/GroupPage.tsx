@@ -4,7 +4,7 @@ import axios from "axios";
 import { Context } from '../context/index.ts';
 import PostList from "../components/PostList";
 import type {IGroup} from '../components/ui/interfaces/IGroup.tsx'
-import styles from "./GroupsPage.module.css"
+import styles from "../styles/GroupsPage.module.css"
 import GroupItem from "@/components/Group.tsx";
 import { useFetching } from "../hooks/useFetching.ts";
 import { useNavigate } from "react-router-dom";
