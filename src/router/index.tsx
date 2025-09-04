@@ -17,10 +17,11 @@ export const privatRoutes = [
   { path: "/menu", element: <Menu />, exact: true },
   { path: "/about", element: <About />, exact: true },
   { path: "/gradesheet", element: <Gradesheet />, exact: true },
-  { path: "/tests", element: <QuestionCreator />, exact: true },
+  { path: "/questions", element: <QuestionCreator />, exact: true },
   { path: "/gradesheet_creation", element: <GradesheetCreation />, exact: true },
   { path: "/groups", element: <GroupsPage />, exact: true },
   { path: "/news", element: <News />, exact: true},
+ { path: "/tests", element: <Tests />, exact: true},
 ];
 export const publicRoutes = [
   { path: "/registration", element: <Registration />, exact: true },
