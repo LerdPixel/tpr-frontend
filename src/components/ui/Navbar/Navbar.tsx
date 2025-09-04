@@ -34,7 +34,7 @@ const Navbar = () => {
       <div className='navbar__left' >
         <div onClick={() => navigate('/menu')}>МЕНЮ</div>
         <div className='navbar__links'>
-          <Link className='navbar__link' to="/about">О сайте</Link>
+          <Link className='navbar__link' to="/news">О сайте</Link>
           <Link className='navbar__link' to="/users">Пользователи</Link>
         </div>
       </div>

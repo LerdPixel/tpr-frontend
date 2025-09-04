@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
-import QuestionCreator from "./QuestionCreator";
-import type IQuestion from "../components/ui/interfaces/IQuestion";
+import QuestionCreator from "./QuestionCreator.tsx";
+import type IQuestion from "../components/ui/interfaces/IQuestion.tsx";
 import { Context } from "../context/index.ts";
 import axios from "axios";
 import { useContext } from "react";
