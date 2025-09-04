@@ -10,6 +10,8 @@ import {
   MoreVertical,
 } from "lucide-react";
 import styles from "../styles/TopicsPage.module.css";
+import GroupSelector from "../components/GroupSelector";
+import type { IGroup } from "../components/ui/interfaces/IGroup";
 
 // Types for Discipline
 interface Discipline {
@@ -43,7 +45,10 @@ interface DisciplineCreateInput {
 export default function DisciplinesPage() {
   const { store } = useContext(Context);
   const [disciplines, setDisciplines] = useState<Discipline[]>([]);
+  const [groups, setGroups] = useState<IGroup[]>([]);
+  const [selectedGroups, setSelectedGroups] = useState<IGroup[]>([]);
   const [loading, setLoading] = useState(false);
+  const [groupsLoading, setGroupsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [menu, setMenu] = useState<{ id: number } | null>(null);
@@ -52,6 +57,9 @@ export default function DisciplinesPage() {
     data: Partial<Discipline>;
     id?: number;
   } | null>(null);
+
+  // Local state for laboratory works (stub until server implementation)
+  const [modalLabs, setModalLabs] = useState<DisciplineLabComponent[]>([]);
 
   // Auto-dismiss error after 5 seconds
   useEffect(() => {
@@ -77,6 +85,21 @@ export default function DisciplinesPage() {
     return access_token;
   };
 
+  // Fetch groups from server
+  const fetchGroups = async () => {
+    setGroupsLoading(true);
+    try {
+      const response = await axios.get("/server/groups");
+      if (response.status !== 200) throw new Error("Ошибка при загрузке групп");
+      setGroups(response.data as IGroup[]);
+    } catch (err: any) {
+      console.error("Error fetching groups:", err);
+      setError(err?.message || "Ошибка при загрузке групп");
+    } finally {
+      setGroupsLoading(false);
+    }
+  };
+
   // Fetch disciplines from server
   const fetchDisciplines = async () => {
     setLoading(true);
@@ -87,15 +110,15 @@ export default function DisciplinesPage() {
         throw new Error("Ошибка при загрузке дисциплин");
       setDisciplines(response.data as Discipline[]);
     } catch (err: any) {
-      console.error('Error fetching disciplines:', err);
+      console.error("Error fetching disciplines:", err);
       if (err.response) {
         // Server responded with error status
         setError(`Ошибка сервера: ${err.response.status}`);
       } else if (err.request) {
         // Network error
-        setError('Ошибка сети. Проверьте подключение к интернету.');
+        setError("Ошибка сети. Проверьте подключение к интернету.");
       } else {
-        setError(err?.message || 'Неизвестная ошибка');
+        setError(err?.message || "Неизвестная ошибка");
       }
     } finally {
       setLoading(false);
@@ -117,15 +140,15 @@ export default function DisciplinesPage() {
         throw new Error("Ошибка при создании дисциплины");
       }
       await fetchDisciplines();
-      setSuccess('Дисциплина успешно создана!');
+      setSuccess("Дисциплина успешно создана!");
     } catch (err: any) {
-      console.error('Error creating discipline:', err);
+      console.error("Error creating discipline:", err);
       if (err.response?.data?.error) {
         setError(`Ошибка: ${err.response.data.error}`);
       } else if (err.response?.status === 401) {
-        setError('Нет прав доступа. Попробуйте войти заново.');
+        setError("Нет прав доступа. Попробуйте войти заново.");
       } else {
-        setError(err?.message || 'Ошибка при создании дисциплины');
+        setError(err?.message || "Ошибка при создании дисциплины");
       }
       throw err;
     }
@@ -172,9 +195,10 @@ export default function DisciplinesPage() {
     }
   };
 
-  // Load disciplines on component mount
+  // Load disciplines and groups on component mount
   useEffect(() => {
     fetchDisciplines();
+    fetchGroups();
   }, []);
 
   // Click outside handler for dropdown menus
@@ -186,12 +210,14 @@ export default function DisciplinesPage() {
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   // Modal handlers
   const openCreateModal = () => {
+    setSelectedGroups([]);
+    setModalLabs([]);
     setModalData({
       mode: "create",
       data: {
@@ -200,13 +226,21 @@ export default function DisciplinesPage() {
         lecture_count: 1,
         lecture_points: 10,
         test_points: 10,
-        lab_count: 0,
         group_ids: [],
       },
     });
   };
 
   const openEditModal = (discipline: Discipline) => {
+    // Set selected groups based on discipline's group_ids
+    const disciplineGroups = groups.filter((group) =>
+      discipline.group_ids?.includes(group.id)
+    );
+    setSelectedGroups(disciplineGroups);
+
+    // Set laboratories (use existing labs or create empty array)
+    setModalLabs(discipline.labs || []);
+
     setModalData({
       mode: "edit",
       id: discipline.id,
@@ -217,11 +251,13 @@ export default function DisciplinesPage() {
 
   const closeModal = () => {
     setModalData(null);
+    setSelectedGroups([]);
+    setModalLabs([]);
   };
 
   const saveModal = async () => {
     if (!modalData) return;
-    
+
     // Clear previous messages
     setError(null);
     setSuccess(null);
@@ -234,6 +270,11 @@ export default function DisciplinesPage() {
       return;
     }
 
+    if (lecture_count <= 0 || lecture_points <= 0 || test_points <= 0) {
+      setError("Количество и баллы должны быть больше 0");
+      return;
+    }
+
     try {
       const disciplineData: DisciplineCreateInput = {
         name: name!,
@@ -241,8 +282,9 @@ export default function DisciplinesPage() {
         lecture_count: lecture_count!,
         lecture_points: lecture_points!,
         test_points: test_points!,
-        lab_count: modalData.data.lab_count || 0,
-        group_ids: modalData.data.group_ids || [],
+        lab_count: modalLabs.length, // Auto-calculate from selected labs
+        labs: modalLabs,
+        group_ids: selectedGroups.map((group) => group.id),
       };
 
       if (modalData.mode === "create") {
@@ -255,6 +297,38 @@ export default function DisciplinesPage() {
     } catch (error) {
       console.error("Ошибка при сохранении дисциплины:", error);
     }
+  };
+
+  // Helper function to get group names by IDs
+  const getGroupNames = (groupIds: number[] = []) => {
+    return groups
+      .filter((group) => groupIds.includes(group.id))
+      .map((group) => group.name)
+      .join(", ");
+  };
+
+  // Laboratory work management functions
+  const addLab = () => {
+    const newLabId =
+      modalLabs.length > 0
+        ? Math.max(...modalLabs.map((lab) => lab.lab_id)) + 1
+        : 1;
+    setModalLabs([...modalLabs, { lab_id: newLabId, points: 10 }]);
+  };
+
+  const removeLab = (labId: number) => {
+    setModalLabs(modalLabs.filter((lab) => lab.lab_id !== labId));
+  };
+
+  const updateLabPoints = (labId: number, points: number) => {
+    setModalLabs(
+      modalLabs.map((lab) => (lab.lab_id === labId ? { ...lab, points } : lab))
+    );
+  };
+
+  // Helper function to get total lab points
+  const getTotalLabPoints = (labs: DisciplineLabComponent[] = []) => {
+    return labs.reduce((total, lab) => total + lab.points, 0);
   };
 
   const removeDiscipline = async (id: number) => {
@@ -282,7 +356,7 @@ export default function DisciplinesPage() {
             alignItems: "center",
             gap: "8px",
             maxWidth: "400px",
-            boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)"
+            boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
           }}
         >
           <span style={{ flex: 1 }}>{error}</span>
@@ -299,7 +373,7 @@ export default function DisciplinesPage() {
               height: "20px",
               display: "flex",
               alignItems: "center",
-              justifyContent: "center"
+              justifyContent: "center",
             }}
           >
             ×
@@ -324,7 +398,7 @@ export default function DisciplinesPage() {
             alignItems: "center",
             gap: "8px",
             maxWidth: "400px",
-            boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)"
+            boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
           }}
         >
           <span style={{ flex: 1 }}>{success}</span>
@@ -341,7 +415,7 @@ export default function DisciplinesPage() {
               height: "20px",
               display: "flex",
               alignItems: "center",
-              justifyContent: "center"
+              justifyContent: "center",
             }}
           >
             ×
@@ -373,11 +447,11 @@ export default function DisciplinesPage() {
         <div className={styles.list}>
           {/* Retry button when there's an error and no data */}
           {error && disciplines.length === 0 && !loading && (
-            <div style={{ textAlign: 'center', padding: '20px' }}>
-              <button 
+            <div style={{ textAlign: "center", padding: "20px" }}>
+              <button
                 onClick={fetchDisciplines}
                 className={`${styles.btn} ${styles.blue}`}
-                style={{ padding: '12px 24px' }}
+                style={{ padding: "12px 24px" }}
               >
                 Попробовать снова
               </button>
@@ -394,6 +468,14 @@ export default function DisciplinesPage() {
                   {discipline.description && (
                     <div className={styles.itemDesc}>
                       {discipline.description}
+                    </div>
+                  )}
+                  {discipline.group_ids && discipline.group_ids.length > 0 && (
+                    <div
+                      className={styles.itemDesc}
+                      style={{ color: "#0056a6", fontWeight: "500" }}
+                    >
+                      Группы: {getGroupNames(discipline.group_ids)}
                     </div>
                   )}
                   <div
@@ -422,7 +504,9 @@ export default function DisciplinesPage() {
                         }}
                       />
                       Баллы:{" "}
-                      {discipline.lecture_points + discipline.test_points}
+                      {discipline.lecture_points +
+                        discipline.test_points +
+                        getTotalLabPoints(discipline.labs)}
                     </div>
                     {discipline.lab_count && discipline.lab_count > 0 && (
                       <div className={styles.itemMeta}>
@@ -435,7 +519,8 @@ export default function DisciplinesPage() {
                             marginRight: "4px",
                           }}
                         />
-                        Лабы: {discipline.lab_count}
+                        Лабы: {discipline.lab_count} (
+                        {getTotalLabPoints(discipline.labs)} баллов)
                       </div>
                     )}
                   </div>
@@ -475,11 +560,13 @@ export default function DisciplinesPage() {
           ))}
 
           {disciplines.length === 0 && !loading && (
-            <div className={styles.placeholder} style={{ textAlign: 'center', padding: '40px' }}>
-              {error ? 
-                'Проверьте подключение к серверу и обновите страницу.' : 
-                'Нет дисциплин. Создайте первую дисциплину, нажав кнопку "Добавить дисциплину".'
-              }
+            <div
+              className={styles.placeholder}
+              style={{ textAlign: "center", padding: "40px" }}
+            >
+              {error
+                ? "Проверьте подключение к серверу и обновите страницу."
+                : 'Нет дисциплин. Создайте первую дисциплину, нажав кнопку "Добавить дисциплину".'}
             </div>
           )}
         </div>
@@ -488,78 +575,97 @@ export default function DisciplinesPage() {
       {/* Modal for Create/Edit */}
       {modalData && (
         <div className={styles.modalOverlay} onClick={closeModal}>
-          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+          <div
+            className={styles.modal}
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              maxWidth: "600px",
+              width: "90vw",
+              maxHeight: "90vh",
+              overflow: "auto",
+              display: "flex",
+              flexDirection: "column",
+            }}
+          >
             <h3 className={styles.modalTitle}>
               {modalData.mode === "create"
                 ? "Создать дисциплину"
                 : "Редактировать дисциплину"}
             </h3>
 
-            <input
-              type="text"
-              value={modalData.data.name || ""}
-              onChange={(e) =>
-                setModalData({
-                  ...modalData,
-                  data: { ...modalData.data, name: e.target.value },
-                })
-              }
-              placeholder="Название дисциплины *"
-              className={styles.input}
-            />
+            <div style={{ overflow: "auto", flex: 1, paddingRight: "8px" }}>
+              <div>
+                <label
+                  className={styles.label}
+                  style={{
+                    display: "block",
+                    marginBottom: "4px",
+                    fontWeight: "600",
+                  }}
+                >
+                  Название дисциплины *
+                </label>
+                <input
+                  type="text"
+                  value={modalData.data.name || ""}
+                  onChange={(e) =>
+                    setModalData({
+                      ...modalData,
+                      data: { ...modalData.data, name: e.target.value },
+                    })
+                  }
+                  placeholder="Например: Математический анализ"
+                  className={styles.input}
+                />
+              </div>
 
-            <textarea
-              value={modalData.data.description || ""}
-              onChange={(e) =>
-                setModalData({
-                  ...modalData,
-                  data: { ...modalData.data, description: e.target.value },
-                })
-              }
-              placeholder="Описание"
-              className={styles.textarea}
-            />
+              <div>
+                <label
+                  className={styles.label}
+                  style={{
+                    display: "block",
+                    marginBottom: "4px",
+                    fontWeight: "600",
+                  }}
+                >
+                  Описание (необязательно)
+                </label>
+                <textarea
+                  value={modalData.data.description || ""}
+                  onChange={(e) =>
+                    setModalData({
+                      ...modalData,
+                      data: { ...modalData.data, description: e.target.value },
+                    })
+                  }
+                  placeholder="Краткое описание дисциплины"
+                  className={styles.textarea}
+                />
+              </div>
 
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
-                gap: "12px",
-              }}
-            >
-              <input
-                type="number"
-                value={modalData.data.lecture_count || 1}
-                onChange={(e) =>
-                  setModalData({
-                    ...modalData,
-                    data: {
-                      ...modalData.data,
-                      lecture_count: parseInt(e.target.value) || 1,
-                    },
-                  })
-                }
-                placeholder="Количество лекций *"
-                className={styles.input}
-                min="1"
-              />
-
-              <input
-                type="number"
-                value={modalData.data.lab_count || 0}
-                onChange={(e) =>
-                  setModalData({
-                    ...modalData,
-                    data: {
-                      ...modalData.data,
-                      lab_count: parseInt(e.target.value) || 0,
-                    },
-                  })
-                }
-                placeholder="Количество лаб"
-                className={styles.input}
-                min="0"
-              />
+              <div>
+                <label
+                  className={styles.label}
+                  style={{
+                    display: "block",
+                    marginBottom: "8px",
+                    fontWeight: "600",
+                  }}
+                >
+                  Выберите группы
+                </label>
+                {groupsLoading ? (
+                  <p style={{ color: "#666", fontSize: "14px" }}>
+                    Загрузка групп...
+                  </p>
+                ) : (
+                  <GroupSelector
+                    groups={groups}
+                    setSelectedGroups={setSelectedGroups}
+                    initialSelected={selectedGroups}
+                  />
+                )}
+              </div>
             </div>
 
             <div
@@ -569,42 +675,268 @@ export default function DisciplinesPage() {
                 gap: "12px",
               }}
             >
-              <input
-                type="number"
-                value={modalData.data.lecture_points || 10}
-                onChange={(e) =>
-                  setModalData({
-                    ...modalData,
-                    data: {
-                      ...modalData.data,
-                      lecture_points: parseInt(e.target.value) || 10,
-                    },
-                  })
-                }
-                placeholder="Баллы за лекции *"
-                className={styles.input}
-                min="1"
-              />
+              <div>
+                <label
+                  className={styles.label}
+                  style={{
+                    display: "block",
+                    marginBottom: "4px",
+                    fontWeight: "600",
+                  }}
+                >
+                  Количество лекций *
+                </label>
+                <input
+                  type="number"
+                  value={modalData.data.lecture_count ?? ""}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setModalData({
+                      ...modalData,
+                      data: {
+                        ...modalData.data,
+                        lecture_count:
+                          value === "" ? undefined : parseInt(value),
+                      },
+                    });
+                  }}
+                  placeholder="8"
+                  className={styles.input}
+                  min="1"
+                />
+              </div>
 
-              <input
-                type="number"
-                value={modalData.data.test_points || 10}
-                onChange={(e) =>
-                  setModalData({
-                    ...modalData,
-                    data: {
-                      ...modalData.data,
-                      test_points: parseInt(e.target.value) || 10,
-                    },
-                  })
-                }
-                placeholder="Баллы за тесты *"
-                className={styles.input}
-                min="1"
-              />
+              <div>
+                <label
+                  className={styles.label}
+                  style={{
+                    display: "block",
+                    marginBottom: "4px",
+                    fontWeight: "600",
+                  }}
+                >
+                  Количество лабораторных работ
+                </label>
+                <div
+                  style={{
+                    padding: "10px",
+                    backgroundColor: "#f3f4f6",
+                    borderRadius: "6px",
+                    border: "1px solid #d1d5db",
+                    fontSize: "14px",
+                    color: "#374151",
+                  }}
+                >
+                  {modalLabs.length}
+                </div>
+              </div>
             </div>
 
-            <div className={styles.modalActions}>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: "12px",
+              }}
+            >
+              <div>
+                <label
+                  className={styles.label}
+                  style={{
+                    display: "block",
+                    marginBottom: "4px",
+                    fontWeight: "600",
+                  }}
+                >
+                  Максимальные баллы за лекции *
+                </label>
+                <input
+                  type="number"
+                  value={modalData.data.lecture_points ?? ""}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setModalData({
+                      ...modalData,
+                      data: {
+                        ...modalData.data,
+                        lecture_points:
+                          value === "" ? undefined : parseInt(value),
+                      },
+                    });
+                  }}
+                  placeholder="40"
+                  className={styles.input}
+                  min="1"
+                />
+              </div>
+
+              <div>
+                <label
+                  className={styles.label}
+                  style={{
+                    display: "block",
+                    marginBottom: "4px",
+                    fontWeight: "600",
+                  }}
+                >
+                  Максимальные баллы за тесты *
+                </label>
+                <input
+                  type="number"
+                  value={modalData.data.test_points ?? ""}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setModalData({
+                      ...modalData,
+                      data: {
+                        ...modalData.data,
+                        test_points: value === "" ? undefined : parseInt(value),
+                      },
+                    });
+                  }}
+                  placeholder="60"
+                  className={styles.input}
+                  min="1"
+                />
+              </div>
+            </div>
+
+            {/* Laboratory Works Section */}
+            <div style={{ marginTop: "16px" }}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  marginBottom: "12px",
+                }}
+              >
+                <label
+                  className={styles.label}
+                  style={{
+                    fontWeight: "600",
+                  }}
+                >
+                  Лабораторные работы
+                </label>
+                <button
+                  type="button"
+                  onClick={addLab}
+                  className={`${styles.btn} ${styles.blue}`}
+                  style={{ padding: "6px 12px", fontSize: "14px" }}
+                >
+                  <Plus
+                    style={{
+                      width: "16px",
+                      height: "16px",
+                      marginRight: "4px",
+                    }}
+                  />
+                  Добавить лабу
+                </button>
+              </div>
+
+              {modalLabs.length === 0 ? (
+                <p
+                  style={{
+                    color: "#666",
+                    fontSize: "14px",
+                    fontStyle: "italic",
+                  }}
+                >
+                  Нет лабораторных работ. Нажмите "Добавить лабу" для создания.
+                </p>
+              ) : (
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "8px",
+                  }}
+                >
+                  {modalLabs.map((lab, index) => (
+                    <div
+                      key={lab.lab_id}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "12px",
+                        padding: "12px",
+                        border: "1px solid #e5e7eb",
+                        borderRadius: "6px",
+                        backgroundColor: "#f9fafb",
+                      }}
+                    >
+                      <span style={{ fontWeight: "500", minWidth: "120px" }}>
+                        Лабораторная {index + 1}:
+                      </span>
+                      <input
+                        type="number"
+                        value={lab.points ?? ""}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          updateLabPoints(
+                            lab.lab_id,
+                            value === "" ? 0 : parseInt(value)
+                          );
+                        }}
+                        placeholder="Баллы"
+                        className={styles.input}
+                        style={{ width: "100px" }}
+                        min="0"
+                      />
+                      <span style={{ fontSize: "14px", color: "#666" }}>
+                        баллов
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => removeLab(lab.lab_id)}
+                        style={{
+                          background: "#dc2626",
+                          color: "white",
+                          border: "none",
+                          borderRadius: "4px",
+                          padding: "6px 8px",
+                          cursor: "pointer",
+                          fontSize: "12px",
+                        }}
+                      >
+                        Удалить
+                      </button>
+                    </div>
+                  ))}
+
+                  {modalLabs.length > 0 && (
+                    <div
+                      style={{
+                        marginTop: "8px",
+                        padding: "8px 12px",
+                        backgroundColor: "#eff6ff",
+                        borderRadius: "6px",
+                        fontSize: "14px",
+                        fontWeight: "500",
+                        color: "#1d4ed8",
+                      }}
+                    >
+                      Общие баллы за лабораторные:{" "}
+                      {getTotalLabPoints(modalLabs)}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div
+              className={styles.modalActions}
+              style={{
+                position: "sticky",
+                bottom: 0,
+                backgroundColor: "white",
+                borderTop: "1px solid #e5e7eb",
+                paddingTop: "16px",
+                marginTop: "16px",
+              }}
+            >
               <button
                 onClick={closeModal}
                 className={`${styles.btn} ${styles.gray}`}

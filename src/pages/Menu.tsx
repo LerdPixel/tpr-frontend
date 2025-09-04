@@ -63,7 +63,14 @@ const Menu: React.FC = () => {
             }}
             onClick={() => {
               // Check if route exists before navigating
-              const validRoutes = ["/news", "/disciplines", "/tests", "/groups", "/users", "/gradesheet"];
+              const validRoutes = [
+                "/news",
+                "/disciplines",
+                "/tests",
+                "/groups",
+                "/users",
+                "/gradesheet",
+              ];
               if (validRoutes.includes(item.link)) {
                 navigate(item.link);
               } else {

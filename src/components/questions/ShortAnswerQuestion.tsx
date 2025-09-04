@@ -1,45 +1,46 @@
-import React, { useEffect, useState } from 'react';
-import styles from '../../styles/QuestionCreator.module.css';
-import MyButton from '../ui/button/MyButton';
+import React, { useEffect, useState } from "react";
+import styles from "../../styles/QuestionCreator.module.css";
+import MyButton from "../ui/button/MyButton";
 
 interface ShortAnswerQuestionProps {
   data: any;
   setData: (data: any) => void;
 }
 
-const ShortAnswerQuestion: React.FC<ShortAnswerQuestionProps> = ({ data, setData }) => {
-    const [isLoading, setIsLoading] = useState(true);
-  
-    // Инициализация data
-    useEffect(() => {
-      if (!data.correct) {
-        setData({ ...data, correct: [''], caseInsensitive : 'true', "trim": true });
-      }
-      setIsLoading(false);
-    }, []);
-  
-    if (isLoading || !data.correct) return null;
+const ShortAnswerQuestion: React.FC<ShortAnswerQuestionProps> = ({
+  data,
+  setData,
+}) => {
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Инициализация data
+  useEffect(() => {
+    if (!data.correct) {
+      setData({ ...data, correct: [""], caseInsensitive: "true", trim: true });
+    }
+    setIsLoading(false);
+  }, []);
+
+  if (isLoading || !data.correct) return null;
 
   const handleAnswerChange = (index: number, value: string) => {
     const updated = [...data.correct];
     updated[index] = value;
-    setData({...data, correct : updated});
+    setData({ ...data, correct: updated });
   };
 
   const addAnswer = () => {
-    setData({...data , correct : [...data.correct, '']});
+    setData({ ...data, correct: [...data.correct, ""] });
   };
 
   const removeAnswer = (index: number) => {
     if (data.correct.length === 1) return; // Не удаляем последний ответ
     const updated = data.correct.filter((_: any, i: number) => i !== index);
-    setData({...data, correct : [updated]});
+    setData({ ...data, correct: [updated] });
   };
 
   return (
-    <div className=''>
-
-
+    <div className="">
       {data.correct.map((ans: string, index: number) => (
         <div key={index} className={styles.optionRow}>
           <input
@@ -61,7 +62,6 @@ const ShortAnswerQuestion: React.FC<ShortAnswerQuestionProps> = ({ data, setData
       <button onClick={addAnswer} className={styles.addOption}>
         + Добавить возможный ответ
       </button>
-
     </div>
   );
 };

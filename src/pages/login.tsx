@@ -1,62 +1,75 @@
-import React, { useContext, useState, type FC } from 'react'
+import React, { useContext, useState, type FC } from "react";
 import MyInput from "../components/ui/input/MyInput.tsx";
 import MyButton from "../components/ui/button/MyButton.tsx";
-import { Context } from '../context/index.ts';
-import { Link } from 'react-router-dom'
+import { Context } from "../context/index.ts";
+import { Link } from "react-router-dom";
 import { useEffect } from "react";
-import { observer } from 'mobx-react-lite';
+import { observer } from "mobx-react-lite";
 
 const Login: FC = () => {
   useEffect(() => {
     document.body.classList.add("centered-body");
     return () => document.body.classList.remove("centered-body");
-  }, []);  
-  const [error, setError] = useState<string | null>(null)
+  }, []);
+  const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
-  const {store} = useContext(Context)
+  const { store } = useContext(Context);
   const handleChange = (field: string, value: string | boolean) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    
+
     if (!formData.email || !formData.password) {
-      setError('Пожалуйста, заполните все поля');
+      setError("Пожалуйста, заполните все поля");
       return;
     }
-    
+
     try {
       await store.login(formData.email, formData.password);
-    } catch(e: any) {
-      setError(e.response?.data?.details || 'Ошибка входа');
+    } catch (e: any) {
+      setError(e.response?.data?.details || "Ошибка входа");
       return;
     }
   };
   return (
     <div className="form-body">
       <div className="container">
-        <form onSubmit={handleSubmit} >
+        <form onSubmit={handleSubmit}>
           <h1 className="title">Вход</h1>
 
-          <MyInput placeholder="Email" value={formData.email} onChange={e => handleChange("email", e.target.value)} />
-          <MyInput type="password" placeholder="Пароль" value={formData.password} onChange={e => handleChange("password", e.target.value)}  />
+          <MyInput
+            placeholder="Email"
+            value={formData.email}
+            onChange={(e) => handleChange("email", e.target.value)}
+          />
+          <MyInput
+            type="password"
+            placeholder="Пароль"
+            value={formData.password}
+            onChange={(e) => handleChange("password", e.target.value)}
+          />
           <MyButton type="submit" className="submit-button">
             Войти
           </MyButton>
           <div className="text-btn-container">
-              <Link className="text-btn" to="/registration">Регистрация</Link>
-              <Link className="text-btn" to="/registration">Восстановить пароль</Link>
+            <Link className="text-btn" to="/registration">
+              Регистрация
+            </Link>
+            <Link className="text-btn" to="/registration">
+              Восстановить пароль
+            </Link>
           </div>
         </form>
         {error && <p className="text-red-500 text-sm">{error}</p>}
       </div>
     </div>
-  )
-}
+  );
+};
 
 export default observer(Login);

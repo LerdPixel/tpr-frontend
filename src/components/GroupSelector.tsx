@@ -1,15 +1,25 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import styles from "./styles/GroupSelector.module.css";
-import type {IGroup} from '../components/ui/interfaces/IGroup.tsx'
-
+import type { IGroup } from "./ui/interfaces/IGroup";
 
 interface Props {
-  groups: IGroup[];                // все группы для выбора
+  groups: IGroup[]; // все группы для выбора
   setSelectedGroups: (selected: IGroup[]) => void; // callback при изменении выбора
+  initialSelected?: IGroup[]; // начально выбранные группы
 }
 
-const GroupSelector: React.FC<Props> = ({ groups, setSelectedGroups }) => {
-  const [selected, setSelected] = useState<IGroup[]>([]);
+const GroupSelector: React.FC<Props> = ({
+  groups,
+  setSelectedGroups,
+  initialSelected = [],
+}) => {
+  const [selected, setSelected] = useState<IGroup[]>(initialSelected);
+
+  // Update selected groups when initialSelected changes
+  useEffect(() => {
+    setSelected(initialSelected);
+    setSelectedGroups(initialSelected);
+  }, [initialSelected, setSelectedGroups]);
 
   const handleSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const groupId = Number(e.target.value);

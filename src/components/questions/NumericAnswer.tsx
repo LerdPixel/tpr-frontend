@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import styles from '../../styles/QuestionCreator.module.css';
+import { useState, useEffect } from "react";
+import styles from "../../styles/QuestionCreator.module.css";
 
 interface NumericAnswerProps {
   data: any;
@@ -7,19 +7,21 @@ interface NumericAnswerProps {
 }
 
 const NumericAnswer: React.FC<NumericAnswerProps> = ({ data, setData }) => {
-  const [answer, setAnswer] = useState(data?.answer || '');
-  const [tolerance, setTolerance] = useState(data?.tolerance || '2');
+  const [answer, setAnswer] = useState(data?.answer || "");
+  const [tolerance, setTolerance] = useState(data?.tolerance || "2");
 
   useEffect(() => {
     setData({ answer, tolerance });
   }, [answer, tolerance, setData]);
 
-  const handleNumericInput = (value: string, setter: (val: string | number) => void) => {
+  const handleNumericInput = (
+    value: string,
+    setter: (val: string | number) => void
+  ) => {
     //setter(value.replace(',', '.'))
-    setter(value.toString().replace(',', '.'))
+    setter(value.toString().replace(",", "."));
     console.log(value);
-    
-  }
+  };
 
   return (
     <div className={styles.numericBlock}>
@@ -46,4 +48,4 @@ const NumericAnswer: React.FC<NumericAnswerProps> = ({ data, setData }) => {
   );
 };
 
-export default NumericAnswer
+export default NumericAnswer;
