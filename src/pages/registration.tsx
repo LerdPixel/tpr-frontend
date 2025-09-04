@@ -52,33 +52,51 @@ const Registration = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (formData.password != formData.confirmPassword) {
-      setError("Вы должны повторить свой пароль")
-      return
+    setError(null);
+    
+    // Validation
+    if (!formData.firstName || !formData.lastName || !formData.patronymic || 
+        !formData.email || !formData.password || !formData.group) {
+      setError('Пожалуйста, заполните все поля');
+      return;
     }
-    let response;
-    response = await store.registration({
+    
+    if (formData.password !== formData.confirmPassword) {
+      setError('Пароли не совпадают');
+      return;
+    }
+    
+    if (formData.password.length < 6) {
+      setError('Пароль должен содержать минимум 6 символов');
+      return;
+    }
+
+    try {
+      const response = await store.registration({
         "email": formData.email,
         "first_name": formData.firstName,
         "group_id": Number(formData.group),
         "last_name": formData.lastName,
         "password": formData.password,
         "patronymic": formData.patronymic,
-        "role": formData.group == "1" ? "seminarist" : "student",
-    })
-    if (response.status == 201) {
-      store.writeTokens(response)
-      store.setAuth(true)
-    } else if (response.status == 400) {
-      if (response.data.details == "Key: 'UserSignUpInput.Email' Error:Field validation for 'Email' failed on the 'email' tag")
-        setError("Email введён в неправильном формате")
-      else {
-        setError(response.data.details)
+        "role": formData.group === "1" ? "seminarist" : "student",
+      });
+      
+      if (response.status === 201) {
+        store.writeTokens(response);
+        store.setAuth(true);
+      } else if (response.status === 400) {
+        if (response.data.details === "Key: 'UserSignUpInput.Email' Error:Field validation for 'Email' failed on the 'email' tag") {
+          setError('Некорректный формат email');
+        } else {
+          setError(response.data.details || 'Ошибка регистрации');
+        }
+      } else {
+        setError(response.data.details || 'Ошибка регистрации');
       }
-    } else {
-      setError(response.data.details)
+    } catch (error: any) {
+      setError('Ошибка сети. Попробуйте позже.');
     }
-    
   };
   
   return (

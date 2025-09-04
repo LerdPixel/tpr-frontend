@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import QuestionCreator from "./QuestionCreator";
 import type IQuestion from "../components/ui/interfaces/IQuestion";
 import { Context } from '../context/index.ts';
@@ -24,40 +24,6 @@ interface Topic {
   description: string;
 }
 
-// Пример данных
-const initialTopics: Topic[] = [
-  { id: 0, title: "Математика", description: "Вопросы по алгебре и геометрии" },
-  { id: 1, title: "История", description: "Вопросы по мировой истории" },
-  { id: 2, title: "Физика", description: "Законы и явления природы" },
-];
-
-const initialQuestions: IQuestion[] = [
-  {
-    id: 0,
-    data: { options: ["2", "3", "4"], correct: 1 },
-    points: 1,
-    question_text: "Сколько будет 2+2?",
-    question_type: "single_choice",
-    topic_id: 0,
-  },
-  {
-    id: 1,
-    data: {},
-    points: 2,
-    question_text: "Кто был первым президентом США?",
-    question_type: "text",
-    topic_id: 1,
-  },
-  {
-    id: 2,
-    data: {},
-    points: 1,
-    question_text: "Что измеряется в Ньютонах?",
-    question_type: "single_choice",
-    topic_id: 2,
-  },
-];
-
 // Функция выбора иконки по типу вопроса
 const getIconByType = (type: string) => {
   switch (type) {
@@ -81,12 +47,12 @@ const getIconByType = (type: string) => {
 export default function TopicsPage() {
     const {store} = useContext(Context)
   const [topics, setTopics] = useState<Topic[]>([]);
-  const [questions, setQuestions] = useState<IQuestion[]>(initialQuestions);
+  const [questions, setQuestions] = useState<IQuestion[]>([]);
   const [selectedTopic, setSelectedTopic] = useState<number | null>(null);
-const [postError, setPostError] = useState();
+  const [postError, setPostError] = useState<string | null>(null);
   const [menu, setMenu] = useState<{ type: "topic" | "question"; id: number } | null>(null);
   const [modalData, setModalData] = useState<any | null>(null);
-const [loading, setLoading] = useState(true)
+  const [questionsLoading, setQuestionsLoading] = useState(false);
 
     const getAccess = () => {
         const access_token = localStorage.getItem("token")
@@ -95,22 +61,17 @@ const [loading, setLoading] = useState(true)
         }
         return access_token;
     }
-  const menuRef = useRef<HTMLDivElement | null>(null);
   const modalRef = useRef<HTMLDivElement | null>(null);
         const fetchTopics = async () => {
-        setLoading(true);
-
         try {
             const response = await axios.get("/server/admin/topics", {
                 headers: { Authorization: `Bearer ${getAccess()}` }
             })
             if (response.status != 200) throw new Error("Ошибка при загрузке тем");
-            const data = response.data
+            const data = response.data as Topic[];
             setTopics(data);
-        } catch (err) {
-            setPostError(err.message);
-        } finally {
-            setLoading(false);
+        } catch (err: any) {
+            setPostError(err?.message || 'Неизвестная ошибка');
         }
     };
     const createTopic = async (topic: Omit<Topic, "id">) => {
@@ -144,66 +105,89 @@ const [loading, setLoading] = useState(true)
             setPostError("Ошибка при удалении темы");
         await fetchTopics();
     };
-        const createQuestion = async (question: Omit<IQuestion, "id">) => {
-    const res = await fetch("/api/v1/admin/questions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(question),
-    });
-    if (!res.ok) throw new Error("Ошибка при создании вопроса");
-    const data = await res.json(); // вернёт { id: number }
-    return { ...question, id: data.id };
+    // Fetch questions for selected topic
+    const fetchQuestions = async (topicId: number) => {
+        setQuestionsLoading(true);
+        try {
+            const response = await axios.get(`/server/admin/topics/${topicId}/questions`, {
+                headers: { Authorization: `Bearer ${getAccess()}` }
+            });
+            if (response.status === 200) {
+                setQuestions(response.data as IQuestion[]);
+            } else {
+                throw new Error("Ошибка при загрузке вопросов");
+            }
+        } catch (err: any) {
+            setPostError(err?.message || 'Ошибка при загрузке вопросов');
+            setQuestions([]);
+        } finally {
+            setQuestionsLoading(false);
+        }
+    };
+    // Create question
+    const createQuestion = async (question: Omit<IQuestion, "id">) => {
+        try {
+            const response = await axios.post("/server/admin/questions", question, {
+                headers: { 
+                    Authorization: `Bearer ${getAccess()}`,
+                    "Content-Type": "application/json"
+                }
+            });
+            if (response.status === 201) {
+                return { ...question, id: (response.data as { id: number }).id };
+            } else {
+                throw new Error("Ошибка при создании вопроса");
+            }
+        } catch (err: any) {
+            setPostError(err?.response?.data?.error || err?.message || 'Ошибка при создании вопроса');
+            throw err;
+        }
     };
 
+    // Update question
     const updateQuestion = async (id: number, question: Omit<IQuestion, "id">) => {
-    const res = await fetch(`/api/v1/admin/questions/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(question),
-    });
-    if (!res.ok) throw new Error("Ошибка при обновлении вопроса");
+        try {
+            const response = await axios.put(`/server/admin/questions/${id}`, question, {
+                headers: { 
+                    Authorization: `Bearer ${getAccess()}`,
+                    "Content-Type": "application/json"
+                }
+            });
+            if (response.status !== 200) {
+                throw new Error("Ошибка при обновлении вопроса");
+            }
+        } catch (err: any) {
+            setPostError(err?.response?.data?.error || err?.message || 'Ошибка при обновлении вопроса');
+            throw err;
+        }
     };
 
+    // Delete question
     const deleteQuestion = async (id: number) => {
-    const res = await fetch(`/api/v1/admin/questions/${id}`, {
-        method: "DELETE",
-    });
-    if (!res.ok) throw new Error("Ошибка при удалении вопроса");
-    };
-
-    // --- Сохранение из модалки ---
-    const saveQuestion = async (question: IQuestion) => {
-    if (modalData?.mode === "create") {
-        const newQuestion = await createQuestion(question);
-        setQuestions([...questions, newQuestion]);
-    } else {
-        await updateQuestion(question.id, question);
-        setQuestions(questions.map((q) => (q.id === question.id ? question : q)));
-    }
-    setModalData(null);
-    };
-
-    // --- Удаление вопроса ---
-    const removeQuestion = async (id: number) => {
-    await deleteQuestion(id);
-    setQuestions(questions.filter((q) => q.id !== id));
-    setMenu(null);
+        try {
+            const response = await axios.delete(`/server/admin/questions/${id}`, {
+                headers: { Authorization: `Bearer ${getAccess()}` }
+            });
+            if (response.status !== 200) {
+                throw new Error("Ошибка при удалении вопроса");
+            }
+        } catch (err: any) {
+            setPostError(err?.response?.data?.error || err?.message || 'Ошибка при удалении вопроса');
+            throw err;
+        }
     };
   useEffect(() => {
-    /*const handleClickOutside = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      // если клик не внутри dropdown и не на кнопке меню → закрыть
-      if (!target.closest(`.${styles.menuContainer}`)) {
-        setMenu(null);
-      }
-      if (!target.closest(`.${styles.modal}`)) {
-        setModalData(null);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);*/
     fetchTopics();
   }, []);
+
+  // Load questions when topic is selected
+  useEffect(() => {
+    if (selectedTopic !== null) {
+      fetchQuestions(selectedTopic);
+    } else {
+      setQuestions([]);
+    }
+  }, [selectedTopic]);
 
 
   // ---------- TOPICS ----------
@@ -241,9 +225,21 @@ const [loading, setLoading] = useState(true)
     setMenu(null);
   };
 
-  const removeQuestion = (id: number) => {
-    setQuestions(questions.filter((q) => q.id !== id));
+  const editQuestion = (id: number) => {
+    const question = questions.find((q) => q.id === id);
+    if (!question) return;
+    setModalData({ type: "question", mode: "edit", id, data: question, topic_id: question.topic_id });
     setMenu(null);
+  };
+
+  const removeQuestion = async (id: number) => {
+    try {
+      await deleteQuestion(id);
+      setQuestions(questions.filter((q) => q.id !== id));
+      setMenu(null);
+    } catch (err) {
+      // Error is already handled in deleteQuestion
+    }
   };
 
   // ---------- SAVE ----------
@@ -277,14 +273,20 @@ const [loading, setLoading] = useState(true)
     setModalData(null);
   };
 
-  const saveQuestion = (question: IQuestion) => {
+  const saveQuestion = async (question: IQuestion) => {
     if (!modalData || modalData.type !== "question") return;
-    if (modalData.mode === "create") {
-      setQuestions([...questions, question]);
-    } else {
-      setQuestions(questions.map((q) => q.id === question.id ? { ...question, topic_id: q.topic_id } : q));
+    try {
+      if (modalData.mode === "create") {
+        const newQuestion = await createQuestion(question);
+        setQuestions([...questions, newQuestion]);
+      } else {
+        await updateQuestion(question.id, question);
+        setQuestions(questions.map((q) => q.id === question.id ? { ...question, topic_id: q.topic_id } : q));
+      }
+      setModalData(null);
+    } catch (err) {
+      // Error is already handled in createQuestion/updateQuestion
     }
-    setModalData(null);
   };
 
   return (
@@ -347,9 +349,11 @@ const [loading, setLoading] = useState(true)
         </div>
         {selectedTopic === null ? (
           <p className={styles.placeholder}>Выберите тему, чтобы увидеть вопросы</p>
+        ) : questionsLoading ? (
+          <p className={styles.placeholder}>Загрузка вопросов...</p>
         ) : (
           <ul className={styles.list}>
-            {questions.filter((q) => q.topic_id === selectedTopic).map((q) => (
+            {questions.map((q) => (
               <li key={q.id} className={styles.listItem}>
                 <div className={styles.itemMain}>
                   <div className={styles.iconContainer}>{getIconByType(q.question_type)}</div>

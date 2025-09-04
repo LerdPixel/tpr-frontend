@@ -1,0 +1,2273 @@
+basePath: /
+definitions:
+  handler.upsertLabGradeInput:
+    properties:
+      discipline_id:
+        type: integer
+      grade:
+        type: integer
+      lab_id:
+        type: integer
+      user_id:
+        type: integer
+    required:
+    - discipline_id
+    - grade
+    - lab_id
+    - user_id
+    type: object
+  models.AnswerSubmitInput:
+    properties:
+      answer: {}
+      question_id:
+        type: integer
+    required:
+    - answer
+    - question_id
+    type: object
+  models.Attempt:
+    properties:
+      discipline_id:
+        type: integer
+      id:
+        type: integer
+      score:
+        type: integer
+      status:
+        type: string
+      test_id:
+        type: integer
+      user_id:
+        type: integer
+    type: object
+  models.AttemptDetailView:
+    properties:
+      attempt:
+        $ref: '#/definitions/models.Attempt'
+      questions:
+        items:
+          $ref: '#/definitions/models.AttemptQuestionView'
+        type: array
+    type: object
+  models.AttemptQuestionView:
+    properties:
+      answer: {}
+      question:
+        $ref: '#/definitions/models.Question'
+    type: object
+  models.AttendanceMarkInput:
+    properties:
+      discipline_id:
+        type: integer
+      lecture_no:
+        type: integer
+      user_id:
+        type: integer
+    required:
+    - discipline_id
+    - lecture_no
+    - user_id
+    type: object
+  models.DisciplineCreateInput:
+    properties:
+      description:
+        type: string
+      group_ids:
+        items:
+          type: integer
+        type: array
+      lab_count:
+        type: integer
+      labs:
+        items:
+          $ref: '#/definitions/models.DisciplineLabComponent'
+        type: array
+      lecture_count:
+        type: integer
+      lecture_points:
+        type: integer
+      name:
+        type: string
+      test_points:
+        type: integer
+    required:
+    - lecture_count
+    - lecture_points
+    - name
+    - test_points
+    type: object
+  models.DisciplineLabComponent:
+    properties:
+      lab_id:
+        type: integer
+      points:
+        type: integer
+    required:
+    - lab_id
+    - points
+    type: object
+  models.DisciplineUpdateInput:
+    properties:
+      description:
+        type: string
+      group_ids:
+        items:
+          type: integer
+        type: array
+      lab_count:
+        type: integer
+      labs:
+        items:
+          $ref: '#/definitions/models.DisciplineLabComponent'
+        type: array
+      lecture_count:
+        type: integer
+      lecture_points:
+        type: integer
+      name:
+        type: string
+      test_points:
+        type: integer
+    required:
+    - lecture_count
+    - lecture_points
+    - name
+    - test_points
+    type: object
+  models.DisciplineView:
+    properties:
+      description:
+        type: string
+      group_ids:
+        items:
+          type: integer
+        type: array
+      id:
+        type: integer
+      lab_count:
+        type: integer
+      labs:
+        items:
+          $ref: '#/definitions/models.DisciplineLabComponent'
+        type: array
+      lecture_count:
+        type: integer
+      lecture_points:
+        type: integer
+      name:
+        type: string
+      test_points:
+        type: integer
+    type: object
+  models.Group:
+    properties:
+      archived_at:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  models.LectureMaterial:
+    properties:
+      created_at:
+        type: string
+      created_by:
+        type: integer
+      description:
+        type: string
+      discipline_id:
+        type: integer
+      file_name:
+        type: string
+      file_path:
+        type: string
+      id:
+        type: integer
+      lecture_no:
+        type: integer
+      mime_type:
+        type: string
+      size_bytes:
+        type: integer
+      title:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  models.MaterialUpdateInput:
+    properties:
+      description:
+        type: string
+      lecture_no:
+        type: integer
+      title:
+        type: string
+    required:
+    - title
+    type: object
+  models.NextQuestionView:
+    properties:
+      attempt_id:
+        type: integer
+      question:
+        $ref: '#/definitions/models.Question'
+    type: object
+  models.ProgressView:
+    properties:
+      discipline_id:
+        type: integer
+      labs_points_awarded:
+        type: integer
+      lecture_points_awarded:
+        type: integer
+      test_points_awarded:
+        type: integer
+      total_awarded:
+        type: integer
+      total_possible:
+        type: integer
+    type: object
+  models.Question:
+    properties:
+      data:
+        additionalProperties: true
+        type: object
+      id:
+        type: integer
+      points:
+        type: integer
+      question_text:
+        type: string
+      question_type:
+        type: string
+      topic_id:
+        type: integer
+    type: object
+  models.QuestionCreateInput:
+    properties:
+      data:
+        additionalProperties: true
+        type: object
+      points:
+        minimum: 1
+        type: integer
+      question_text:
+        type: string
+      question_type:
+        type: string
+      topic_id:
+        type: integer
+    required:
+    - data
+    - points
+    - question_text
+    - question_type
+    - topic_id
+    type: object
+  models.QuestionUpdateInput:
+    properties:
+      data:
+        additionalProperties: true
+        type: object
+      points:
+        minimum: 1
+        type: integer
+      question_text:
+        type: string
+      question_type:
+        type: string
+      topic_id:
+        type: integer
+    required:
+    - data
+    - points
+    - question_text
+    - question_type
+    - topic_id
+    type: object
+  models.StartAttemptInput:
+    properties:
+      discipline_id:
+        type: integer
+    required:
+    - discipline_id
+    type: object
+  models.TeacherBonusInput:
+    properties:
+      discipline_id:
+        type: integer
+      points:
+        minimum: 1
+        type: integer
+      reason:
+        type: string
+      user_id:
+        type: integer
+    required:
+    - discipline_id
+    - points
+    - user_id
+    type: object
+  models.Test:
+    properties:
+      description:
+        type: string
+      id:
+        type: integer
+      title:
+        type: string
+    type: object
+  models.TestCreateInput:
+    properties:
+      description:
+        type: string
+      title:
+        minLength: 1
+        type: string
+    required:
+    - title
+    type: object
+  models.TestTopic:
+    properties:
+      questions_count:
+        type: integer
+      test_id:
+        type: integer
+      topic_id:
+        type: integer
+    type: object
+  models.TestTopicsReplaceInput:
+    properties:
+      topics:
+        items:
+          $ref: '#/definitions/models.TestTopic'
+        type: array
+    type: object
+  models.TestUpdateInput:
+    properties:
+      description:
+        type: string
+      title:
+        type: string
+    type: object
+  models.Tokens:
+    properties:
+      access_token:
+        type: string
+      refresh_token:
+        type: string
+    type: object
+  models.Topic:
+    properties:
+      description:
+        type: string
+      id:
+        type: integer
+      title:
+        type: string
+    type: object
+  models.TopicCreateInput:
+    properties:
+      description:
+        type: string
+      title:
+        minLength: 1
+        type: string
+    required:
+    - title
+    type: object
+  models.TopicUpdateInput:
+    properties:
+      description:
+        type: string
+      title:
+        type: string
+    type: object
+  models.User:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      first_name:
+        type: string
+      group_id:
+        type: integer
+      id:
+        type: integer
+      is_approved:
+        type: boolean
+      last_name:
+        type: string
+      patronymic:
+        type: string
+      role_id:
+        type: integer
+    type: object
+  models.UserPublic:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      first_name:
+        type: string
+      group_id:
+        type: integer
+      id:
+        type: integer
+      is_approved:
+        type: boolean
+      last_name:
+        type: string
+      patronymic:
+        type: string
+      role_id:
+        type: integer
+    type: object
+  models.UserSignInInput:
+    properties:
+      email:
+        type: string
+      password:
+        minLength: 8
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  models.UserSignUpInput:
+    properties:
+      email:
+        type: string
+      first_name:
+        type: string
+      group_id:
+        type: integer
+      last_name:
+        type: string
+      password:
+        minLength: 8
+        type: string
+      patronymic:
+        type: string
+      role:
+        type: string
+    required:
+    - email
+    - first_name
+    - group_id
+    - last_name
+    - password
+    - patronymic
+    - role
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: API for TPR
+  title: TPR API
+  version: 1.0.0
+paths:
+  /api/v1/admin/disciplines:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Discipline
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/models.DisciplineCreateInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            properties:
+              id:
+                type: integer
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "422":
+          description: Unprocessable Entity
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Create discipline
+      tags:
+      - disciplines
+  /api/v1/admin/disciplines/{id}:
+    delete:
+      parameters:
+      - description: Discipline ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Delete discipline
+      tags:
+      - disciplines
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Discipline ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Discipline
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/models.DisciplineUpdateInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "422":
+          description: Unprocessable Entity
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Update discipline
+      tags:
+      - disciplines
+  /api/v1/admin/groups:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new group (admin only)
+      parameters:
+      - description: Group name
+        in: body
+        name: input
+        required: true
+        schema:
+          properties:
+            name:
+              type: string
+          type: object
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            properties:
+              id:
+                type: integer
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Create group
+      tags:
+      - groups
+  /api/v1/admin/groups/{groupId}/archive:
+    post:
+      description: Marks a group as archived. Archived groups cannot be assigned to
+        new users.
+      parameters:
+      - description: Group ID
+        in: path
+        name: groupId
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Invalid Group ID
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "403":
+          description: Access Denied
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "404":
+          description: Group not found
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Archive a Group
+      tags:
+      - groups
+  /api/v1/admin/groups/{groupId}/unarchive:
+    post:
+      description: Restores an archived group, making it active again.
+      parameters:
+      - description: Group ID
+        in: path
+        name: groupId
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Invalid Group ID
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "403":
+          description: Access Denied
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "404":
+          description: Group not found
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Unarchive a Group
+      tags:
+      - groups
+  /api/v1/admin/groups/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Deletes a group (admin only)
+      parameters:
+      - description: Group ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Delete group
+      tags:
+      - groups
+    put:
+      consumes:
+      - application/json
+      description: Updates a group (admin only)
+      parameters:
+      - description: Group ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Group data
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/models.Group'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Update group
+      tags:
+      - groups
+  /api/v1/admin/materials:
+    post:
+      consumes:
+      - multipart/form-data
+      parameters:
+      - description: Discipline ID
+        in: formData
+        name: discipline_id
+        required: true
+        type: integer
+      - description: Title
+        in: formData
+        name: title
+        required: true
+        type: string
+      - description: Description
+        in: formData
+        name: description
+        type: string
+      - description: Lecture number
+        in: formData
+        name: lecture_no
+        type: integer
+      - description: File to upload
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            properties:
+              id:
+                type: integer
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - ApiKeyAuth: []
+      summary: Upload lecture material (metadata + file name)
+      tags:
+      - materials
+  /api/v1/admin/materials/{id}:
+    delete:
+      parameters:
+      - description: Material ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Delete a material
+      tags:
+      - materials
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Material ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Update
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/models.MaterialUpdateInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Update material metadata
+      tags:
+      - materials
+  /api/v1/admin/progress/lab-grade:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Lab grade
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/handler.upsertLabGradeInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Upsert lab grade (webhook)
+      tags:
+      - progress
+  /api/v1/admin/questions:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Question
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/models.QuestionCreateInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            properties:
+              id:
+                type: integer
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Create question
+      tags:
+      - questions
+  /api/v1/admin/questions/{id}:
+    delete:
+      parameters:
+      - description: Question ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Delete question
+      tags:
+      - questions
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Question ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Question
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/models.QuestionUpdateInput'
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Update question
+      tags:
+      - questions
+  /api/v1/admin/tests:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Test
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/models.TestCreateInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            properties:
+              id:
+                type: integer
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Create test
+      tags:
+      - tests
+  /api/v1/admin/tests/{id}:
+    delete:
+      parameters:
+      - description: Test ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Delete test
+      tags:
+      - tests
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Test ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Test
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/models.TestUpdateInput'
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Update test
+      tags:
+      - tests
+  /api/v1/admin/tests/{id}/topics:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Test ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Topics mapping
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/models.TestTopicsReplaceInput'
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Replace test topics mapping
+      tags:
+      - tests
+  /api/v1/admin/topics:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Topic'
+            type: array
+      security:
+      - ApiKeyAuth: []
+      summary: List all topics (admin)
+      tags:
+      - topics
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Topic
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/models.TopicCreateInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            properties:
+              id:
+                type: integer
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Create topic
+      tags:
+      - topics
+  /api/v1/admin/topics/{id}:
+    delete:
+      parameters:
+      - description: Topic ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Delete topic
+      tags:
+      - topics
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Topic ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Topic
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/models.TopicUpdateInput'
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Update topic
+      tags:
+      - topics
+  /api/v1/admin/topics/{id}/questions:
+    get:
+      parameters:
+      - description: Topic ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Question'
+            type: array
+      security:
+      - ApiKeyAuth: []
+      summary: List questions by topic (admin)
+      tags:
+      - questions
+  /api/v1/admin/users/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Deletes a user (admin only)
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Delete user
+      tags:
+      - admin
+    put:
+      consumes:
+      - application/json
+      description: Updates a user (admin only)
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Update payload
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/models.User'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Update user
+      tags:
+      - admin
+  /api/v1/admin/users/{id}/approve:
+    patch:
+      consumes:
+      - application/json
+      description: Marks a user as approved (admin only)
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Approve user
+      tags:
+      - admin
+  /api/v1/admin/users/pending:
+    get:
+      consumes:
+      - application/json
+      description: Returns users awaiting approval (admin only)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.User'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: List pending users
+      tags:
+      - admin
+  /api/v1/attempts:
+    get:
+      parameters:
+      - description: Filter by test id
+        in: query
+        name: test_id
+        type: integer
+      - description: Filter by discipline id
+        in: query
+        name: discipline_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Attempt'
+            type: array
+      security:
+      - ApiKeyAuth: []
+      summary: List my attempts
+      tags:
+      - attempts
+  /api/v1/attempts/{attemptId}:
+    get:
+      parameters:
+      - description: Attempt ID
+        in: path
+        name: attemptId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.AttemptDetailView'
+      security:
+      - ApiKeyAuth: []
+      summary: Get attempt details (owner only)
+      tags:
+      - attempts
+  /api/v1/attempts/{attemptId}/answers:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Attempt ID
+        in: path
+        name: attemptId
+        required: true
+        type: integer
+      - description: Answer
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/models.AnswerSubmitInput'
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Submit answer
+      tags:
+      - attempts
+  /api/v1/attempts/{attemptId}/finish:
+    post:
+      parameters:
+      - description: Attempt ID
+        in: path
+        name: attemptId
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              score:
+                type: integer
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Finish attempt and score
+      tags:
+      - attempts
+  /api/v1/attempts/{attemptId}/next:
+    get:
+      parameters:
+      - description: Attempt ID
+        in: path
+        name: attemptId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.NextQuestionView'
+        "404":
+          description: Not Found
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Get next question in attempt
+      tags:
+      - attempts
+  /api/v1/attempts/{attemptId}/questions:
+    get:
+      parameters:
+      - description: Attempt ID
+        in: path
+        name: attemptId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Question'
+            type: array
+        "404":
+          description: Not Found
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Get all questions for attempt
+      tags:
+      - attempts
+  /api/v1/auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticates a user and returns a token pair
+      parameters:
+      - description: Credentials
+        in: body
+        name: credentials
+        required: true
+        schema:
+          $ref: '#/definitions/models.UserSignInInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Tokens'
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Login
+      tags:
+      - auth
+  /api/v1/auth/logout:
+    post:
+      consumes:
+      - application/json
+      description: Logs out the user by invalidating their refresh token
+      parameters:
+      - description: Refresh Token
+        in: body
+        name: input
+        required: true
+        schema:
+          properties:
+            refresh_token:
+              type: string
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.UserPublic'
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Logout User
+      tags:
+      - auth
+  /api/v1/auth/me:
+    get:
+      description: Retrieves public profile information for the user associated with
+        the access token
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.UserPublic'
+        "401":
+          description: Unauthorized
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get Current User
+      tags:
+      - auth
+  /api/v1/auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Refreshes the access/refresh token pair
+      parameters:
+      - description: Refresh Token
+        in: body
+        name: input
+        required: true
+        schema:
+          properties:
+            refresh_token:
+              type: string
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Tokens'
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Refresh Tokens
+      tags:
+      - auth
+  /api/v1/auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new user and returns a token pair
+      parameters:
+      - description: User data
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/models.UserSignUpInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Tokens'
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "409":
+          description: Conflict
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Register User
+      tags:
+      - auth
+  /api/v1/disciplines:
+    get:
+      parameters:
+      - default: 10
+        description: Items per page
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Pagination offset
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.DisciplineView'
+            type: array
+      summary: List disciplines
+      tags:
+      - disciplines
+  /api/v1/disciplines/{id}:
+    get:
+      parameters:
+      - description: Discipline ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.DisciplineView'
+        "404":
+          description: Not Found
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Get discipline by ID
+      tags:
+      - disciplines
+  /api/v1/disciplines/{id}/materials:
+    get:
+      parameters:
+      - description: Discipline ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.LectureMaterial'
+            type: array
+      security:
+      - ApiKeyAuth: []
+      summary: List lecture materials available to me in a discipline
+      tags:
+      - materials
+  /api/v1/groups:
+    get:
+      consumes:
+      - application/json
+      description: Returns a paginated list of groups
+      parameters:
+      - default: 10
+        description: Items per page
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Pagination offset
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Group'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            type: object
+      summary: List Groups
+      tags:
+      - groups
+  /api/v1/groups/{id}/students:
+    get:
+      consumes:
+      - application/json
+      description: Returns approved students for the given group
+      parameters:
+      - description: Group ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.User'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Get approved students by group
+      tags:
+      - admin
+      - seminarist
+  /api/v1/materials/{id}:
+    get:
+      parameters:
+      - description: Material ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.LectureMaterial'
+      security:
+      - ApiKeyAuth: []
+      summary: Get material metadata by ID (must have access)
+      tags:
+      - materials
+  /api/v1/materials/{id}/download:
+    get:
+      parameters:
+      - description: Material ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: file
+      security:
+      - ApiKeyAuth: []
+      summary: Download material file by ID (ACL enforced)
+      tags:
+      - materials
+  /api/v1/progress/{disciplineId}:
+    get:
+      parameters:
+      - description: Discipline ID
+        in: path
+        name: disciplineId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ProgressView'
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Get my progress for a discipline
+      tags:
+      - progress
+  /api/v1/progress/{disciplineId}/attendance:
+    get:
+      parameters:
+      - description: Discipline ID
+        in: path
+        name: disciplineId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              type: integer
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: List my lecture attendance (lecture numbers)
+      tags:
+      - progress
+  /api/v1/questions/{id}:
+    get:
+      parameters:
+      - description: Question ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Question'
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Get question by ID
+      tags:
+      - questions
+  /api/v1/seminarist/progress:
+    get:
+      parameters:
+      - description: User ID
+        in: query
+        name: userId
+        required: true
+        type: integer
+      - description: Discipline ID
+        in: query
+        name: disciplineId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ProgressView'
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Get user progress for a discipline (staff)
+      tags:
+      - progress
+  /api/v1/seminarist/progress/attendance:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: Attendance
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/models.AttendanceMarkInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Delete lecture attendance
+      tags:
+      - progress
+    get:
+      parameters:
+      - description: User ID
+        in: query
+        name: userId
+        required: true
+        type: integer
+      - description: Discipline ID
+        in: query
+        name: disciplineId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              type: integer
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: List user's lecture attendance (lecture numbers) [staff]
+      tags:
+      - progress
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Attendance
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/models.AttendanceMarkInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Mark lecture attendance
+      tags:
+      - progress
+  /api/v1/seminarist/progress/teacher-bonus:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: Teacher bonus payload (points ignored)
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/models.TeacherBonusInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Delete teacher bonus points
+      tags:
+      - progress
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Teacher bonus payload
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/models.TeacherBonusInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - ApiKeyAuth: []
+      summary: Set or update teacher bonus points for a student in a discipline
+      tags:
+      - progress
+  /api/v1/tests:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Test'
+            type: array
+      summary: List tests
+      tags:
+      - tests
+  /api/v1/tests/{id}:
+    get:
+      parameters:
+      - description: Test ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Test'
+        "404":
+          description: Not Found
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Get test by ID
+      tags:
+      - tests
+  /api/v1/tests/{id}/topics:
+    get:
+      parameters:
+      - description: Test ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.TestTopic'
+            type: array
+      summary: Get test topics quotas
+      tags:
+      - tests
+  /api/v1/tests/{testId}/attempts:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Test ID
+        in: path
+        name: testId
+        required: true
+        type: integer
+      - description: Start
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/models.StartAttemptInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            properties:
+              id:
+                type: integer
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Start test attempt
+      tags:
+      - attempts
+  /api/v1/topics/{id}:
+    get:
+      parameters:
+      - description: Topic ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Topic'
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Get topic by ID
+      tags:
+      - topics
+  /healthz:
+    get:
+      description: Возвращает статус сервиса
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              status:
+                type: string
+            type: object
+      summary: Health check
+      tags:
+      - health
+swagger: "2.0"
+tags:
+- description: 'Authentication: register, login, refresh, logout, me'
+  name: auth
+- description: Groups management and listing
+  name: groups
+- description: Disciplines CRUD and retrieval
+  name: disciplines
+- description: Lecture materials upload, list, download
+  name: materials
+- description: Tests CRUD and retrieval
+  name: tests
+- description: Topics CRUD and retrieval
+  name: topics
+- description: Questions CRUD and retrieval
+  name: questions
+- description: Test attempts lifecycle
+  name: attempts
+- description: 'Progress: attendance, bonuses, grades, totals'
+  name: progress
+- description: Health check
+  name: health

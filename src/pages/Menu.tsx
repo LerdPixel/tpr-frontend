@@ -2,45 +2,52 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 
 const menuItems = [
-  {label : "Новости", link: "/news"},
-  {label : "Тесты", link: "/tests"},
-  {label : "Лабораторные работы", link: "/labs"},
-  {label : "Группы", link: "/groups"},
-  {label : "Студенты", link: "/users"},
-  {label : "Лекции", link: "/lectures"},
-  {label : "Ведомость", link: "/gradesheet"},
+  { label: "Новости", link: "/news" },
+  { label: "Дисциплины", link: "/disciplines" },
+  { label: "Тесты", link: "/tests" },
+  { label: "Лабораторные работы", link: "/labs" },
+  { label: "Группы", link: "/groups" },
+  { label: "Студенты", link: "/users" },
+  { label: "Лекции", link: "/lectures" },
+  { label: "Ведомость", link: "/gradesheet" },
 ];
 
 const Menu: React.FC = () => {
-    const navigate = useNavigate();
+  const navigate = useNavigate();
   return (
-    <div style={{
-      minHeight: "100vh",
-      background: "#fff",
-      paddingTop: 80,
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center"
-    }}>
-      <div style={{
-        background: "#e3e3e3",
-        width: 600,
-        margin: "0 auto 32px auto",
-        padding: "16px 0",
-        textAlign: "center",
-        fontSize: 32,
-        fontWeight: 700
-      }}>
-        Меню преподавателя
-      </div>
-      <div style={{
+    <div
+      style={{
+        minHeight: "100vh",
+        background: "#fff",
+        paddingTop: 80,
         display: "flex",
         flexDirection: "column",
-        gap: 20,
-        width: 400,
-        margin: "0 auto"
-      }}>
-        {menuItems.map(item => (
+        alignItems: "center",
+      }}
+    >
+      <div
+        style={{
+          background: "#e3e3e3",
+          width: 600,
+          margin: "0 auto 32px auto",
+          padding: "16px 0",
+          textAlign: "center",
+          fontSize: 32,
+          fontWeight: 700,
+        }}
+      >
+        Меню преподавателя
+      </div>
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: 20,
+          width: 400,
+          margin: "0 auto",
+        }}
+      >
+        {menuItems.map((item) => (
           <button
             key={item.label}
             style={{
@@ -52,9 +59,17 @@ const Menu: React.FC = () => {
               fontSize: 26,
               fontWeight: 600,
               cursor: "pointer",
-              width: "100%"
+              width: "100%",
             }}
-            onClick={() => {navigate(item.link)}}
+            onClick={() => {
+              // Check if route exists before navigating
+              const validRoutes = ["/news", "/disciplines", "/tests", "/groups", "/users", "/gradesheet"];
+              if (validRoutes.includes(item.link)) {
+                navigate(item.link);
+              } else {
+                alert(`Страница "${item.label}" ещё не реализована`);
+              }
+            }}
           >
             {item.label}
           </button>

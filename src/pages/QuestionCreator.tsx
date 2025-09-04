@@ -22,7 +22,13 @@ const questionTypes = {
 type QuestionType = keyof typeof questionTypes;
 
 
-const QuestionCreator = ({saveQuestion, modalData, setModalData}) => {
+interface QuestionCreatorProps {
+  saveQuestion: (question: IQuestion) => void;
+  modalData: any;
+  setModalData: (data: any) => void;
+}
+
+const QuestionCreator: React.FC<QuestionCreatorProps> = ({saveQuestion, modalData, setModalData}) => {
   const qType =  modalData?.data?.question_type || "single"
   const [questionType, setQuestionType] = useState<QuestionType>(qType);
   const [questionText, setQuestionText] = useState(
@@ -96,7 +102,7 @@ const QuestionCreator = ({saveQuestion, modalData, setModalData}) => {
           onChange={(e) => {setQuestionType(e.target.value as QuestionType)}}
         >
           {Object.keys(questionTypes).map((key) =>
-            <option key={key} value={key}>{questionTypes[key][0]}</option>
+            <option key={key} value={key}>{questionTypes[key as QuestionType][0]}</option>
           )}
         </select>
       </div>

@@ -1,5 +1,5 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
-import { privatRoutes, publicRoutes } from '../router/index.tsx';
+import { privateRoutes, publicRoutes } from '../router/index.tsx';
 import { useContext } from 'react';
 import { Context } from '../context/index.ts';
 import Loader from './ui/Loader/loader.tsx';
@@ -15,7 +15,7 @@ const AppRouter = () => {
     store.isAuth ?
       <Routes>
         {
-          privatRoutes.map(route => 
+          privateRoutes.map(route => 
             <Route element={route.element} path = {route.path} key={route.path}/>
         )}
         <Route path="/*" element={<Navigate replace to="/news" />}/>

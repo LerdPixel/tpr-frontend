@@ -26,7 +26,7 @@ const Posts = () => {
   const params = useParams();  
   const initialReceive = {pending : !("id" in params) , groups : ("id" in params ? [Number(params.id)] : []), archived : false}
   const [selectedUser, setSelectedUser] = useState<IStudent | null>(null);
-  const [posts, setPosts] = useState<IStudent>([]);
+  const [posts, setPosts] = useState<IStudent[]>([]);
   const [filter, setFilter] = useState({ sort: "", query : ""});
   const [receive, setReceive] = useState(initialReceive)
   const [modal, setModal] = useState(false);
@@ -37,7 +37,7 @@ const Posts = () => {
   const sortedAndSearchedPosts = usePosts(posts, filter.sort, filter.query);
   const lastElement = useRef();
   const [groupsLoader, setGroupsLoader] = useState(true);
-  const [postError, setPostError] = useState();
+  const [postError, setPostError] = useState<string | null>(null);
   const {store} = useContext(Context)
   const notArchivedGroups = useMemo(() => groups.filter(gr => !("archived_at" in gr))
   , [groups])
@@ -95,7 +95,7 @@ const Posts = () => {
     }
     return undefined
   }
-  const groupNameFromId = (id : number) => groupFromId(id) == undefined ? "Группа не найдена" : groupFromId(id).name
+  const groupNameFromId = (id : number) => groupFromId(id) == undefined ? "Группа не найдена" : groupFromId(id)!.name
   const getPending = async () => {
     const response2 = await store.getPending();
     if (Array.isArray(response2.data)) {
@@ -103,7 +103,7 @@ const Posts = () => {
     }
     return []
   }
-  const usersFromGroups = async (selectedGroups) => {
+  const usersFromGroups = async (selectedGroups: number[]) => {
     let newPosts = []
     for (const id of selectedGroups) {
       const response = await store.getStudents(id) 

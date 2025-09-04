@@ -15,25 +15,34 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import styles from '../../styles/QuestionCreator.module.css';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import MyButton from '../ui/button/MyButton';
 import React from 'react';
 
 type Answer = { id: string; text: string };
 
-const SortableQuestion = () => {
-  const [options, setOptions] = useState<Answer[]>([
+interface SortableQuestionProps {
+  data: any;
+  setData: (data: any) => void;
+}
+
+const SortableQuestion: React.FC<SortableQuestionProps> = ({ data, setData }) => {
+  const [options, setOptions] = useState<Answer[]>(data?.options || [
     { id: '1', text: '' },
     { id: '2', text: '' },
     { id: '3', text: '' },
   ]);
+
+  useEffect(() => {
+    setData({ options });
+  }, [options, setData]);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
   const handleAddOption = () => {
-    setOptions([...options, {id : ++options.length, text : ''}])
+    setOptions([...options, {id : (options.length + 1).toString(), text : ''}])
   }
     const handleTextChange = (id: string, newText: string) => {
       // setOptions(prev => 

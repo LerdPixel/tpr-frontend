@@ -11,7 +11,7 @@ const Login: FC = () => {
     document.body.classList.add("centered-body");
     return () => document.body.classList.remove("centered-body");
   }, []);  
-  const [error, setError] = useState()
+  const [error, setError] = useState<string | null>(null)
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -21,15 +21,21 @@ const Login: FC = () => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      store.login(formData.email, formData.password)
-    } catch(e) {
-      setError(e.response?.data?.details)
-      return
+    setError(null);
+    
+    if (!formData.email || !formData.password) {
+      setError('Пожалуйста, заполните все поля');
+      return;
     }
-    localStorage.setItem('auth', 'true')
+    
+    try {
+      await store.login(formData.email, formData.password);
+    } catch(e: any) {
+      setError(e.response?.data?.details || 'Ошибка входа');
+      return;
+    }
   };
   return (
     <div className="form-body">

@@ -1,14 +1,22 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import styles from '../../styles/QuestionCreator.module.css';
 
+interface NumericAnswerProps {
+  data: any;
+  setData: (data: any) => void;
+}
 
-const NumericAnswer = () => {
-  const [answer, setAnswer] = useState('');
-  const [tolerance, setTolerance] = useState('2');
+const NumericAnswer: React.FC<NumericAnswerProps> = ({ data, setData }) => {
+  const [answer, setAnswer] = useState(data?.answer || '');
+  const [tolerance, setTolerance] = useState(data?.tolerance || '2');
 
-  const handleNumericInput = (value, setter) => {
+  useEffect(() => {
+    setData({ answer, tolerance });
+  }, [answer, tolerance, setData]);
+
+  const handleNumericInput = (value: string, setter: (val: string | number) => void) => {
     //setter(value.replace(',', '.'))
-    setter(parseInt(value.toString().replace(',', '.')))
+    setter(value.toString().replace(',', '.'))
     console.log(value);
     
   }

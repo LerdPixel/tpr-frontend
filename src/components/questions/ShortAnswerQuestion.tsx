@@ -2,7 +2,12 @@ import React, { useEffect, useState } from 'react';
 import styles from '../../styles/QuestionCreator.module.css';
 import MyButton from '../ui/button/MyButton';
 
-const ShortAnswerQuestion = ({ data, setData }) => {
+interface ShortAnswerQuestionProps {
+  data: any;
+  setData: (data: any) => void;
+}
+
+const ShortAnswerQuestion: React.FC<ShortAnswerQuestionProps> = ({ data, setData }) => {
     const [isLoading, setIsLoading] = useState(true);
   
     // Инициализация data
@@ -13,7 +18,7 @@ const ShortAnswerQuestion = ({ data, setData }) => {
       setIsLoading(false);
     }, []);
   
-    if (isLoading || !data.options || !data.correct) return null;
+    if (isLoading || !data.correct) return null;
 
   const handleAnswerChange = (index: number, value: string) => {
     const updated = [...data.correct];
@@ -27,7 +32,7 @@ const ShortAnswerQuestion = ({ data, setData }) => {
 
   const removeAnswer = (index: number) => {
     if (data.correct.length === 1) return; // Не удаляем последний ответ
-    const updated = data.correct.filter((_, i) => i !== index);
+    const updated = data.correct.filter((_: any, i: number) => i !== index);
     setData({...data, correct : [updated]});
   };
 
@@ -35,7 +40,7 @@ const ShortAnswerQuestion = ({ data, setData }) => {
     <div className=''>
 
 
-      {data.correct.map((ans, index) => (
+      {data.correct.map((ans: string, index: number) => (
         <div key={index} className={styles.optionRow}>
           <input
             type="text"

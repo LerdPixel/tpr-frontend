@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import styles from '../../styles/QuestionCreator.module.css';
 
 type MatchPair = {
@@ -12,17 +12,26 @@ type MatchOption = {
   text: string;
 };
 
-const MatchingQuestion = () => {
-  const [leftItems, setLeftItems] = useState<MatchPair[]>([
+interface MatchingQuestionProps {
+  data: any;
+  setData: (data: any) => void;
+}
+
+const MatchingQuestion: React.FC<MatchingQuestionProps> = ({ data, setData }) => {
+  const [leftItems, setLeftItems] = useState<MatchPair[]>(data?.leftItems || [
     { id: '1', text: '', matchId: null },
     { id: '2', text: '', matchId: null },
   ]);
 
-  const [rightItems, setRightItems] = useState<MatchOption[]>([
+  const [rightItems, setRightItems] = useState<MatchOption[]>(data?.rightItems || [
     { id: 'a', text: '' },
     { id: 'b', text: '' },
     { id: 'c', text: '' },
   ]);
+
+  useEffect(() => {
+    setData({ leftItems, rightItems });
+  }, [leftItems, rightItems, setData]);
 
   const handleLeftTextChange = (id: string, value: string) => {
     setLeftItems(prev =>

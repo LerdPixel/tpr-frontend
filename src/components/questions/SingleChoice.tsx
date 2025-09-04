@@ -1,7 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import styles from '../../styles/QuestionCreator.module.css';
 
-const SingleChoice = ({data, setData}) => {
+interface SingleChoiceProps {
+  data: any;
+  setData: (data: any) => void;
+}
+
+const SingleChoice: React.FC<SingleChoiceProps> = ({data, setData}) => {
   const [isLoading, setIsLoading] = useState(true)
   useEffect(() => {
     if (data.options == undefined)
@@ -22,7 +27,7 @@ const SingleChoice = ({data, setData}) => {
   };
 
   const handleRemoveOption = (i: number) => {
-    const updated = data.options.filter((_, index) => index !== i);
+    const updated = data.options.filter((_: any, index: number) => index !== i);
     setOptions(updated);
     if (i === data.correct) setSelectedIndex(0);
     else if (i < data.correct) setSelectedIndex(data.correct - 1);
@@ -36,7 +41,7 @@ const SingleChoice = ({data, setData}) => {
   if (isLoading || !data.options) return null;
   return ( 
     <div className={styles.optionsBlock}>
-      {data.options && data.options.map((opt, i) => (
+      {data.options && data.options.map((opt: string, i: number) => (
         <div key={i} className={styles.optionRow}>
           <input
             type="radio"
