@@ -1,5 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
-import QuestionCreator from "./Test";
+import QuestionCreator from "./QuestionCreator";
+import type IQuestion from "../components/ui/interfaces/IQuestion";
+import { Context } from '../context/index.ts';
+import axios from "axios";
+import { useContext } from "react";
 import {
   ListChecks,
   CheckSquare,
@@ -11,48 +15,45 @@ import {
   MoreVertical,
 } from "lucide-react";
 import styles from "../styles/TopicsPage.module.css";
+import Modal from "@/components/news/Modal";
 
 // Типы данных
 interface Topic {
+  id: number;
   title: string;
   description: string;
 }
 
-interface Question {
-  data: Record<string, any>;
-  points: number;
-  question_text: string;
-  question_type: string;
-  topic_id: number;
-}
-
 // Пример данных
 const initialTopics: Topic[] = [
-  { title: "Математика", description: "Вопросы по алгебре и геометрии" },
-  { title: "История", description: "Вопросы по мировой истории" },
-  { title: "Физика", description: "Законы и явления природы" },
+  { id: 0, title: "Математика", description: "Вопросы по алгебре и геометрии" },
+  { id: 1, title: "История", description: "Вопросы по мировой истории" },
+  { id: 2, title: "Физика", description: "Законы и явления природы" },
 ];
 
-const initialQuestions: Question[] = [
+const initialQuestions: IQuestion[] = [
   {
-    data: { additionalProp1: { options: ["2", "3", "4"] } },
+    id: 0,
+    data: { options: ["2", "3", "4"], correct: 1 },
     points: 1,
     question_text: "Сколько будет 2+2?",
-    question_type: "single",
+    question_type: "single_choice",
     topic_id: 0,
   },
   {
-    data: { additionalProp1: { placeholder: "Введите ответ" } },
+    id: 1,
+    data: {},
     points: 2,
     question_text: "Кто был первым президентом США?",
-    question_type: "short",
+    question_type: "text",
     topic_id: 1,
   },
   {
-    data: { additionalProp1: { options: ["Сила", "Масса", "Энергия"] } },
+    id: 2,
+    data: {},
     points: 1,
     question_text: "Что измеряется в Ньютонах?",
-    question_type: "single",
+    question_type: "single_choice",
     topic_id: 2,
   },
 ];
@@ -60,11 +61,11 @@ const initialQuestions: Question[] = [
 // Функция выбора иконки по типу вопроса
 const getIconByType = (type: string) => {
   switch (type) {
-    case "single":
+    case "single_choice":
       return <CheckSquare className={`${styles.icon} ${styles.blue}`} />;
-    case "multiple":
+    case "multiple_choice":
       return <ListChecks className={`${styles.icon} ${styles.green}`} />;
-    case "short":
+    case "text":
       return <FileText className={`${styles.icon} ${styles.purple}`} />;
     case "numeric":
       return <Hash className={`${styles.icon} ${styles.orange}`} />;
@@ -78,96 +79,220 @@ const getIconByType = (type: string) => {
 };
 
 export default function TopicsPage() {
-  const [topics, setTopics] = useState<Topic[]>(initialTopics);
-  const [questions, setQuestions] = useState<Question[]>(initialQuestions);
+    const {store} = useContext(Context)
+  const [topics, setTopics] = useState<Topic[]>([]);
+  const [questions, setQuestions] = useState<IQuestion[]>(initialQuestions);
   const [selectedTopic, setSelectedTopic] = useState<number | null>(null);
-
-  const [menu, setMenu] = useState<{ type: "topic" | "question"; index: number } | null>(null);
+const [postError, setPostError] = useState();
+  const [menu, setMenu] = useState<{ type: "topic" | "question"; id: number } | null>(null);
   const [modalData, setModalData] = useState<any | null>(null);
+const [loading, setLoading] = useState(true)
 
+    const getAccess = () => {
+        const access_token = localStorage.getItem("token")
+        if (access_token == null) {
+            store.refresh() 
+        }
+        return access_token;
+    }
   const menuRef = useRef<HTMLDivElement | null>(null);
   const modalRef = useRef<HTMLDivElement | null>(null);
+        const fetchTopics = async () => {
+        setLoading(true);
 
+        try {
+            const response = await axios.get("/server/admin/topics", {
+                headers: { Authorization: `Bearer ${getAccess()}` }
+            })
+            if (response.status != 200) throw new Error("Ошибка при загрузке тем");
+            const data = response.data
+            setTopics(data);
+        } catch (err) {
+            setPostError(err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+    const createTopic = async (topic: Omit<Topic, "id">) => {
+        const access_token = localStorage.getItem("token")
+        if (access_token == null) {
+            store.refresh() 
+        }
+        const response = await axios.post("/server/admin/topics", topic ,
+        { 
+            headers: { Authorization: `Bearer ${access_token}` }
+        })
+        if (response.status != 201) 
+            setPostError("Ошибка при создании темы");
+        await fetchTopics();
+    };
+    const updateTopic = async (id: number, topic: Omit<Topic, "id">) => {
+        const response = await axios.put(`/server/admin/topics/${id}`, topic ,
+        { 
+            headers: { Authorization: `Bearer ${getAccess()}` }
+        })
+        if (response.status != 200) 
+            setPostError("Ошибка при изменении темы");
+        await fetchTopics();
+    };
+    const deleteTopic = async (id: number) => {
+        const response = await axios.delete(`/server/admin/topics/${id}` ,
+        { 
+            headers: { Authorization: `Bearer ${getAccess()}` }
+        })
+        if (response.status != 200)
+            setPostError("Ошибка при удалении темы");
+        await fetchTopics();
+    };
+        const createQuestion = async (question: Omit<IQuestion, "id">) => {
+    const res = await fetch("/api/v1/admin/questions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(question),
+    });
+    if (!res.ok) throw new Error("Ошибка при создании вопроса");
+    const data = await res.json(); // вернёт { id: number }
+    return { ...question, id: data.id };
+    };
+
+    const updateQuestion = async (id: number, question: Omit<IQuestion, "id">) => {
+    const res = await fetch(`/api/v1/admin/questions/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(question),
+    });
+    if (!res.ok) throw new Error("Ошибка при обновлении вопроса");
+    };
+
+    const deleteQuestion = async (id: number) => {
+    const res = await fetch(`/api/v1/admin/questions/${id}`, {
+        method: "DELETE",
+    });
+    if (!res.ok) throw new Error("Ошибка при удалении вопроса");
+    };
+
+    // --- Сохранение из модалки ---
+    const saveQuestion = async (question: IQuestion) => {
+    if (modalData?.mode === "create") {
+        const newQuestion = await createQuestion(question);
+        setQuestions([...questions, newQuestion]);
+    } else {
+        await updateQuestion(question.id, question);
+        setQuestions(questions.map((q) => (q.id === question.id ? question : q)));
+    }
+    setModalData(null);
+    };
+
+    // --- Удаление вопроса ---
+    const removeQuestion = async (id: number) => {
+    await deleteQuestion(id);
+    setQuestions(questions.filter((q) => q.id !== id));
+    setMenu(null);
+    };
   useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+    /*const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      // если клик не внутри dropdown и не на кнопке меню → закрыть
+      if (!target.closest(`.${styles.menuContainer}`)) {
         setMenu(null);
       }
-      if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
+      if (!target.closest(`.${styles.modal}`)) {
         setModalData(null);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);*/
+    fetchTopics();
   }, []);
 
+
+  // ---------- TOPICS ----------
   const addTopic = () => {
-    setModalData({ type: "topic", mode: "create", data: { title: "", description: "" } });
+    const newId = topics.length ? Math.max(...topics.map((t) => t.id)) + 1 : 0;
+    setModalData({
+      type: "topic",
+      mode: "create",
+      data: { id: newId, title: "", description: "" },
+    });
   };
 
-  const editTopic = (index: number) => {
-    setModalData({ type: "topic", mode: "edit", index, data: topics[index] });
+ const removeTopic = async (id: number) => {
+    await deleteTopic(id);
+    if (selectedTopic === id) setSelectedTopic(null);
     setMenu(null);
   };
 
-  const removeTopic = (index: number) => {
-    setTopics(topics.filter((_, i) => i !== index));
-    if (selectedTopic === index) setSelectedTopic(null);
-    setMenu(null);
-  };
-
+  // ---------- QUESTIONS ----------
   const addQuestion = () => {
     if (selectedTopic === null) return;
+    const newId = questions.length ? Math.max(...questions.map((q) => q.id)) + 1 : 0;
     setModalData({
       type: "question",
       mode: "create",
-      data: { question_text: "", points: 1, question_type: "short" },
+      data: { id: newId, question_text: "", points: 1, question_type: "single_choice", data: {options : ['']} },
       topic_id: selectedTopic,
     });
   };
 
-  const editQuestion = (index: number) => {
-    setModalData({ type: "question", mode: "edit", index, data: questions[index] });
+  const editTopic = (id: number) => {
+    const topic = topics.find((t) => t.id === id);
+    if (!topic) return;
+    setModalData({ type: "topic", mode: "edit", id, data: topic });
     setMenu(null);
   };
 
-  const removeQuestion = (index: number) => {
-    setQuestions(questions.filter((_, i) => i !== index));
+  const removeQuestion = (id: number) => {
+    setQuestions(questions.filter((q) => q.id !== id));
     setMenu(null);
   };
 
-  const saveModal = () => {
+  // ---------- SAVE ----------
+  const saveModal = async () => {
     if (!modalData) return;
-
+    if (modalData.type === "topic") {
+        if (modalData.mode === "create") {
+            await createTopic(modalData.data);
+      } else {
+            console.log("dsfdasdds");
+            
+            await updateTopic(modalData.id, modalData.data);
+      }
+    }
+    /*
     if (modalData.type === "topic") {
       if (modalData.mode === "create") {
         setTopics([...topics, modalData.data]);
-      } else if (modalData.mode === "edit") {
-        const newTopics = [...topics];
-        newTopics[modalData.index] = modalData.data;
-        setTopics(newTopics);
+      } else {
+        setTopics(topics.map((t) => (t.id === modalData.id ? modalData.data : t)));
       }
     } else if (modalData.type === "question") {
       if (modalData.mode === "create") {
-        const newQuestion: Question = {
-          ...modalData.data,
-          data: {},
-          topic_id: modalData.topic_id,
-        };
+        const newQuestion: IQuestion = { ...modalData.data, topic_id: modalData.topic_id };
         setQuestions([...questions, newQuestion]);
-      } else if (modalData.mode === "edit") {
-        const newQuestions = [...questions];
-        newQuestions[modalData.index] = modalData.data;
-        setQuestions(newQuestions);
+      } else {
+        setQuestions(questions.map((q) => (q.id === modalData.id ? modalData.data : q)));
       }
-    }
+    }*/
 
+    setModalData(null);
+  };
+
+  const saveQuestion = (question: IQuestion) => {
+    if (!modalData || modalData.type !== "question") return;
+    if (modalData.mode === "create") {
+      setQuestions([...questions, question]);
+    } else {
+      setQuestions(questions.map((q) => q.id === question.id ? { ...question, topic_id: q.topic_id } : q));
+    }
     setModalData(null);
   };
 
   return (
     <div className={styles.page}>
-      {/* Левая часть - список тем */}
+      {/* Сайдбар: темы */}
+        {postError && (
+        <h1 style={{ color: "red" }}>Произошла ошибка в {postError}</h1>
+      )}
       <div className={styles.sidebar}>
         <div className={styles.sidebarHeader}>
           <h2 className={styles.title}>Темы</h2>
@@ -176,30 +301,30 @@ export default function TopicsPage() {
           </button>
         </div>
         <ul className={styles.list}>
-          {topics.map((topic, index) => (
+          {topics.map((topic) => (
             <li
-              key={index}
-              className={`${styles.listItem} ${selectedTopic === index ? styles.active : ""}`}
+              key={topic.id}
+              className={`${styles.listItem} ${selectedTopic === topic.id ? styles.active : ""}`}
             >
-              <div onClick={() => setSelectedTopic(index)}>
+              <div onClick={() => setSelectedTopic(topic.id)}>
                 <div className={styles.itemTitle}>{topic.title}</div>
                 <div className={styles.itemDesc}>{topic.description}</div>
               </div>
-              <div className={styles.menuContainer} ref={menuRef}>
+              <div className={styles.menuContainer}>
                 <button
                   onClick={() =>
-                    setMenu(menu?.index === index && menu?.type === "topic" ? null : { type: "topic", index })
+                    setMenu({ type: "topic", id: topic.id })
                   }
                   className={styles.menuBtn}
                 >
                   <MoreVertical className={styles.icon} />
                 </button>
-                {menu?.index === index && menu?.type === "topic" && (
+                {menu?.id === topic.id && menu?.type === "topic" && (
                   <div className={styles.dropdown}>
-                    <button onClick={() => editTopic(index)} className={styles.dropdownItem}>
+                    <button onClick={() => {console.log(topic.id); editTopic(topic.id)}} className={styles.dropdownItem}>
                       Редактировать
                     </button>
-                    <button onClick={() => removeTopic(index)} className={`${styles.dropdownItem} ${styles.danger}`}>
+                    <button onClick={() => {console.log(topic.id); removeTopic(topic.id)}} className={`${styles.dropdownItem} ${styles.danger}`}>
                       Удалить
                     </button>
                   </div>
@@ -210,7 +335,7 @@ export default function TopicsPage() {
         </ul>
       </div>
 
-      {/* Правая часть - список вопросов */}
+      {/* Контент: вопросы */}
       <div className={styles.content}>
         <div className={styles.contentHeader}>
           <h2 className={styles.title}>Вопросы</h2>
@@ -224,97 +349,71 @@ export default function TopicsPage() {
           <p className={styles.placeholder}>Выберите тему, чтобы увидеть вопросы</p>
         ) : (
           <ul className={styles.list}>
-            {questions
-              .filter((q) => q.topic_id === selectedTopic)
-              .map((q, i) => (
-                <li key={i} className={styles.listItem}>
-                  <div className={styles.itemMain}>
-                    <div className={styles.iconContainer}>{getIconByType(q.question_type)}</div>
-                    <div>
-                      <div className={styles.itemTitle}>{q.question_text}</div>
-                      <div className={styles.itemMeta}>Тип: {q.question_type}</div>
-                      <div className={styles.itemMeta}>Баллы: {q.points}</div>
+            {questions.filter((q) => q.topic_id === selectedTopic).map((q) => (
+              <li key={q.id} className={styles.listItem}>
+                <div className={styles.itemMain}>
+                  <div className={styles.iconContainer}>{getIconByType(q.question_type)}</div>
+                  <div>
+                    <div className={styles.itemTitle}>{q.question_text}</div>
+                    <div className={styles.itemMeta}>Тип: {q.question_type}</div>
+                    <div className={styles.itemMeta}>Баллы: {q.points}</div>
+                  </div>
+                </div>
+                <div className={styles.menuContainer}>
+                  <button
+                    onClick={() =>
+                      setMenu(menu?.id === q.id && menu?.type === "question" ? null : { type: "question", id: q.id })
+                    }
+                    className={styles.menuBtn}
+                  >
+                    <MoreVertical className={styles.icon} />
+                  </button>
+                  {menu?.id === q.id && menu?.type === "question" && (
+                    <div className={styles.dropdown}>
+                      <button onClick={() => editQuestion(q.id)} className={styles.dropdownItem}>
+                        Редактировать
+                      </button>
+                      <button onClick={() => removeQuestion(q.id)} className={`${styles.dropdownItem} ${styles.danger}`}>
+                        Удалить
+                      </button>
                     </div>
-                  </div>
-                  <div className={styles.menuContainer} ref={menuRef}>
-                    <button
-                      onClick={() =>
-                        setMenu(menu?.index === i && menu?.type === "question" ? null : { type: "question", index: i })
-                      }
-                      className={styles.menuBtn}
-                    >
-                      <MoreVertical className={styles.icon} />
-                    </button>
-                    {menu?.index === i && menu?.type === "question" && (
-                      <div className={styles.dropdown}>
-                        <button onClick={() => editQuestion(i)} className={styles.dropdownItem}>
-                          Редактировать
-                        </button>
-                        <button onClick={() => removeQuestion(i)} className={`${styles.dropdownItem} ${styles.danger}`}>
-                          Удалить
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </li>
-              ))}
+                  )}
+                </div>
+              </li>
+            ))}
           </ul>
         )}
       </div>
 
-      {/* Модальное окно */}
-      {modalData && (
+      {/* Модалка для вопросов */}
+      <Modal open={modalData && modalData.type === "question"} onClose={() => setModalData(null)}>
+        <QuestionCreator saveQuestion={saveQuestion} modalData={modalData} setModalData={setModalData} />
+      </Modal>
+
+      {/* Модалка для тем */}
+      {modalData && modalData.type === "topic" && (
         <div className={styles.modalOverlay}>
           <div ref={modalRef} className={styles.modal}>
             <h3 className={styles.modalTitle}>
-              {modalData.mode === "create" ? "Создать" : "Редактировать"} {modalData.type === "topic" ? "тему" : "вопрос"}
+              {modalData.mode === "create" ? "Создать" : "Редактировать"} тему
             </h3>
-            {modalData.type === "topic" ? (
-              <>
-                <input
-                  type="text"
-                  value={modalData.data.title}
-                  onChange={(e) => setModalData({ ...modalData, data: { ...modalData.data, title: e.target.value } })}
-                  placeholder="Название темы"
-                  className={styles.input}
-                />
-                <textarea
-                  value={modalData.data.description}
-                  onChange={(e) => setModalData({ ...modalData, data: { ...modalData.data, description: e.target.value } })}
-                  placeholder="Описание"
-                  className={styles.textarea}
-                />
-              </>
-            ) : (
-              <>
-                <input
-                  type="text"
-                  value={modalData.data.question_text}
-                  onChange={(e) => setModalData({ ...modalData, data: { ...modalData.data, question_text: e.target.value } })}
-                  placeholder="Текст вопроса"
-                  className={styles.input}
-                />
-                <input
-                  type="number"
-                  value={modalData.data.points}
-                  onChange={(e) => setModalData({ ...modalData, data: { ...modalData.data, points: Number(e.target.value) } })}
-                  placeholder="Баллы"
-                  className={styles.input}
-                />
-                <select
-                  value={modalData.data.question_type}
-                  onChange={(e) => setModalData({ ...modalData, data: { ...modalData.data, question_type: e.target.value } })}
-                  className={styles.input}
-                >
-                  <option value="single">Один вариант</option>
-                  <option value="multiple">Несколько вариантов</option>
-                  <option value="short">Краткий ответ</option>
-                  <option value="numeric">Числовой</option>
-                  <option value="sortable">Сортировка</option>
-                  <option value="matching">Соответствие</option>
-                </select>
-              </>
-            )}
+            <input
+              type="text"
+              value={modalData.data.title}
+              onChange={(e) =>
+                setModalData({ ...modalData, data: { ...modalData.data, title: e.target.value } })
+              }
+              placeholder="Название темы"
+              className={styles.input}
+            />
+            <textarea
+              value={modalData.data.description}
+              onChange={(e) =>
+                setModalData({ ...modalData, data: { ...modalData.data, description: e.target.value } })
+              }
+              placeholder="Описание"
+              className={styles.textarea}
+            />
             <div className={styles.modalActions}>
               <button onClick={() => setModalData(null)} className={`${styles.btn} ${styles.gray}`}>
                 Отмена

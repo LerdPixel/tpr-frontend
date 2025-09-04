@@ -1,55 +1,41 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import styles from '../../styles/QuestionCreator.module.css';
 import MyButton from '../ui/button/MyButton';
 
-const ShortAnswerQuestion = () => {
-  const [questionText, setQuestionText] = useState('');
-  const [points, setPoints] = useState(1);
-  const [answers, setAnswers] = useState<string[]>(['']);
+const ShortAnswerQuestion = ({ data, setData }) => {
+    const [isLoading, setIsLoading] = useState(true);
+  
+    // Инициализация data
+    useEffect(() => {
+      if (!data.correct) {
+        setData({ ...data, correct: [''], caseInsensitive : 'true', "trim": true });
+      }
+      setIsLoading(false);
+    }, []);
+  
+    if (isLoading || !data.options || !data.correct) return null;
 
   const handleAnswerChange = (index: number, value: string) => {
-    const updated = [...answers];
+    const updated = [...data.correct];
     updated[index] = value;
-    setAnswers(updated);
+    setData({...data, correct : updated});
   };
 
   const addAnswer = () => {
-    setAnswers([...answers, '']);
+    setData({...data , correct : [...data.correct, '']});
   };
 
   const removeAnswer = (index: number) => {
-    if (answers.length === 1) return; // Не удаляем последний ответ
-    const updated = answers.filter((_, i) => i !== index);
-    setAnswers(updated);
-  };
-
-  const handleSubmit = () => {
-    const trimmedAnswers = answers.map(a => a.trim());
-    if (!questionText.trim()) {
-      alert('Введите текст вопроса.');
-      return;
-    }
-    if (trimmedAnswers.some(a => a === '')) {
-      alert('Все ответы должны быть заполнены.');
-      return;
-    }
-
-    const questionPayload = {
-      type: 'short-answer',
-      text: questionText.trim(),
-      points,
-      correctAnswers: trimmedAnswers,
-    };
-
-    console.log('Создан вопрос:', questionPayload);
-    // TODO: передать в API или родителю
+    if (data.correct.length === 1) return; // Не удаляем последний ответ
+    const updated = data.correct.filter((_, i) => i !== index);
+    setData({...data, correct : [updated]});
   };
 
   return (
     <div className=''>
 
 
-      {answers.map((ans, index) => (
+      {data.correct.map((ans, index) => (
         <div key={index} className={styles.optionRow}>
           <input
             type="text"

@@ -7,7 +7,7 @@ import { API_URL } from "@/http";
 import { useCookies } from 'react-cookie';
 import { Cookies } from "react-cookie";
 import { Cog } from "lucide-react";
-import type {Group, IGroup} from '../components/ui/interfaces/IGroup.tsx'
+import type {IGroup} from '../components/ui/interfaces/IGroup.tsx'
 import type { IStudent } from "@/components/ui/interfaces/IStudent.tsx";
 
 interface CookieSetOptions {
@@ -271,4 +271,5 @@ export default class Store {
             throw error;
         }
     }
+    async 
 }

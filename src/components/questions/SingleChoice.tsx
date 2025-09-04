@@ -1,34 +1,46 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import styles from '../../styles/QuestionCreator.module.css';
 
-const SingleChoice = () => {
-  const [options, setOptions] = useState(['']);
-  const [selectedIndex, setSelectedIndex] = useState(0);
+const SingleChoice = ({data, setData}) => {
+  const [isLoading, setIsLoading] = useState(true)
+  useEffect(() => {
+    if (data.options == undefined)
+      setData({...data, options : ['']})
+    if (data.correct == undefined)
+      setData({...data, correct : 0})
+    setIsLoading(false)
+  }, [])
+  const setOptions = (options : string[]) => {
+    setData({...data, options})
+  }
+  const setSelectedIndex = (selectedIndex : number) => {
+    setData({...data, correct : selectedIndex})
+  }
 
   const handleAddOption = () => {
-    setOptions([...options, '']);
+    setOptions([...data.options, '']);
   };
 
   const handleRemoveOption = (i: number) => {
-    const updated = options.filter((_, index) => index !== i);
+    const updated = data.options.filter((_, index) => index !== i);
     setOptions(updated);
-    if (i === selectedIndex) setSelectedIndex(0);
-    else if (i < selectedIndex) setSelectedIndex(selectedIndex - 1);
+    if (i === data.correct) setSelectedIndex(0);
+    else if (i < data.correct) setSelectedIndex(data.correct - 1);
   };
 
   const handleOptionChange = (index: number, value: string) => {
-    const updated = [...options];
+    const updated = [... data.options];
     updated[index] = value;
     setOptions(updated);
   };
-
-  return (
+  if (isLoading || !data.options) return null;
+  return ( 
     <div className={styles.optionsBlock}>
-      {options.map((opt, i) => (
+      {data.options && data.options.map((opt, i) => (
         <div key={i} className={styles.optionRow}>
           <input
             type="radio"
-            checked={selectedIndex === i}
+            checked={ data.correct === i}
             onChange={() => setSelectedIndex(i)}
           />
           <input
@@ -50,6 +62,6 @@ const SingleChoice = () => {
         + Добавить вариант
       </button>
     </div>
-  );
+  )
 };
 export default SingleChoice

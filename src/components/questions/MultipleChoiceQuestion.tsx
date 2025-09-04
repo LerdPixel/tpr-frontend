@@ -1,65 +1,87 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import styles from '../../styles/QuestionCreator.module.css';
 
-type Option = {
-  id: string;
-  text: string;
-  isCorrect: boolean;
-};
+interface Props {
+  data: {
+    options?: string[];
+    correct?: number[];
+  };
+  setData: (data: { options: string[]; correct: number[] }) => void;
+}
 
-const MultipleChoiceQuestion = () => {
-  const [options, setOptions] = useState<Option[]>([
-    { id: '1', text: '', isCorrect: false },
-    { id: '2', text: '', isCorrect: false },
-    { id: '3', text: '', isCorrect: false },
-    { id: '4', text: '', isCorrect: false },
-  ]);
+const MultipleChoiceQuestion = ({ data, setData }: Props) => {
+  const [isLoading, setIsLoading] = useState(true);
 
-  const handleTextChange = (id: string, text: string) => {
-    setOptions(prev =>
-      prev.map(option => option.id === id ? { ...option, text } : option)
-    );
+  // Инициализация data
+  useEffect(() => {
+    if (!data.options) {
+      setData({ ...data, options: [""] });
+    }
+    if (!data.correct) {
+      setData({ ...data, correct: [] });
+    }
+    setIsLoading(false);
+  }, []);
+
+  if (isLoading || !data.options || !data.correct) return null;
+
+  const handleTextChange = (index: number, text: string) => {
+    const updated = [...data.options];
+    updated[index] = text;
+    setData({ ...data, options: updated });
   };
 
-  const handleToggleCorrect = (id: string) => {
-    setOptions(prev =>
-      prev.map(option => option.id === id ? { ...option, isCorrect: !option.isCorrect } : option)
-    );
+  const handleToggleCorrect = (index: number) => {
+    const isCorrect = data.correct.includes(index);
+    const updatedCorrect = isCorrect
+      ? data.correct.filter((i) => i !== index)
+      : [...data.correct, index];
+    setData({ ...data, correct: updatedCorrect });
   };
 
   const addOption = () => {
-    setOptions(prev => [
-      ...prev,
-      { id: `${Date.now()}`, text: '', isCorrect: false }
-    ]);
+    setData({ ...data, options: [...data.options, ""] });
   };
 
   const removeOption = (index: number) => {
-    setOptions(prev => prev.filter((_, i) => i !== index));
+    const updatedOptions = data.options.filter((_, i) => i !== index);
+
+    // Пересчёт correct после удаления
+    const updatedCorrect = data.correct
+      .filter((i) => i !== index) // убираем удалённый индекс
+      .map((i) => (i > index ? i - 1 : i)); // смещаем индексы
+
+    setData({ ...data, options: updatedOptions, correct: updatedCorrect });
   };
 
   return (
     <div className={styles.optionsBlock}>
-
-      {options.map((option, index) => (
-        <div key={option.id} className={styles.optionRow}>
+      {data.options.map((option, index) => (
+        <div key={index} className={styles.optionRow}>
           <input
             type="checkbox"
-            checked={option.isCorrect}
-            onChange={() => handleToggleCorrect(option.id)}
+            checked={data.correct.includes(index)}
+            onChange={() => handleToggleCorrect(index)}
           />
           <input
             type="text"
-            value={option.text}
-            onChange={(e) => handleTextChange(option.id, e.target.value)}
+            value={option}
+            onChange={(e) => handleTextChange(index, e.target.value)}
             className={styles.input}
             placeholder={`Вариант ${index + 1}`}
           />
-          <button onClick={() => removeOption(index)} className={styles.removeButton}>✕</button>
+          <button
+            onClick={() => removeOption(index)}
+            className={styles.removeButton}
+          >
+            ✕
+          </button>
         </div>
       ))}
 
-      <button onClick={addOption} className={styles.addOption}>+ Добавить вариант</button>
+      <button onClick={addOption} className={styles.addOption}>
+        + Добавить вариант
+      </button>
     </div>
   );
 };
