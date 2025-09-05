@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useContext } from "react";
 import { Context } from "../context/index";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 import {
   BookOpen,
   Users,
@@ -53,6 +54,7 @@ interface TestTopicsReplaceInput {
 
 export default function TestsManagementPage() {
   const { store } = useContext(Context);
+  const navigate = useNavigate();
   const [tests, setTests] = useState<Test[]>([]);
   const [topics, setTopics] = useState<Topic[]>([]);
   const [disciplines, setDisciplines] = useState<Discipline[]>([]);
@@ -266,8 +268,16 @@ export default function TestsManagementPage() {
       if (response.status !== 201 && response.status !== 200) {
         throw new Error("Ошибка при создании попытки теста");
       }
-      setSuccess("Попытка теста успешно создана!");
+      
+      // Get the attempt ID from response and navigate to attempt page
+      const attemptId = (response.data as { id: number }).id;
+      setSuccess("Попытка теста создана! Переход к тесту...");
       setAttemptModalData(null);
+      
+      // Navigate to attempt page
+      setTimeout(() => {
+        navigate(`/attempt/${attemptId}`);
+      }, 1000);
     } catch (err: any) {
       console.error("Error starting test attempt:", err);
       if (err.response?.data?.error) {

@@ -10,6 +10,7 @@ import TestsManagementPage from "@/pages/TestsManagement.tsx";
 import News from "@/pages/News.tsx";
 import TopicsPage from "@/pages/TopicsPage.tsx";
 import Disciplines from "@/pages/Disciplines.tsx";
+import Attempt from "@/pages/Attempt.tsx";
 
 export const privateRoutes = [
   { path: "/users", element: <Posts />, exact: true },
@@ -21,6 +22,7 @@ export const privateRoutes = [
   { path: "/questions", element: <TopicsPage />, exact: true },
   { path: "/disciplines", element: <Disciplines />, exact: true },
   { path: "/tests", element: <TestsManagementPage />, exact: true },
+  { path: "/attempt/:attemptId", element: <Attempt />, exact: true },
 ];
 export const publicRoutes = [
   { path: "/registration", element: <Registration />, exact: true },
