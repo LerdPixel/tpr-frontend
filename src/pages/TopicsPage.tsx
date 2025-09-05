@@ -35,7 +35,7 @@ const getIconByType = (type: string) => {
       return <FileText className={`${styles.icon} ${styles.purple}`} />;
     case "numeric":
       return <Hash className={`${styles.icon} ${styles.orange}`} />;
-    case "sortable":
+    case "ordering":
       return <ArrowDownAZ className={`${styles.icon} ${styles.pink}`} />;
     case "matching":
       return <Shuffle className={`${styles.icon} ${styles.teal}`} />;

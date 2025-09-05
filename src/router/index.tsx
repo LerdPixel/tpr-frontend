@@ -16,14 +16,9 @@ export const privateRoutes = [
   { path: "/users/:id", element: <Posts />, exact: true },
   { path: "/menu", element: <Menu />, exact: true },
   { path: "/gradesheet", element: <Gradesheet />, exact: true },
-  {
-    path: "/gradesheet_creation",
-    element: <GradesheetCreation />,
-    exact: true,
-  },
   { path: "/groups", element: <GroupsPage />, exact: true },
   { path: "/news", element: <News />, exact: true },
-  { path: "/question", element: <TopicsPage />, exact: true },
+  { path: "/questions", element: <TopicsPage />, exact: true },
   { path: "/disciplines", element: <Disciplines />, exact: true },
   { path: "/tests", element: <TestsManagementPage />, exact: true },
 ];

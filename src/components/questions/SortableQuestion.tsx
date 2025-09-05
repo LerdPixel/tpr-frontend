@@ -39,7 +39,7 @@ const SortableQuestion: React.FC<SortableQuestionProps> = ({
   );
 
   useEffect(() => {
-    setData({ options });
+    setData({ options , correctOrder : options.map((_, i) => Number(i))});
   }, [options, setData]);
 
   const sensors = useSensors(

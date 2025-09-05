@@ -35,6 +35,12 @@ interface Topic {
   description?: string;
 }
 
+interface Discipline {
+  id: number;
+  name: string;
+  description?: string;
+}
+
 interface TestTopic {
   topic_id: number;
   questions_count: number;
@@ -49,8 +55,10 @@ export default function TestsManagementPage() {
   const { store } = useContext(Context);
   const [tests, setTests] = useState<Test[]>([]);
   const [topics, setTopics] = useState<Topic[]>([]);
+  const [disciplines, setDisciplines] = useState<Discipline[]>([]);
   const [loading, setLoading] = useState(false);
   const [topicsLoading, setTopicsLoading] = useState(false);
+  const [disciplinesLoading, setDisciplinesLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [menu, setMenu] = useState<{ id: number } | null>(null);
@@ -58,6 +66,12 @@ export default function TestsManagementPage() {
     mode: "create" | "edit";
     data: Partial<Test>;
     id?: number;
+  } | null>(null);
+
+  // Test attempt modal state
+  const [attemptModalData, setAttemptModalData] = useState<{
+    testId: number;
+    selectedDisciplineId: number;
   } | null>(null);
 
   // Local state for test topics management
@@ -85,6 +99,22 @@ export default function TestsManagementPage() {
       store.refresh();
     }
     return access_token;
+  };
+
+  // Fetch disciplines from server
+  const fetchDisciplines = async () => {
+    setDisciplinesLoading(true);
+    try {
+      const response = await axios.get("/server/disciplines");
+      if (response.status !== 200)
+        throw new Error("Ошибка при загрузке дисциплин");
+      setDisciplines((response.data as Discipline[]) || []);
+    } catch (err: any) {
+      console.error("Error fetching disciplines:", err);
+      setError(err?.message || "Ошибка при загрузке дисциплин");
+    } finally {
+      setDisciplinesLoading(false);
+    }
   };
 
   // Fetch topics from server
@@ -223,10 +253,38 @@ export default function TestsManagementPage() {
     }
   };
 
+  // Start test attempt
+  const startTestAttempt = async (testId: number, disciplineId: number) => {
+    try {
+      const response = await axios.post(
+        `/server/tests/${testId}/attempts`,
+        { discipline_id: disciplineId },
+        {
+          headers: { Authorization: `Bearer ${getAccess()}` },
+        }
+      );
+      if (response.status !== 201 && response.status !== 200) {
+        throw new Error("Ошибка при создании попытки теста");
+      }
+      setSuccess("Попытка теста успешно создана!");
+      setAttemptModalData(null);
+    } catch (err: any) {
+      console.error("Error starting test attempt:", err);
+      if (err.response?.data?.error) {
+        setError(`Ошибка: ${err.response.data.error}`);
+      } else if (err.response?.status === 401) {
+        setError("Нет прав доступа. Попробуйте войти заново.");
+      } else {
+        setError(err?.message || "Ошибка при создании попытки теста");
+      }
+    }
+  };
+
   // Load tests and topics on component mount
   useEffect(() => {
     fetchTests();
     fetchTopics();
+    fetchDisciplines();
   }, []);
 
   // Click outside handler for dropdown menus
@@ -344,11 +402,11 @@ export default function TestsManagementPage() {
 
   // Navigate to test attempts
   const openTestAttempts = (testId: number) => {
-    // This would navigate to /api/v1/tests/{testId}/attempts
-    // For now, we'll show an alert
-    alert(
-      `Открытие попыток для теста ID: ${testId}\nЭндпоинт: /api/v1/tests/${testId}/attempts`
-    );
+    setAttemptModalData({
+      testId,
+      selectedDisciplineId: 0,
+    });
+    setMenu(null);
   };
 
   const removeTest = async (id: number) => {
@@ -809,6 +867,86 @@ export default function TestsManagementPage() {
                 className={`${styles.btn} ${styles.blue}`}
               >
                 {modalData.mode === "create" ? "Создать" : "Сохранить"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Test Attempt Modal */}
+      {attemptModalData && (
+        <div
+          className={styles.modalOverlay}
+          onClick={() => setAttemptModalData(null)}
+        >
+          <div
+            className={styles.modal}
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              maxWidth: "400px",
+              width: "90vw",
+            }}
+          >
+            <h3 className={styles.modalTitle}>Открыть тест</h3>
+
+            <div>
+              <label
+                className={styles.label}
+                style={{
+                  display: "block",
+                  marginBottom: "8px",
+                  fontWeight: "600",
+                }}
+              >
+                Выберите дисциплину *
+              </label>
+              {disciplinesLoading ? (
+                <p style={{ color: "#666", fontSize: "14px" }}>
+                  Загрузка дисциплин...
+                </p>
+              ) : (
+                <select
+                  value={attemptModalData.selectedDisciplineId}
+                  onChange={(e) =>
+                    setAttemptModalData({
+                      ...attemptModalData,
+                      selectedDisciplineId: parseInt(e.target.value),
+                    })
+                  }
+                  className={styles.input}
+                >
+                  <option value={0}>Выберите дисциплину</option>
+                  {(disciplines || []).map((discipline) => (
+                    <option key={discipline.id} value={discipline.id}>
+                      {discipline.name}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+
+            <div className={styles.modalActions}>
+              <button
+                onClick={() => setAttemptModalData(null)}
+                className={`${styles.btn} ${styles.gray}`}
+              >
+                Отмена
+              </button>
+              <button
+                onClick={() => {
+                  if (attemptModalData.selectedDisciplineId === 0) {
+                    setError("Выберите дисциплину");
+                    return;
+                  }
+                  startTestAttempt(
+                    attemptModalData.testId,
+                    attemptModalData.selectedDisciplineId
+                  );
+                }}
+                className={`${styles.btn} ${styles.blue}`}
+                disabled={attemptModalData.selectedDisciplineId === 0}
+              >
+                Открыть тест
               </button>
             </div>
           </div>

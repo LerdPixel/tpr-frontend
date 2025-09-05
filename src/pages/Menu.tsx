@@ -5,6 +5,7 @@ const menuItems = [
   { label: "Новости", link: "/news" },
   { label: "Дисциплины", link: "/disciplines" },
   { label: "Тесты", link: "/tests" },
+  { label: "Вопросы", link: "/questions" },
   { label: "Лабораторные работы", link: "/labs" },
   { label: "Группы", link: "/groups" },
   { label: "Студенты", link: "/users" },
@@ -62,20 +63,7 @@ const Menu: React.FC = () => {
               width: "100%",
             }}
             onClick={() => {
-              // Check if route exists before navigating
-              const validRoutes = [
-                "/news",
-                "/disciplines",
-                "/tests",
-                "/groups",
-                "/users",
-                "/gradesheet",
-              ];
-              if (validRoutes.includes(item.link)) {
-                navigate(item.link);
-              } else {
-                alert(`Страница "${item.label}" ещё не реализована`);
-              }
+              navigate(item.link);
             }}
           >
             {item.label}

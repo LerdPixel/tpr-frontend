@@ -17,7 +17,7 @@ const questionTypes = {
   ],
   text: ["Краткий ответ", "Создание вопроса с коротким ответом"],
   numeric: ["Числовой", "Создание вопроса с численным ответом"],
-  sortable: ["Ранжирующий", "Создание вопроса на упорядочивание"],
+  ordering: ["Сортировка", "Создание вопроса на упорядочивание"],
   matching: ["Соответствие", "Создание вопроса на соответствие"],
 } as const;
 
@@ -64,7 +64,7 @@ const QuestionCreator: React.FC<QuestionCreatorProps> = ({
         return <SingleChoice data={data} setData={setData} />;
       case "numeric":
         return <NumericAnswer data={data} setData={setData} />;
-      case "sortable":
+      case "ordering":
         return <SortableQuestion data={data} setData={setData} />;
       case "matching":
         return <MatchingQuestion data={data} setData={setData} />;
