@@ -141,7 +141,9 @@ export default function TestsManagementPage() {
     setLoading(true);
     setError(null);
     try {
-      const response = await axios.get("/server/tests");
+      const response = await axios.get("/server/tests", {
+        headers: { Authorization: `Bearer ${getAccess()}` },
+      });
       if (response.status !== 200)
         throw new Error("Ошибка при загрузке тестов");
       setTests((response.data as Test[]) || []);
@@ -323,7 +325,10 @@ export default function TestsManagementPage() {
   };
 
   const openEditModal = async (test: Test) => {
-    // Fetch current test topics
+    const access_token = localStorage.getItem("token")
+    if (access_token == null) {
+        store.refresh() 
+    }
     try {
       const response = await axios.get(`/server/tests/${test.id}/topics`);
       if (response.status === 200) {

@@ -126,6 +126,10 @@ export default function TopicsPage() {
   };
   // Create question
   const createQuestion = async (question: Omit<IQuestion, "id">) => {
+    console.log(question);
+    if (question.question_type === "text") {
+      question = {...question, data: { "correct" : question.data.correct[0] || "" } }
+    }
     try {
       const response = await axios.post("/server/admin/questions", question, {
         headers: {

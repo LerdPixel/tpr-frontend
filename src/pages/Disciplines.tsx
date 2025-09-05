@@ -21,6 +21,7 @@ interface Discipline {
   lecture_count: number;
   lecture_points: number;
   test_points: number;
+  test_id?: number;
   lab_count?: number;
   labs?: DisciplineLabComponent[];
   group_ids?: number[];
@@ -37,18 +38,27 @@ interface DisciplineCreateInput {
   lecture_count: number;
   lecture_points: number;
   test_points: number;
+  test_id: number;
   lab_count?: number;
   labs?: DisciplineLabComponent[];
   group_ids?: number[];
+}
+
+interface Test {
+  id: number;
+  title: string;
+  description?: string;
 }
 
 export default function DisciplinesPage() {
   const { store } = useContext(Context);
   const [disciplines, setDisciplines] = useState<Discipline[]>([]);
   const [groups, setGroups] = useState<IGroup[]>([]);
+  const [tests, setTests] = useState<Test[]>([]);
   const [selectedGroups, setSelectedGroups] = useState<IGroup[]>([]);
   const [loading, setLoading] = useState(false);
   const [groupsLoading, setGroupsLoading] = useState(false);
+  const [testsLoading, setTestsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [menu, setMenu] = useState<{ id: number } | null>(null);
@@ -100,6 +110,23 @@ export default function DisciplinesPage() {
     }
   };
 
+  // Fetch tests from server
+  const fetchTests = async () => {
+    setTestsLoading(true);
+    try {
+      const response = await axios.get("/server/tests", {
+        headers: { Authorization: `Bearer ${getAccess()}` },
+      });
+      if (response.status !== 200) throw new Error("Ошибка при загрузке тестов");
+      setTests(response.data as Test[]);
+    } catch (err: any) {
+      console.error("Error fetching tests:", err);
+      setError(err?.message || "Ошибка при загрузке тестов");
+    } finally {
+      setTestsLoading(false);
+    }
+  };
+
   // Fetch disciplines from server
   const fetchDisciplines = async () => {
     setLoading(true);
@@ -128,6 +155,7 @@ export default function DisciplinesPage() {
   // Create discipline
   const createDiscipline = async (disciplineData: DisciplineCreateInput) => {
     try {
+      console.log("Creating discipline with data:", disciplineData);
       const response = await axios.post(
         "/server/admin/disciplines",
         disciplineData,
@@ -135,6 +163,7 @@ export default function DisciplinesPage() {
           headers: { Authorization: `Bearer ${getAccess()}` },
         }
       );
+      console.log("Create discipline response:", response);
       if (response.status !== 201) {
         setError("Ошибка при создании дисциплины");
         throw new Error("Ошибка при создании дисциплины");
@@ -143,6 +172,8 @@ export default function DisciplinesPage() {
       setSuccess("Дисциплина успешно создана!");
     } catch (err: any) {
       console.error("Error creating discipline:", err);
+      console.error("Error response data:", err.response?.data);
+      console.error("Error response status:", err.response?.status);
       if (err.response?.data?.error) {
         setError(`Ошибка: ${err.response.data.error}`);
       } else if (err.response?.status === 401) {
@@ -195,10 +226,11 @@ export default function DisciplinesPage() {
     }
   };
 
-  // Load disciplines and groups on component mount
+  // Load disciplines, groups, and tests on component mount
   useEffect(() => {
     fetchDisciplines();
     fetchGroups();
+    fetchTests();
   }, []);
 
   // Click outside handler for dropdown menus
@@ -223,9 +255,10 @@ export default function DisciplinesPage() {
       data: {
         name: "",
         description: "",
-        lecture_count: 1,
+        lecture_count: 16,
         lecture_points: 10,
         test_points: 10,
+        test_id: undefined,
         group_ids: [],
       },
     });
@@ -262,10 +295,10 @@ export default function DisciplinesPage() {
     setError(null);
     setSuccess(null);
 
-    const { name, lecture_count, lecture_points, test_points } = modalData.data;
+    const { name, lecture_count, lecture_points, test_points, test_id } = modalData.data;
 
     // Validation
-    if (!name || !lecture_count || !lecture_points || !test_points) {
+    if (!name || !lecture_count || !lecture_points || !test_points || !test_id) {
       setError("Заполните все обязательные поля");
       return;
     }
@@ -282,10 +315,13 @@ export default function DisciplinesPage() {
         lecture_count: lecture_count!,
         lecture_points: lecture_points!,
         test_points: test_points!,
-        lab_count: modalLabs.length, // Auto-calculate from selected labs
-        labs: modalLabs,
-        group_ids: selectedGroups.map((group) => group.id),
+        test_id: test_id!,
+        lab_count: modalLabs.length,
+        labs: modalLabs.length > 0 ? modalLabs : [],
+        group_ids: selectedGroups.length > 0 ? selectedGroups.map((group) => group.id) : [],
       };
+
+      console.log("Discipline data being sent:", JSON.stringify(disciplineData, null, 2));
 
       if (modalData.mode === "create") {
         await createDiscipline(disciplineData);
@@ -305,6 +341,13 @@ export default function DisciplinesPage() {
       .filter((group) => groupIds.includes(group.id))
       .map((group) => group.name)
       .join(", ");
+  };
+
+  // Helper function to get test name by ID
+  const getTestName = (testId?: number) => {
+    if (!testId) return "Не выбран";
+    const test = tests.find((test) => test.id === testId);
+    return test ? test.title : `Тест #${testId}`;
   };
 
   // Laboratory work management functions
@@ -476,6 +519,14 @@ export default function DisciplinesPage() {
                       style={{ color: "#0056a6", fontWeight: "500" }}
                     >
                       Группы: {getGroupNames(discipline.group_ids)}
+                    </div>
+                  )}
+                  {discipline.test_id && (
+                    <div
+                      className={styles.itemDesc}
+                      style={{ color: "#059669", fontWeight: "500" }}
+                    >
+                      Тест: {getTestName(discipline.test_id)}
                     </div>
                   )}
                   <div
@@ -668,69 +719,85 @@ export default function DisciplinesPage() {
               </div>
             </div>
 
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
-                gap: "12px",
-              }}
-            >
-              <div>
-                <label
-                  className={styles.label}
-                  style={{
-                    display: "block",
-                    marginBottom: "4px",
-                    fontWeight: "600",
-                  }}
-                >
-                  Количество лекций *
-                </label>
-                <input
-                  type="number"
-                  value={modalData.data.lecture_count ?? ""}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    setModalData({
-                      ...modalData,
-                      data: {
-                        ...modalData.data,
-                        lecture_count:
-                          value === "" ? undefined : parseInt(value),
-                      },
-                    });
-                  }}
-                  placeholder="8"
-                  className={styles.input}
-                  min="1"
-                />
-              </div>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  gap: "12px",
+                }}
+              >
+                <div>
+                  <label
+                    className={styles.label}
+                    style={{
+                      display: "block",
+                      marginBottom: "4px",
+                      fontWeight: "600",
+                    }}
+                  >
+                    Выберите тест *
+                  </label>
+                  {testsLoading ? (
+                    <p style={{ color: "#666", fontSize: "14px" }}>
+                      Загрузка тестов...
+                    </p>
+                  ) : (
+                    <select
+                      value={modalData.data.test_id || ""}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        setModalData({
+                          ...modalData,
+                          data: {
+                            ...modalData.data,
+                            test_id: value === "" ? undefined : parseInt(value),
+                          },
+                        });
+                      }}
+                      className={styles.input}
+                      style={{ padding: "10px" }}
+                    >
+                      <option value="">Выберите тест</option>
+                      {tests.map((test) => (
+                        <option key={test.id} value={test.id}>
+                          {test.title}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </div>
 
-              <div>
-                <label
-                  className={styles.label}
-                  style={{
-                    display: "block",
-                    marginBottom: "4px",
-                    fontWeight: "600",
-                  }}
-                >
-                  Количество лабораторных работ
-                </label>
-                <div
-                  style={{
-                    padding: "10px",
-                    backgroundColor: "#f3f4f6",
-                    borderRadius: "6px",
-                    border: "1px solid #d1d5db",
-                    fontSize: "14px",
-                    color: "#374151",
-                  }}
-                >
-                  {modalLabs.length}
+                <div>
+                  <label
+                    className={styles.label}
+                    style={{
+                      display: "block",
+                      marginBottom: "4px",
+                      fontWeight: "600",
+                    }}
+                  >
+                    Количество лекций *
+                  </label>
+                  <input
+                    type="number"
+                    value={modalData.data.lecture_count ?? ""}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setModalData({
+                        ...modalData,
+                        data: {
+                          ...modalData.data,
+                          lecture_count:
+                            value === "" ? undefined : parseInt(value),
+                        },
+                      });
+                    }}
+                    placeholder="16"
+                    className={styles.input}
+                    min="1"
+                  />
                 </div>
               </div>
-            </div>
 
             <div
               style={{
@@ -817,7 +884,7 @@ export default function DisciplinesPage() {
                     fontWeight: "600",
                   }}
                 >
-                  Лабораторные работы
+                  Лабораторные работы (количество: {modalLabs.length})
                 </label>
                 <button
                   type="button"

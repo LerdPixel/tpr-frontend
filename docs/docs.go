@@ -29,7 +29,7 @@ const docTemplate = `{
                 "summary": "Create discipline",
                 "parameters": [
                     {
-                        "description": "Discipline",
+                        "description": "Discipline (includes test_id)",
                         "name": "input",
                         "in": "body",
                         "required": true,
@@ -96,7 +96,7 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "description": "Discipline",
+                        "description": "Discipline (includes test_id)",
                         "name": "input",
                         "in": "body",
                         "required": true,
@@ -1909,6 +1909,33 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/disciplines/my-ids": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "disciplines"
+                ],
+                "summary": "List discipline IDs available to me",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "integer"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/disciplines/{id}": {
             "get": {
                 "produces": [
@@ -1978,6 +2005,61 @@ const docTemplate = `{
                             "type": "array",
                             "items": {
                                 "$ref": "#/definitions/models.LectureMaterial"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/disciplines/{id}/test": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tests"
+                ],
+                "summary": "Get my discipline test (student)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Discipline ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.Test"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "type": "string"
+                                }
                             }
                         }
                     }
@@ -2292,6 +2374,49 @@ const docTemplate = `{
                                 "error": {
                                     "type": "string"
                                 }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/seminarist/groups/{groupId}/progress": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "progress"
+                ],
+                "summary": "Get group progress [staff]",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Group ID",
+                        "name": "groupId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Discipline ID",
+                        "name": "discipline_id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.GroupProgressRow"
                             }
                         }
                     }
@@ -2903,6 +3028,7 @@ const docTemplate = `{
                 "lecture_count",
                 "lecture_points",
                 "name",
+                "test_id",
                 "test_points"
             ],
             "properties": {
@@ -2932,6 +3058,9 @@ const docTemplate = `{
                 },
                 "name": {
                     "type": "string"
+                },
+                "test_id": {
+                    "type": "integer"
                 },
                 "test_points": {
                     "type": "integer"
@@ -2959,6 +3088,7 @@ const docTemplate = `{
                 "lecture_count",
                 "lecture_points",
                 "name",
+                "test_id",
                 "test_points"
             ],
             "properties": {
@@ -2988,6 +3118,9 @@ const docTemplate = `{
                 },
                 "name": {
                     "type": "string"
+                },
+                "test_id": {
+                    "type": "integer"
                 },
                 "test_points": {
                     "type": "integer"
@@ -3027,6 +3160,9 @@ const docTemplate = `{
                 "name": {
                     "type": "string"
                 },
+                "test_id": {
+                    "type": "integer"
+                },
                 "test_points": {
                     "type": "integer"
                 }
@@ -3046,6 +3182,26 @@ const docTemplate = `{
                 },
                 "name": {
                     "type": "string"
+                }
+            }
+        },
+        "models.GroupProgressRow": {
+            "type": "object",
+            "properties": {
+                "first_name": {
+                    "type": "string"
+                },
+                "group_id": {
+                    "type": "integer"
+                },
+                "last_name": {
+                    "type": "string"
+                },
+                "progress": {
+                    "$ref": "#/definitions/models.ProgressView"
+                },
+                "user_id": {
+                    "type": "integer"
                 }
             }
         },

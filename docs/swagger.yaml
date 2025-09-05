@@ -88,12 +88,15 @@ definitions:
         type: integer
       name:
         type: string
+      test_id:
+        type: integer
       test_points:
         type: integer
     required:
     - lecture_count
     - lecture_points
     - name
+    - test_id
     - test_points
     type: object
   models.DisciplineLabComponent:
@@ -126,12 +129,15 @@ definitions:
         type: integer
       name:
         type: string
+      test_id:
+        type: integer
       test_points:
         type: integer
     required:
     - lecture_count
     - lecture_points
     - name
+    - test_id
     - test_points
     type: object
   models.DisciplineView:
@@ -156,6 +162,8 @@ definitions:
         type: integer
       name:
         type: string
+      test_id:
+        type: integer
       test_points:
         type: integer
     type: object
@@ -169,6 +177,19 @@ definitions:
         type: integer
       name:
         type: string
+    type: object
+  models.GroupProgressRow:
+    properties:
+      first_name:
+        type: string
+      group_id:
+        type: integer
+      last_name:
+        type: string
+      progress:
+        $ref: '#/definitions/models.ProgressView'
+      user_id:
+        type: integer
     type: object
   models.LectureMaterial:
     properties:
@@ -477,7 +498,7 @@ paths:
       consumes:
       - application/json
       parameters:
-      - description: Discipline
+      - description: Discipline (includes test_id)
         in: body
         name: input
         required: true
@@ -540,7 +561,7 @@ paths:
         name: id
         required: true
         type: integer
-      - description: Discipline
+      - description: Discipline (includes test_id)
         in: body
         name: input
         required: true
@@ -1730,6 +1751,56 @@ paths:
       summary: List lecture materials available to me in a discipline
       tags:
       - materials
+  /api/v1/disciplines/{id}/test:
+    get:
+      parameters:
+      - description: Discipline ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Test'
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      security:
+      - ApiKeyAuth: []
+      summary: Get my discipline test (student)
+      tags:
+      - tests
+  /api/v1/disciplines/my-ids:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              type: integer
+            type: array
+      security:
+      - ApiKeyAuth: []
+      summary: List discipline IDs available to me
+      tags:
+      - disciplines
   /api/v1/groups:
     get:
       consumes:
@@ -1931,6 +2002,33 @@ paths:
       summary: Get question by ID
       tags:
       - questions
+  /api/v1/seminarist/groups/{groupId}/progress:
+    get:
+      parameters:
+      - description: Group ID
+        in: path
+        name: groupId
+        required: true
+        type: integer
+      - description: Discipline ID
+        in: query
+        name: discipline_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.GroupProgressRow'
+            type: array
+      security:
+      - ApiKeyAuth: []
+      summary: Get group progress [staff]
+      tags:
+      - progress
   /api/v1/seminarist/progress:
     get:
       parameters:

@@ -11,7 +11,7 @@ const NumericAnswer: React.FC<NumericAnswerProps> = ({ data, setData }) => {
   const [tolerance, setTolerance] = useState(data?.tolerance || "2");
 
   useEffect(() => {
-    setData({ answer, tolerance });
+    setData({ correct : answer, tolerance });
   }, [answer, tolerance, setData]);
 
   const handleNumericInput = (
