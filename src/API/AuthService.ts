@@ -5,12 +5,14 @@ import axios from "axios";
 
 export default class AuthService {
     static async login(email: string, password: string) {
-        const response = await axios.post('/server/auth/login', {email, password},  { withCredentials: true }).catch(function(error) {
-          console.log(error.response.data);
-        })
-        console.log(response);
-        
-        return response
+        try {
+            const response = await axios.post('/server/auth/login', {email, password},  { withCredentials: true });
+            console.log(response);
+            return response;
+        } catch (error: any) {
+            console.log(error.response?.data);
+            throw error;
+        }
     }
     static async registration(regData : RegData) {
          const response = await axios.post('/server/auth/register', regData, { withCredentials: true })//.catch(function(error) {

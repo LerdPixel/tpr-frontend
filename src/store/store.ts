@@ -1,14 +1,11 @@
 import AuthService from "@/API/AuthService";
-import type { IUser, RegData } from "@/models/IUser";
+import type {RegData } from "@/models/IUser";
 import AdminService  from "@/API/AdminService";
 import {makeAutoObservable} from "mobx"
 import axios from 'axios'
-import { API_URL } from "@/http";
-import { useCookies } from 'react-cookie';
 import { Cookies } from "react-cookie";
-import { Cog } from "lucide-react";
 import type {IGroup} from '../components/ui/interfaces/IGroup.tsx'
-import type { IStudent } from "@/components/ui/interfaces/IStudent.tsx";
+import type { IPerson } from "../components/ui/interfaces/IPerson.tsx";
 
 interface CookieSetOptions {
   path?: string;
@@ -19,12 +16,20 @@ interface CookieSetOptions {
   httpOnly?: boolean;
   sameSite?: boolean | "lax" | "strict" | "none";
 }
-export const roleToId = () => {
-
+export const RoleFromId = (id : string): string => {
+    if (id == '3')
+        return "admin"
+    if (id == '2')
+        return "seminarist"
+    if (id == '1')
+        return "student"
+    return ""
 }
 export default class Store {
     isAuth = false;
     isLoading = true;
+    person: IPerson | null = null;
+    role: string = "";
     private cookies: Cookies;
     constructor() {
         this.cookies = new Cookies();
@@ -36,8 +41,13 @@ export default class Store {
     setAuth(bool: boolean) {
         this.isAuth = bool;
     }
-    setUser(user : IUser) {
-        this.user = user;
+
+    setPerson(person: IPerson | null) {
+        this.person = person;
+    }
+
+    setRole(role: string) {
+        this.role = role;
     }
 
     getCookie(name: string): string | undefined {
@@ -51,23 +61,27 @@ export default class Store {
     removeCookie(name: string, options?: CookieSetOptions): void {
         this.cookies.remove(name, { path: "/", ...options });
     }
-    private authHandler(response) {
+    private async authHandler(response: any) {
         console.log(response);
         
         if (response.status == 200 || response.status == 201 ) {
             this.setAuth(true);
             localStorage.setItem('token', response.data.access_token);
             this.setCookie('refresh', response.data.refresh_token);
+            // Fetch user info after successful authentication
+            await this.getUserInfo();
         } else {
             this.logout()
         }
     }
-    writeTokens(response) {
+    async writeTokens(response: any) {
         this.setAuth(true);
         localStorage.setItem('token', response.data.access_token);
         this.setCookie('refresh', response.data.refresh_token);
+        // Fetch user info after writing tokens
+        await this.getUserInfo();
     }
-    private errorHandler(error) {
+    private errorHandler(error: any) {
         console.log(error.response);
         if (error.response.status == 401) {
             console.log("HANDLER: 401");
@@ -81,37 +95,52 @@ export default class Store {
     async getUserInfo() {
         const access_token = localStorage.getItem("token")
         if (access_token == null) {
-            this.refresh() 
+            await this.refresh() 
         }
-        const response = await axios.get('/server/auth/me', {
-            headers: { Authorization: `Bearer ${access_token}` }
-        }).catch((e) => {
-            this.errorHandler(e)
-        })
-        return response.data
+        try {
+            const response = await axios.get('/server/auth/me', {
+                headers: { Authorization: `Bearer ${access_token}` }
+            });
+            
+            if (response?.data) {
+                this.setPerson(response.data as IPerson);
+                const roleId = (response.data as any).roleID || (response.data as any).role_id;
+                this.setRole(RoleFromId(roleId?.toString() || ""));
+            }
+            
+            return response?.data
+        } catch (e) {
+            this.errorHandler(e);
+            return null;
+        }
     }
     async login(email : string, password : string) {
         try {
-            const response = await AuthService.login(email, password).catch((e) => {
-                console.log(response);
-            });
-            this.authHandler(response)
+            const response = await AuthService.login(email, password);
+            await this.authHandler(response);
             console.log("my_cookie:  ", this.getCookie("refresh"));
-            return response.status
-        } catch(e) {
+            return response.status;
+        } catch(e: any) {
             console.log(e.response?.data?.message);
         }
     }
 
     async registration(regData: RegData) {
-        const response = await AuthService.registration(regData).catch((e) => {
-            this.errorHandler(e)
-            return e.response
-        })
-        return response
+        try {
+            const response = await AuthService.registration(regData);
+            if (response && (response.status === 200 || response.status === 201)) {
+                await this.authHandler(response);
+            }
+            return response;
+        } catch (e: any) {
+            this.errorHandler(e);
+            return e.response;
+        }
     }
     logout() {
         this.setAuth(false);
+        this.setPerson(null);
+        this.setRole("");
         localStorage.removeItem('auth')
         localStorage.removeItem('token')
         this.removeCookie("refresh")
@@ -120,7 +149,7 @@ export default class Store {
         let refresh_token = this.getCookie("refresh")
         if (refresh_token) {
             const response = await AuthService.refresh(refresh_token)
-            this.authHandler(response)
+            await this.authHandler(response)
         }
         else {
             this.setAuth(false)
@@ -133,12 +162,16 @@ export default class Store {
         return response
     }
     async getPending() {
-        const access_token = localStorage.getItem("token")
+        let access_token = localStorage.getItem("token")
         if (access_token == null) {
-            this.refresh() 
+            await this.refresh() 
+            access_token = localStorage.getItem("token")
         }
-        const response = await AdminService.getPending(access_token)
-        return response
+        if (access_token) {
+            const response = await AdminService.getPending(access_token)
+            return response
+        }
+        return null
     }
     async approve(id : number) {
         const access_token = localStorage.getItem("token")
@@ -172,7 +205,7 @@ export default class Store {
         }).catch(this.errorHandler)
         return response
     }
-    async updateUser(id : number, user : IStudent) {
+    async updateUser(id : number, user : IPerson) {
         const access_token = localStorage.getItem("token")
         if (access_token == null) {
             this.refresh() 
@@ -230,7 +263,7 @@ export default class Store {
         }).catch(this.errorHandler)
         return response
     }
-    async createGroup(group) {
+    async createGroup(group: any) {
         const access_token = localStorage.getItem("token")
         if (access_token == null) {
             this.refresh() 
@@ -243,7 +276,7 @@ export default class Store {
         }).catch(this.errorHandler)
         return response
     }
-    async editUser(user : IStudent) {
+    async editUser(user : IPerson) {
         try {
             const access_token = localStorage.getItem("token");
             if (!access_token) throw new Error("Нет токена авторизации");
@@ -271,5 +304,4 @@ export default class Store {
             throw error;
         }
     }
-    async 
 }

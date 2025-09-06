@@ -16,7 +16,6 @@ interface Discipline {
   labs?: DisciplineLabComponent[];
 }
 
-const a = " "
 interface DisciplineLabComponent {
   lab_id: number;
   points: number;

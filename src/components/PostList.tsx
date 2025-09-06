@@ -1,4 +1,4 @@
-import { type IStudent } from "./ui/interfaces/IStudent.tsx";
+import { type IPerson } from "./ui/interfaces/IPerson.tsx";
 import Student from "./Student.tsx";
 import styles from "./styles/PostList.module.css";
 
@@ -17,11 +17,7 @@ const PostList = <T,>({ posts, title, renderItem, ...props }: Props<T>) => {
     <div className={styles.studentTable}>
       <h1 className={styles.studentTitle}>{title}</h1>
       <table>
-        <tbody>
-          {posts.map((post, index) => (
-            renderItem(post, index)
-          ))}
-        </tbody>
+        <tbody>{posts.map((post, index) => renderItem(post, index))}</tbody>
       </table>
     </div>
   );

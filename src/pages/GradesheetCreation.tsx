@@ -1,19 +1,19 @@
 import React, { useState } from "react";
-import type {IGroup} from '../components/ui/interfaces/IGroup.tsx'
+import type { IGroup } from "../components/ui/interfaces/IGroup.tsx";
 import SectionSetup from "../components/SectionSetup.tsx";
 import FinalSectionSetup from "../components/FinalSectionSetup.tsx";
 import type { FinalColumn } from "../components/FinalSectionSetup.tsx";
 import GradeTable from "../components/GradeTable.tsx";
 import GroupSelector from "../components/GroupSelector.tsx";
 
-export interface IStudent {
+export interface IPerson {
   id: number;
   name: string;
   groupId: number;
 }
 
 const GradesheetCreation = () => {
-   const [courseName, setCourseName] = useState("");
+  const [courseName, setCourseName] = useState("");
   const [section1Lessons, setSection1Lessons] = useState(0);
   const [section2Lessons, setSection2Lessons] = useState(0);
   const [section1Max, setSection1Max] = useState(0);
@@ -24,12 +24,12 @@ const GradesheetCreation = () => {
 
   // Пример данных
   const groups: IGroup[] = [
-    { id: 1, name: "Группа A", created_at : "" },
-    { id: 2, name: "Группа B", created_at : "" },
-    { id: 3, name: "Группа C", created_at : "" },
+    { id: 1, name: "Группа A", created_at: "" },
+    { id: 2, name: "Группа B", created_at: "" },
+    { id: 3, name: "Группа C", created_at: "" },
   ];
 
-  const allStudents: IStudent[] = [
+  const allStudents: IPerson[] = [
     { id: 1, name: "Иванов Иван", groupId: 1 },
     { id: 2, name: "Петров Петр", groupId: 1 },
     { id: 3, name: "Сидоров Сидор", groupId: 2 },
@@ -37,7 +37,9 @@ const GradesheetCreation = () => {
     { id: 5, name: "Кузнецова Мария", groupId: 3 },
   ];
 
-  const students = allStudents.filter(st => selectedGroups.map(gr => gr.id).includes(st.groupId));
+  const students = allStudents.filter((st) =>
+    selectedGroups.map((gr) => gr.id).includes(st.groupId)
+  );
 
   const totalMax =
     section1Max +
@@ -61,10 +63,7 @@ const GradesheetCreation = () => {
         </label>
       </div>
 
-      <GroupSelector
-        groups={groups}
-        setSelectedGroups={setSelectedGroups}
-      />
+      <GroupSelector groups={groups} setSelectedGroups={setSelectedGroups} />
 
       <SectionSetup
         sectionName="Раздел 1"

@@ -1,22 +1,21 @@
 import React, { useEffect, useState } from "react";
 import styles from "./styles/UserForm.module.css";
-import { type IStudent } from "./ui/interfaces/IStudent.tsx";
+import { type IPerson } from "./ui/interfaces/IPerson.tsx";
 import { SelectList } from "./ui/select/Select.tsx";
 import type { IGroup } from "./ui/interfaces/IGroup.tsx";
 
-
 interface Props {
-  user: IStudent;
-  onSave: (updatedUser: IStudent) => void;
+  user: IPerson;
+  onSave: (updatedUser: IPerson) => void;
   groups: IGroup[];
 }
 
 const UserForm: React.FC<Props> = ({ user, onSave, groups }) => {
-  const [formData, setFormData] = useState<IStudent>({ ...user });
+  const [formData, setFormData] = useState<IPerson>({ ...user });
   useEffect(() => {
     setFormData({ ...user });
-  }, [user])
-  const handleChange = (field: keyof IStudent, value: string | number) => {
+  }, [user]);
+  const handleChange = (field: keyof IPerson, value: string | number) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -24,7 +23,6 @@ const UserForm: React.FC<Props> = ({ user, onSave, groups }) => {
     e.preventDefault();
     onSave(formData);
     console.log(formData);
-    
   };
   return (
     <form onSubmit={handleSubmit} className={styles.form}>
@@ -38,12 +36,12 @@ const UserForm: React.FC<Props> = ({ user, onSave, groups }) => {
           disabled
         />
       </label>
-     <br />
+      <br />
 
       <label>
         Имя:
         <input
-        className={styles.formInput}
+          className={styles.formInput}
           type="text"
           value={formData.first_name}
           onChange={(e) => handleChange("first_name", e.target.value)}
@@ -54,7 +52,7 @@ const UserForm: React.FC<Props> = ({ user, onSave, groups }) => {
       <label>
         Фамилия:
         <input
-        className={styles.formInput}
+          className={styles.formInput}
           type="text"
           value={formData.last_name}
           onChange={(e) => handleChange("last_name", e.target.value)}
@@ -65,7 +63,7 @@ const UserForm: React.FC<Props> = ({ user, onSave, groups }) => {
       <label>
         Отчество:
         <input
-        className={styles.formInput}
+          className={styles.formInput}
           type="text"
           value={formData.patronymic}
           onChange={(e) => handleChange("patronymic", e.target.value)}
@@ -75,7 +73,7 @@ const UserForm: React.FC<Props> = ({ user, onSave, groups }) => {
       <label>
         Группа:
         <SelectList
-        className={styles.formInput}
+          className={styles.formInput}
           name="group_id"
           options={groups.map((g) => ({ label: g.name, value: g.id }))}
           value={formData.group_id}
@@ -83,7 +81,9 @@ const UserForm: React.FC<Props> = ({ user, onSave, groups }) => {
           placeholder="Выберите группу"
         />
       </label>
-      <button type="submit" className={styles.btn}>Сохранить</button>
+      <button type="submit" className={styles.btn}>
+        Сохранить
+      </button>
     </form>
   );
 };

@@ -2,33 +2,31 @@ import { MoreVertical } from "lucide-react"; // иконка троеточия
 import { useState } from "react";
 import styles from "./styles/Student.module.css";
 import SmartImg from "./ui/SmartImg/SmartImg";
-import type { IStudent } from "./ui/interfaces/IStudent";
+import type { IPerson } from "./ui/interfaces/IPerson";
 
-import DisApprovedImg from "../imgs/disapproved.png"
-import DeleteImg from "../imgs/trash-bin.png"
-import HoverDeleteImg from "../imgs/trash.png"
-import HoverCheckImg from "../imgs/accept.png"
-import CheckMarkImg from "../imgs/check_mark.png"
+import DisApprovedImg from "../imgs/disapproved.png";
+import DeleteImg from "../imgs/trash-bin.png";
+import HoverDeleteImg from "../imgs/trash.png";
+import HoverCheckImg from "../imgs/accept.png";
+import CheckMarkImg from "../imgs/check_mark.png";
 import StudentImg from "../imgs/user.png";
 import SeminaristImg from "../imgs/seminarist.png";
 
-
-const StudentAva = (student : IStudent, ...props) => {
-    if (student.is_approved) {
-        if (student.group_id == 1)
-          return <img src={SeminaristImg} {...props}></img>
-        return <img src={StudentImg} {...props}></img>
-    }
-    else {
-        return <img src={DisApprovedImg} {...props}></img>
-    }
-}
+const StudentAva = (student: IPerson, ...props) => {
+  if (student.is_approved) {
+    if (student.group_id == 1)
+      return <img src={SeminaristImg} {...props}></img>;
+    return <img src={StudentImg} {...props}></img>;
+  } else {
+    return <img src={DisApprovedImg} {...props}></img>;
+  }
+};
 
 const Student = ({ student, remove, approve, groupFromId, onClick }) => {
-    const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(false);
 
-    const studentName = () =>
-        `${student.last_name} ${student.first_name} ${student.patronymic}`;
+  const studentName = () =>
+    `${student.last_name} ${student.first_name} ${student.patronymic}`;
 
   return (
     <tr className={styles.studentRow}>
@@ -36,15 +34,29 @@ const Student = ({ student, remove, approve, groupFromId, onClick }) => {
       <td className={styles.studentInfo} onClick={() => onClick(student)}>
         <div className={styles.studentName}>{studentName()}</div>
         {student.group_id && (
-          <div className={styles.studentGroup}>{groupFromId(student.group_id)}</div>
+          <div className={styles.studentGroup}>
+            {groupFromId(student.group_id)}
+          </div>
         )}
       </td>
-    <td>
-        <SmartImg InitialImage={DeleteImg} HoverImage={HoverDeleteImg} className={styles.ava} onClick={() => remove(student)}></SmartImg>
-    </td>
-    {student.is_approved || <td>
-        <SmartImg onClick={() => approve(student)} InitialImage={CheckMarkImg} HoverImage={HoverCheckImg} className={styles.ava}></SmartImg>
-    </td>}
+      <td>
+        <SmartImg
+          InitialImage={DeleteImg}
+          HoverImage={HoverDeleteImg}
+          className={styles.ava}
+          onClick={() => remove(student)}
+        ></SmartImg>
+      </td>
+      {student.is_approved || (
+        <td>
+          <SmartImg
+            onClick={() => approve(student)}
+            InitialImage={CheckMarkImg}
+            HoverImage={HoverCheckImg}
+            className={styles.ava}
+          ></SmartImg>
+        </td>
+      )}
       {/* <td className={styles.studentActions}>
         <button
           className={styles.moreBtn}

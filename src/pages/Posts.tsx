@@ -7,7 +7,7 @@ import PostList from "../components/PostList.tsx";
 import MyButton from "../components/ui/button/MyButton.tsx";
 import { useFetching } from "../hooks/useFetching.ts";
 import { usePosts } from "../hooks/usePosts.ts";
-import { type IStudent } from "../components/ui/interfaces/IStudent.tsx";
+import { type IPerson } from "../components/ui/interfaces/IPerson.tsx";
 import { type IGroup } from "../components/ui/interfaces/IGroup.tsx";
 import { getPageCount } from "../utils/pages.ts";
 import { Outlet, useParams } from "react-router-dom";
@@ -28,8 +28,8 @@ const Posts = () => {
     groups: "id" in params ? [Number(params.id)] : [],
     archived: false,
   };
-  const [selectedUser, setSelectedUser] = useState<IStudent | null>(null);
-  const [posts, setPosts] = useState<IStudent[]>([]);
+  const [selectedUser, setSelectedUser] = useState<IPerson | null>(null);
+  const [posts, setPosts] = useState<IPerson[]>([]);
   const [filter, setFilter] = useState({ sort: "", query: "" });
   const [receive, setReceive] = useState(initialReceive);
   const [modal, setModal] = useState(false);
@@ -86,19 +86,19 @@ const Posts = () => {
     if (!groupsLoader) fetchUsers();
   }, [receive, groupsLoader]);
 
-  const createPost = (newPost: IStudent) => {
+  const createPost = (newPost: IPerson) => {
     setPosts([...posts, newPost]);
     setModal(false);
   };
-  const removeStudent = (student: IStudent) => {
+  const removeStudent = (student: IPerson) => {
     store.delete(student.id);
-    setPosts(posts.filter((p: IStudent) => p.id !== student.id));
+    setPosts(posts.filter((p: IPerson) => p.id !== student.id));
   };
-  const approveStudent = (student: IStudent) => {
+  const approveStudent = (student: IPerson) => {
     store.approve(student.id);
     setPosts(
       posts
-        .filter((p: IStudent) => p.id !== student.id)
+        .filter((p: IPerson) => p.id !== student.id)
         .concat([{ ...student, is_approved: true }])
     );
   };
@@ -130,11 +130,11 @@ const Posts = () => {
     }
     return newPosts;
   };
-  const clickOnStudent = (student: IStudent) => {
+  const clickOnStudent = (student: IPerson) => {
     setSelectedUser(student);
     setModal(true);
   };
-  const editUser = async (student: IStudent) => {
+  const editUser = async (student: IPerson) => {
     setModal(false);
     store.editUser(student);
     setPosts((prev) =>
@@ -177,7 +177,7 @@ const Posts = () => {
       {postError && (
         <h1 style={{ color: "red" }}>Произошла ошибка в {postError}</h1>
       )}
-      <PostList<IStudent>
+      <PostList<IPerson>
         posts={sortedAndSearchedPosts}
         title="Студенты"
         renderItem={(student, index) => (
