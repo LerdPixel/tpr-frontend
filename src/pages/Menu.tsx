@@ -10,7 +10,7 @@ const menuItems = [
   { label: "Группы", link: "/groups" },
   { label: "Студенты", link: "/users" },
   { label: "Лекции", link: "/lectures" },
-  { label: "Ведомость", link: "/gradesheet" },
+  { label: "Тест ведомости", link: "/gradesheet/1/1" },
 ];
 
 const Menu: React.FC = () => {

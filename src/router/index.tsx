@@ -17,7 +17,7 @@ export const privateRoutes = [
   { path: "/users", element: <Posts />, exact: true },
   { path: "/users/:id", element: <Posts />, exact: true },
   { path: "/menu", element: <Menu />, exact: true },
-  { path: "/gradesheet", element: <GradebookPage />, exact: true },
+  { path: "/gradesheet/:disciplineId/:groupId", element: <GradebookPage />, exact: true },
   { path: "/groups", element: <GroupsPage />, exact: true },
   { path: "/news", element: <News />, exact: true },
   { path: "/questions", element: <TopicsPage />, exact: true },
@@ -28,5 +28,5 @@ export const privateRoutes = [
 export const publicRoutes = [
   { path: "/registration", element: <Registration />, exact: true },
   { path: "/login", element: <Login />, exact: true },
-  { path: "/gradesheet", element: <GradebookPage />, exact: true },
+  { path: "/gradesheet/:disciplineId/:groupId", element: <GradebookPage />, exact: true },
 ];

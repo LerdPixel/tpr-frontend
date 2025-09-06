@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useContext } from "react";
 import { Context } from "../context/index";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import {
   BookOpen,
@@ -52,6 +53,7 @@ interface Test {
 
 export default function DisciplinesPage() {
   const { store } = useContext(Context);
+  const navigate = useNavigate();
   const [disciplines, setDisciplines] = useState<Discipline[]>([]);
   const [groups, setGroups] = useState<IGroup[]>([]);
   const [tests, setTests] = useState<Test[]>([]);
@@ -380,6 +382,12 @@ export default function DisciplinesPage() {
     }
   };
 
+  // Open gradebook for discipline and group
+  const openGradebook = (disciplineId: number, groupId: number) => {
+    navigate(`/gradesheet/${disciplineId}/${groupId}`);
+    setMenu(null);
+  };
+
   return (
     <div className={styles.page}>
       {/* Error display */}
@@ -591,6 +599,37 @@ export default function DisciplinesPage() {
                 </button>
                 {menu?.id === discipline.id && (
                   <div className={styles.dropdown}>
+                    {/* Gradebook option for each group */}
+                    {discipline.group_ids && discipline.group_ids.length > 0 && (
+                      <>
+                        {discipline.group_ids.length === 1 ? (
+                          <button
+                            onClick={() => openGradebook(discipline.id, discipline.group_ids![0])}
+                            className={styles.dropdownItem}
+                          >
+                            Открыть ведомость
+                          </button>
+                        ) : (
+                          <div className={styles.submenu}>
+                            <span className={styles.submenuTitle}>Открыть ведомость:</span>
+                            {discipline.group_ids.map((groupId) => {
+                              const group = groups.find(g => g.id === groupId);
+                              return (
+                                <button
+                                  key={groupId}
+                                  onClick={() => openGradebook(discipline.id, groupId)}
+                                  className={styles.dropdownItem}
+                                  style={{ paddingLeft: "20px", fontSize: "14px" }}
+                                >
+                                  {group ? group.name : `Группа ${groupId}`}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+                        <hr style={{ margin: "4px 0", border: "none", borderTop: "1px solid #e5e7eb" }} />
+                      </>
+                    )}
                     <button
                       onClick={() => openEditModal(discipline)}
                       className={styles.dropdownItem}
