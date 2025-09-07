@@ -12,8 +12,23 @@ interface Discipline {
   lecture_count: number;
   lecture_points: number;
   test_points: number;
+  test_id: number;
   lab_count?: number;
   labs?: DisciplineLabComponent[];
+}
+
+interface Test {
+  id: number;
+  title: string;
+  description?: string;
+}
+
+interface TestScheduleCreateInput {
+  user_id: number;
+  discipline_id: number;
+  opens_at: string;
+  closes_at: string;
+  attempt_time_limit_sec: number;
 }
 
 interface DisciplineLabComponent {
@@ -79,6 +94,14 @@ export default function GradebookPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [selectedStudents, setSelectedStudents] = useState<Set<number>>(new Set());
+  const [showTestModal, setShowTestModal] = useState(false);
+  const [testData, setTestData] = useState<Test | null>(null);
+  const [testModalData, setTestModalData] = useState({
+    opensAt: new Date().toISOString().slice(0, 16),
+    closesAt: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString().slice(0, 16), // 2 hours from now
+    attemptTimeLimit: 60 // minutes
+  });
 
   // Auto-dismiss messages
   useEffect(() => {
@@ -101,6 +124,22 @@ export default function GradebookPage() {
       store.refresh();
     }
     return access_token;
+  };
+
+  // Fetch test data for the discipline
+  const fetchTest = async () => {
+    if (!discipline?.test_id) return;
+    try {
+      const response = await axios.get(`/server/tests/${discipline.test_id}`, {
+        headers: { Authorization: `Bearer ${getAccess()}` },
+      });
+      if (response.status === 200) {
+        setTestData(response.data as Test);
+      }
+    } catch (err: any) {
+      console.error("Error fetching test:", err);
+      // Test not found is not a critical error for gradebook functionality
+    }
   };
 
   // Fetch discipline data
@@ -322,6 +361,11 @@ export default function GradebookPage() {
 
         // Load progress after we have the basic data
         await fetchGroupProgress();
+        
+        // Load test data after discipline is loaded
+        if (discipline?.test_id) {
+          await fetchTest();
+        }
         console.log("Data load completed successfully");
       } catch (err) {
         console.error("Error loading gradebook data:", err);
@@ -332,6 +376,79 @@ export default function GradebookPage() {
 
     loadData();
   }, [disciplineId, groupId]);
+
+  // Load test when discipline changes
+  useEffect(() => {
+    if (discipline?.test_id) {
+      fetchTest();
+    }
+  }, [discipline?.test_id]);
+
+  // Handle student selection
+  const toggleStudentSelection = (studentId: number) => {
+    setSelectedStudents(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(studentId)) {
+        newSet.delete(studentId);
+      } else {
+        newSet.add(studentId);
+      }
+      return newSet;
+    });
+  };
+
+  const selectAllStudents = () => {
+    setSelectedStudents(new Set(students.map(s => s.id)));
+  };
+
+  const clearStudentSelection = () => {
+    setSelectedStudents(new Set());
+  };
+
+  // Handle test opening
+  const openTestModal = () => {
+    if (!testData) {
+      setError("Тест не найден для данной дисциплины");
+      return;
+    }
+    if (selectedStudents.size === 0) {
+      setError("Выберите хотя бы одного студента");
+      return;
+    }
+    setShowTestModal(true);
+  };
+
+  const closeTestModal = () => {
+    setShowTestModal(false);
+  };
+
+  const createTestSchedules = async () => {
+    if (!testData || !disciplineId || selectedStudents.size === 0) return;
+
+    try {
+      const schedulePromises = Array.from(selectedStudents).map(studentId => {
+        const scheduleData: TestScheduleCreateInput = {
+          user_id: studentId,
+          discipline_id: parseInt(disciplineId),
+          opens_at: new Date(testModalData.opensAt).toISOString(),
+          closes_at: new Date(testModalData.closesAt).toISOString(),
+          attempt_time_limit_sec: testModalData.attemptTimeLimit * 60 // convert minutes to seconds
+        };
+
+        return axios.post('/server/admin/tests/schedules', scheduleData, {
+          headers: { Authorization: `Bearer ${getAccess()}` },
+        });
+      });
+
+      await Promise.all(schedulePromises);
+      setSuccess(`Тест открыт для ${selectedStudents.size} студентов`);
+      setShowTestModal(false);
+      setSelectedStudents(new Set());
+    } catch (err: any) {
+      console.error("Error creating test schedules:", err);
+      setError(err?.response?.data?.error || "Ошибка при открытии теста");
+    }
+  };
 
   if (loading) {
     return (
@@ -439,15 +556,55 @@ export default function GradebookPage() {
         </div>
       )}
 
-      <h2 className={styles.title}>
-        Ведомость дисциплины "{discipline.name}" (группа: {group.name})
-      </h2>
+      <div className={styles.header}>
+        <h2 className={styles.title}>
+          Ведомость дисциплины "{discipline.name}" (группа: {group.name})
+        </h2>
+        <div className={styles.controls}>
+          {testData && (
+            <>
+              <div className={styles.selectionInfo}>
+                Выбрано студентов: {selectedStudents.size}
+                {selectedStudents.size > 0 && (
+                  <button 
+                    onClick={clearStudentSelection}
+                    className={styles.clearBtn}
+                  >
+                    Очистить
+                  </button>
+                )}
+                <button 
+                  onClick={selectAllStudents}
+                  className={styles.selectAllBtn}
+                >
+                  Выбрать всех
+                </button>
+              </div>
+              <button
+                onClick={openTestModal}
+                disabled={selectedStudents.size === 0}
+                className={`${styles.openTestBtn} ${selectedStudents.size === 0 ? styles.disabled : ''}`}
+              >
+                Открыть тест
+              </button>
+            </>
+          )}
+        </div>
+      </div>
 
       <table className={styles.table}>
         <thead>
           {/* верхняя строка */}
           <tr>
-            <th rowSpan={2}>Ученик</th>
+            <th rowSpan={2}>
+              <input
+                type="checkbox"
+                checked={selectedStudents.size === students.length && students.length > 0}
+                onChange={selectedStudents.size === students.length ? clearStudentSelection : selectAllStudents}
+                style={{ marginRight: '8px' }}
+              />
+              Ученик
+            </th>
             <th colSpan={discipline.lecture_count}>Лекции</th>
             {Array.from({ length: discipline.lab_count || 0 }).map((_, i) => (
               <th key={`labHeader${i}`} rowSpan={2}>
@@ -475,6 +632,12 @@ export default function GradebookPage() {
             return (
               <tr key={student.id}>
                 <td>
+                  <input
+                    type="checkbox"
+                    checked={selectedStudents.has(student.id)}
+                    onChange={() => toggleStudentSelection(student.id)}
+                    style={{ marginRight: '8px' }}
+                  />
                   {`${student.last_name} ${student.first_name[0]}.${student.patronymic[0]}.`}
                 </td>
                 {Array.from({ length: discipline.lecture_count }).map(
@@ -525,7 +688,79 @@ export default function GradebookPage() {
         <p>• Кликните по ячейке лекции, чтобы отметить/снять посещение</p>
         <p>• Зеленый цвет - присутствовал, красный с "Н" - отсутствовал</p>
         <p>• Баллы за лабораторные и тесты загружаются с сервера</p>
+        {testData && (
+          <p>• Доступен тест: "{testData.title}"</p>
+        )}
       </div>
+
+      {/* Test Schedule Modal */}
+      {showTestModal && (
+        <div className={styles.modalOverlay} onClick={closeTestModal}>
+          <div
+            className={styles.modal}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className={styles.modalTitle}>
+              Открыть тест "{testData?.title}" для {selectedStudents.size} студентов
+            </h3>
+
+            <div className={styles.modalBody}>
+              <div className={styles.formGroup}>
+                <label className={styles.label}>
+                  Время открытия:
+                  <input
+                    type="datetime-local"
+                    value={testModalData.opensAt}
+                    onChange={(e) => setTestModalData(prev => ({ ...prev, opensAt: e.target.value }))}
+                    className={styles.input}
+                  />
+                </label>
+              </div>
+
+              <div className={styles.formGroup}>
+                <label className={styles.label}>
+                  Время закрытия:
+                  <input
+                    type="datetime-local"
+                    value={testModalData.closesAt}
+                    onChange={(e) => setTestModalData(prev => ({ ...prev, closesAt: e.target.value }))}
+                    className={styles.input}
+                  />
+                </label>
+              </div>
+
+              <div className={styles.formGroup}>
+                <label className={styles.label}>
+                  Время на прохождение (минуты):
+                  <input
+                    type="number"
+                    min="1"
+                    max="300"
+                    value={testModalData.attemptTimeLimit}
+                    onChange={(e) => setTestModalData(prev => ({ ...prev, attemptTimeLimit: parseInt(e.target.value) || 60 }))}
+                    className={styles.input}
+                  />
+                </label>
+              </div>
+            </div>
+
+            <div className={styles.modalActions}>
+              <button
+                onClick={closeTestModal}
+                className={`${styles.btn} ${styles.gray}`}
+              >
+                Отмена
+              </button>
+              <button
+                onClick={createTestSchedules}
+                className={`${styles.btn} ${styles.blue}`}
+              >
+                Открыть тест
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
