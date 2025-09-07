@@ -1,7 +1,9 @@
-import React from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { observer } from "mobx-react-lite";
+import { Context } from "../context/index.ts";
 
-const menuItems = [
+const adminMenuItems = [
   { label: "Новости", link: "/news" },
   { label: "Дисциплины", link: "/disciplines" },
   { label: "Тесты", link: "/tests" },
@@ -10,11 +12,35 @@ const menuItems = [
   { label: "Группы", link: "/groups" },
   { label: "Студенты", link: "/users" },
   { label: "Лекции", link: "/lectures" },
-  { label: "Тест ведомости", link: "/gradesheet/1/1" },
 ];
+const seminaristMenuItems = [
+  { label: "Новости", link: "/news" },
+  { label: "Дисциплины", link: "/disciplines" },
+  { label: "Тесты", link: "/tests" },
+  { label: "Лабораторные работы", link: "/labs" },
+  { label: "Группы", link: "/groups" },
+  { label: "Студенты", link: "/users" },
+  { label: "Лекции", link: "/lectures" },
+];
+const studentMenuItems = [
+  { label: "Новости", link: "/news" },
+  { label: "Дисциплины", link: "/disciplines" },
+  { label: "Тесты", link: "/tests" },
+  { label: "Лабораторные работы", link: "/labs" },
+  { label: "Лекции", link: "/lectures" },
+]
 
 const Menu: React.FC = () => {
   const navigate = useNavigate();
+  const { store } = useContext(Context);
+  const [menuItems, setMenuItems] = useState(studentMenuItems)
+  useEffect(() => {
+    if (store.role === "seminarist")
+      setMenuItems(seminaristMenuItems)
+    else if (store.role === "admin")
+      setMenuItems(adminMenuItems) 
+  }, [store.role])
+
   return (
     <div
       style={{
@@ -74,4 +100,4 @@ const Menu: React.FC = () => {
   );
 };
 
-export default Menu;
+export default observer(Menu);
