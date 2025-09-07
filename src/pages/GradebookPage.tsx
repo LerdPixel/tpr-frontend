@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext } from "react";
 import { Context } from "../context/index";
 import axios from "axios";
 import { useParams } from "react-router-dom";
+import TestScheduleModal from "../components/TestScheduleModal";
 import styles from "../styles/Gradebook.module.css";
 
 // Types based on API documentation
@@ -21,6 +22,24 @@ interface Test {
   id: number;
   title: string;
   description?: string;
+}
+
+interface TestSchedule {
+  id: number;
+  user_id: number;
+  discipline_id: number;
+  opens_at: string;
+  closes_at: string;
+  attempt_time_limit_sec: number;
+  max_attempts?: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+interface TestScheduleUpdateInput {
+  opens_at: string;
+  closes_at: string;
+  attempt_time_limit_sec: number;
 }
 
 interface TestScheduleCreateInput {
@@ -94,14 +113,23 @@ export default function GradebookPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [selectedStudents, setSelectedStudents] = useState<Set<number>>(new Set());
+  const [selectedStudents, setSelectedStudents] = useState<Set<number>>(
+    new Set()
+  );
   const [showTestModal, setShowTestModal] = useState(false);
   const [testData, setTestData] = useState<Test | null>(null);
   const [testModalData, setTestModalData] = useState({
     opensAt: new Date().toISOString().slice(0, 16),
-    closesAt: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString().slice(0, 16), // 2 hours from now
-    attemptTimeLimit: 60 // minutes
+    closesAt: new Date(Date.now() + 2 * 60 * 60 * 1000)
+      .toISOString()
+      .slice(0, 16), // 2 hours from now
+    attemptTimeLimit: 60, // minutes
   });
+  const [testSchedules, setTestSchedules] = useState<TestSchedule[]>([]);
+  const [selectedSchedule, setSelectedSchedule] = useState<TestSchedule | null>(
+    null
+  );
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
 
   // Auto-dismiss messages
   useEffect(() => {
@@ -124,6 +152,27 @@ export default function GradebookPage() {
       store.refresh();
     }
     return access_token;
+  };
+
+  // Fetch test schedules for the discipline
+  const fetchTestSchedules = async () => {
+    if (!disciplineId) return;
+    console.log("disciplineId=", disciplineId);
+    
+    try {
+      const response = await axios.get(
+        `/server/admin/tests/schedules?discipline_id=${disciplineId}`,
+        {
+          headers: { Authorization: `Bearer ${getAccess()}` },
+        }
+      );
+      if (response.status === 200) {
+        setTestSchedules(response.data as TestSchedule[]);
+      }
+    } catch (err: any) {
+      console.error("Error fetching test schedules:", err);
+      // This is not a critical error, so we don't show it to the user
+    }
   };
 
   // Fetch test data for the discipline
@@ -361,11 +410,12 @@ export default function GradebookPage() {
 
         // Load progress after we have the basic data
         await fetchGroupProgress();
-        
-        // Load test data after discipline is loaded
+
+        // Load test data and schedules after discipline is loaded
         if (discipline?.test_id) {
           await fetchTest();
         }
+        await fetchTestSchedules();
         console.log("Data load completed successfully");
       } catch (err) {
         console.error("Error loading gradebook data:", err);
@@ -382,11 +432,88 @@ export default function GradebookPage() {
     if (discipline?.test_id) {
       fetchTest();
     }
+    fetchTestSchedules();
   }, [discipline?.test_id]);
+
+  // Get test schedule for a specific student
+  const getStudentTestSchedule = (studentId: number): TestSchedule | null => {
+    if (testSchedules === null)
+      return null;
+    return (
+      testSchedules.find((schedule) => schedule.user_id === studentId) || null
+    );
+  };
+
+  // Check if a test is currently open for a student
+  const isTestOpen = (schedule: TestSchedule | null): boolean => {
+    if (!schedule) return false;
+
+    const now = new Date();
+    const opens = new Date(schedule.opens_at);
+    const closes = new Date(schedule.closes_at);
+
+    return now >= opens && now <= closes;
+  };
+
+  // Handle test cell click
+  const handleTestCellClick = (student: Student) => {
+    const schedule = getStudentTestSchedule(student.id);
+    if (schedule) {
+      setSelectedSchedule(schedule);
+      setShowScheduleModal(true);
+    }
+  };
+
+  // Handle schedule deletion
+  const handleDeleteSchedule = async (scheduleId: number): Promise<void> => {
+    try {
+      await axios.delete(`/server/admin/tests/schedules/${scheduleId}`, {
+        headers: { Authorization: `Bearer ${getAccess()}` },
+      });
+
+      // Remove from local state
+      setTestSchedules((prev) => prev.filter((s) => s.id !== scheduleId));
+      setSuccess("Расписание теста удалено");
+    } catch (err: any) {
+      console.error("Error deleting schedule:", err);
+      throw new Error(
+        err?.response?.data?.error || "Ошибка при удалении расписания"
+      );
+    }
+  };
+
+  // Handle schedule update
+  const handleUpdateSchedule = async (
+    scheduleId: number,
+    data: TestScheduleUpdateInput
+  ): Promise<void> => {
+    try {
+      const response = await axios.put(
+        `/server/admin/tests/schedules/${scheduleId}`,
+        data,
+        {
+          headers: { Authorization: `Bearer ${getAccess()}` },
+        }
+      );
+
+      if (response.status === 200) {
+        // Update local state
+        setTestSchedules((prev) =>
+          prev.map((s) => (s.id === scheduleId ? { ...s, ...data } : s))
+        );
+        setSuccess("Расписание теста обновлено");
+      }
+    } catch (err: any) {
+      console.error("Error updating schedule:", err);
+      throw new Error(
+        err?.response?.data?.error || "Ошибка при обновлении расписания"
+      );
+    }
+  };
 
   // Handle student selection
   const toggleStudentSelection = (studentId: number) => {
-    setSelectedStudents(prev => {
+    setSelectedStudents((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(studentId)) {
         newSet.delete(studentId);
@@ -398,7 +525,7 @@ export default function GradebookPage() {
   };
 
   const selectAllStudents = () => {
-    setSelectedStudents(new Set(students.map(s => s.id)));
+    setSelectedStudents(new Set(students.map((s) => s.id)));
   };
 
   const clearStudentSelection = () => {
@@ -426,16 +553,16 @@ export default function GradebookPage() {
     if (!testData || !disciplineId || selectedStudents.size === 0) return;
 
     try {
-      const schedulePromises = Array.from(selectedStudents).map(studentId => {
+      const schedulePromises = Array.from(selectedStudents).map((studentId) => {
         const scheduleData: TestScheduleCreateInput = {
           user_id: studentId,
           discipline_id: parseInt(disciplineId),
           opens_at: new Date(testModalData.opensAt).toISOString(),
           closes_at: new Date(testModalData.closesAt).toISOString(),
-          attempt_time_limit_sec: testModalData.attemptTimeLimit * 60 // convert minutes to seconds
+          attempt_time_limit_sec: testModalData.attemptTimeLimit * 60, // convert minutes to seconds
         };
 
-        return axios.post('/server/admin/tests/schedules', scheduleData, {
+        return axios.post("/server/admin/tests/schedules", scheduleData, {
           headers: { Authorization: `Bearer ${getAccess()}` },
         });
       });
@@ -444,6 +571,9 @@ export default function GradebookPage() {
       setSuccess(`Тест открыт для ${selectedStudents.size} студентов`);
       setShowTestModal(false);
       setSelectedStudents(new Set());
+
+      // Refresh test schedules
+      await fetchTestSchedules();
     } catch (err: any) {
       console.error("Error creating test schedules:", err);
       setError(err?.response?.data?.error || "Ошибка при открытии теста");
@@ -566,14 +696,14 @@ export default function GradebookPage() {
               <div className={styles.selectionInfo}>
                 Выбрано студентов: {selectedStudents.size}
                 {selectedStudents.size > 0 && (
-                  <button 
+                  <button
                     onClick={clearStudentSelection}
                     className={styles.clearBtn}
                   >
                     Очистить
                   </button>
                 )}
-                <button 
+                <button
                   onClick={selectAllStudents}
                   className={styles.selectAllBtn}
                 >
@@ -583,7 +713,9 @@ export default function GradebookPage() {
               <button
                 onClick={openTestModal}
                 disabled={selectedStudents.size === 0}
-                className={`${styles.openTestBtn} ${selectedStudents.size === 0 ? styles.disabled : ''}`}
+                className={`${styles.openTestBtn} ${
+                  selectedStudents.size === 0 ? styles.disabled : ""
+                }`}
               >
                 Открыть тест
               </button>
@@ -599,9 +731,16 @@ export default function GradebookPage() {
             <th rowSpan={2}>
               <input
                 type="checkbox"
-                checked={selectedStudents.size === students.length && students.length > 0}
-                onChange={selectedStudents.size === students.length ? clearStudentSelection : selectAllStudents}
-                style={{ marginRight: '8px' }}
+                checked={
+                  selectedStudents.size === students.length &&
+                  students.length > 0
+                }
+                onChange={
+                  selectedStudents.size === students.length
+                    ? clearStudentSelection
+                    : selectAllStudents
+                }
+                style={{ marginRight: "8px" }}
               />
               Ученик
             </th>
@@ -628,6 +767,8 @@ export default function GradebookPage() {
               (p) => p.user_id === student.id
             );
             const studentAttendance = attendance[student.id] || [];
+            const testSchedule = getStudentTestSchedule(student.id);
+            const hasOpenTest = isTestOpen(testSchedule);
 
             return (
               <tr key={student.id}>
@@ -636,7 +777,7 @@ export default function GradebookPage() {
                     type="checkbox"
                     checked={selectedStudents.has(student.id)}
                     onChange={() => toggleStudentSelection(student.id)}
-                    style={{ marginRight: '8px' }}
+                    style={{ marginRight: "8px" }}
                   />
                   {`${student.last_name} ${student.first_name[0]}.${student.patronymic[0]}.`}
                 </td>
@@ -669,8 +810,25 @@ export default function GradebookPage() {
                     </td>
                   )
                 )}
-                <td className={styles.cell}>
-                  {progressData?.progress.test_points_awarded || ""}
+                <td
+                  className={`${styles.cell} ${
+                    testSchedule
+                      ? hasOpenTest
+                        ? styles.testCellOpen
+                        : styles.cell
+                      : styles.cell
+                  }`}
+                  onClick={
+                    testSchedule
+                      ? () => handleTestCellClick(student)
+                      : undefined
+                  }
+                  style={{
+                    cursor: testSchedule ? "pointer" : "default",
+                  }}
+                >
+                  {progressData?.progress.test_points_awarded ||
+                    (testSchedule ? "🟡" : "")}
                 </td>
                 <td className={styles.cell}>
                   {progressData?.progress.total_awarded || ""}
@@ -688,20 +846,16 @@ export default function GradebookPage() {
         <p>• Кликните по ячейке лекции, чтобы отметить/снять посещение</p>
         <p>• Зеленый цвет - присутствовал, красный с "Н" - отсутствовал</p>
         <p>• Баллы за лабораторные и тесты загружаются с сервера</p>
-        {testData && (
-          <p>• Доступен тест: "{testData.title}"</p>
-        )}
+        {testData && <p>• Доступен тест: "{testData.title}"</p>}
       </div>
 
       {/* Test Schedule Modal */}
       {showTestModal && (
         <div className={styles.modalOverlay} onClick={closeTestModal}>
-          <div
-            className={styles.modal}
-            onClick={(e) => e.stopPropagation()}
-          >
+          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
             <h3 className={styles.modalTitle}>
-              Открыть тест "{testData?.title}" для {selectedStudents.size} студентов
+              Открыть тест "{testData?.title}" для {selectedStudents.size}{" "}
+              студентов
             </h3>
 
             <div className={styles.modalBody}>
@@ -711,7 +865,12 @@ export default function GradebookPage() {
                   <input
                     type="datetime-local"
                     value={testModalData.opensAt}
-                    onChange={(e) => setTestModalData(prev => ({ ...prev, opensAt: e.target.value }))}
+                    onChange={(e) =>
+                      setTestModalData((prev) => ({
+                        ...prev,
+                        opensAt: e.target.value,
+                      }))
+                    }
                     className={styles.input}
                   />
                 </label>
@@ -723,7 +882,12 @@ export default function GradebookPage() {
                   <input
                     type="datetime-local"
                     value={testModalData.closesAt}
-                    onChange={(e) => setTestModalData(prev => ({ ...prev, closesAt: e.target.value }))}
+                    onChange={(e) =>
+                      setTestModalData((prev) => ({
+                        ...prev,
+                        closesAt: e.target.value,
+                      }))
+                    }
                     className={styles.input}
                   />
                 </label>
@@ -737,7 +901,12 @@ export default function GradebookPage() {
                     min="1"
                     max="300"
                     value={testModalData.attemptTimeLimit}
-                    onChange={(e) => setTestModalData(prev => ({ ...prev, attemptTimeLimit: parseInt(e.target.value) || 60 }))}
+                    onChange={(e) =>
+                      setTestModalData((prev) => ({
+                        ...prev,
+                        attemptTimeLimit: parseInt(e.target.value) || 60,
+                      }))
+                    }
                     className={styles.input}
                   />
                 </label>
@@ -760,6 +929,28 @@ export default function GradebookPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Test Schedule Modal */}
+      {selectedSchedule && (
+        <TestScheduleModal
+          isOpen={showScheduleModal}
+          onClose={() => {
+            setShowScheduleModal(false);
+            setSelectedSchedule(null);
+          }}
+          schedule={selectedSchedule}
+          studentName={`${
+            students.find((s) => s.id === selectedSchedule.user_id)
+              ?.last_name || ""
+          } ${
+            students.find((s) => s.id === selectedSchedule.user_id)
+              ?.first_name || ""
+          }`}
+          testTitle={testData?.title || "Тест"}
+          onDelete={handleDeleteSchedule}
+          onUpdate={handleUpdateSchedule}
+        />
       )}
     </div>
   );

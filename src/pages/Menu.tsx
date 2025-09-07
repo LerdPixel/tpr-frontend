@@ -12,6 +12,7 @@ const adminMenuItems = [
   { label: "Группы", link: "/groups" },
   { label: "Студенты", link: "/users" },
   { label: "Лекции", link: "/lectures" },
+  { label: "Материалы", link: "/materials" },
 ];
 const seminaristMenuItems = [
   { label: "Новости", link: "/news" },
@@ -21,25 +22,26 @@ const seminaristMenuItems = [
   { label: "Группы", link: "/groups" },
   { label: "Студенты", link: "/users" },
   { label: "Лекции", link: "/lectures" },
+  { label: "Материалы", link: "/materials" },
 ];
 const studentMenuItems = [
   { label: "Новости", link: "/news" },
   { label: "Дисциплины", link: "/disciplines" },
+  { label: "Мои тесты", link: "/student-tests" },
   { label: "Тесты", link: "/tests" },
   { label: "Лабораторные работы", link: "/labs" },
   { label: "Лекции", link: "/lectures" },
-]
+  { label: "Материалы", link: "/materials" },
+];
 
 const Menu: React.FC = () => {
   const navigate = useNavigate();
   const { store } = useContext(Context);
-  const [menuItems, setMenuItems] = useState(studentMenuItems)
+  const [menuItems, setMenuItems] = useState(studentMenuItems);
   useEffect(() => {
-    if (store.role === "seminarist")
-      setMenuItems(seminaristMenuItems)
-    else if (store.role === "admin")
-      setMenuItems(adminMenuItems) 
-  }, [store.role])
+    if (store.role === "seminarist") setMenuItems(seminaristMenuItems);
+    else if (store.role === "admin") setMenuItems(adminMenuItems);
+  }, [store.role]);
 
   return (
     <div

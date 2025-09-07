@@ -12,21 +12,33 @@ import TopicsPage from "@/pages/TopicsPage.tsx";
 import Disciplines from "@/pages/Disciplines.tsx";
 import Attempt from "@/pages/Attempt.tsx";
 import GradebookPage from "../pages/GradebookPage.tsx";
+import StudentTests from "../pages/StudentTests.tsx";
+import MaterialsPage from "../pages/MaterialsPage.tsx";
 
 export const privateRoutes = [
   { path: "/users", element: <Posts />, exact: true },
   { path: "/users/:id", element: <Posts />, exact: true },
   { path: "/menu", element: <Menu />, exact: true },
-  { path: "/gradesheet/:disciplineId/:groupId", element: <GradebookPage />, exact: true },
+  {
+    path: "/gradesheet/:disciplineId/:groupId",
+    element: <GradebookPage />,
+    exact: true,
+  },
   { path: "/groups", element: <GroupsPage />, exact: true },
   { path: "/news", element: <News />, exact: true },
   { path: "/questions", element: <TopicsPage />, exact: true },
   { path: "/disciplines", element: <Disciplines />, exact: true },
   { path: "/tests", element: <TestsManagementPage />, exact: true },
   { path: "/attempt/:attemptId", element: <Attempt />, exact: true },
+  { path: "/student-tests", element: <StudentTests />, exact: true },
+  { path: "/materials", element: <MaterialsPage />, exact: true },
 ];
 export const publicRoutes = [
   { path: "/registration", element: <Registration />, exact: true },
   { path: "/login", element: <Login />, exact: true },
-  { path: "/gradesheet/:disciplineId/:groupId", element: <GradebookPage />, exact: true },
+  {
+    path: "/gradesheet/:disciplineId/:groupId",
+    element: <GradebookPage />,
+    exact: true,
+  },
 ];
