@@ -394,6 +394,9 @@ export default function StudentTestsPage() {
   const [success, setSuccess] = useState<string | null>(null);
 
   // Test taking state
+  const [currentAttemptId, setCurrentAttemptId] = useState<number | null>(
+    null
+  );
   const [currentAttempt, setCurrentAttempt] =
     useState<AttemptDetailView | null>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -552,6 +555,7 @@ export default function StudentTestsPage() {
 
       // Get the attempt ID and start the test
       const attemptId = (response.data as { id: number }).id;
+      setCurrentAttemptId(attemptId)
       await fetchAttemptData(attemptId);
       setSuccess("Тест начат!");
     } catch (err: any) {
@@ -567,6 +571,8 @@ export default function StudentTestsPage() {
   // Fetch attempt data and questions
   const fetchAttemptData = async (attemptId: number) => {
     setLoading(true);
+    console.log(`Fetching attempt data for attempt ${attemptId}...`);
+    
     try {
       const [attemptResponse, questionsResponse] = await Promise.all([
         axios.get(`/server/attempts/${attemptId}`, {
@@ -615,7 +621,7 @@ export default function StudentTestsPage() {
       };
 
       const response = await axios.post(
-        `/server/attempts/${currentAttempt.attempt.id}/answers`,
+        `/server/attempts/${currentAttemptId}/answers`,
         answerData,
         {
           headers: { Authorization: `Bearer ${getAccess()}` },
@@ -655,7 +661,7 @@ export default function StudentTestsPage() {
     setFinishing(true);
     try {
       const response = await axios.post(
-        `/server/attempts/${currentAttempt.attempt.id}/finish`,
+        `/server/attempts/${currentAttemptId}/finish`,
         {},
         {
           headers: { Authorization: `Bearer ${getAccess()}` },
