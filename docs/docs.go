@@ -15,6 +15,47 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/api/v1/admin/attempt-overrides": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin"
+                ],
+                "summary": "Grant extra attempts to a student",
+                "parameters": [
+                    {
+                        "description": "Grant",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.AttemptOverrideGrantInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/admin/disciplines": {
             "post": {
                 "consumes": [
@@ -485,6 +526,31 @@ const docTemplate = `{
             }
         },
         "/api/v1/admin/materials": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "materials"
+                ],
+                "summary": "List all lecture materials (admin)",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.LectureMaterial"
+                            }
+                        }
+                    }
+                }
+            },
             "post": {
                 "security": [
                     {
@@ -807,6 +873,71 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/admin/roles/{id}": {
+            "get": {
+                "description": "Returns a role name by its ID (admin only)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin"
+                ],
+                "summary": "Get role by ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Role ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.Role"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/admin/tests": {
             "post": {
                 "consumes": [
@@ -841,6 +972,210 @@ const docTemplate = `{
                                 }
                             }
                         }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/admin/tests/schedules": {
+            "get": {
+                "tags": [
+                    "admin",
+                    "seminarist"
+                ],
+                "summary": "List schedules for discipline (all users)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Discipline ID",
+                        "name": "discipline_id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.TestSchedule"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Create per-user schedule window for discipline test (admin/seminarist)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin",
+                    "seminarist"
+                ],
+                "summary": "Create test schedule",
+                "parameters": [
+                    {
+                        "description": "Schedule",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.TestScheduleCreateInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "integer"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/admin/tests/schedules/{id}": {
+            "put": {
+                "description": "Update times or time limit",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin",
+                    "seminarist"
+                ],
+                "summary": "Update test schedule",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Schedule ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Update",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.TestScheduleUpdateInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "admin",
+                    "seminarist"
+                ],
+                "summary": "Delete test schedule",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Schedule ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
                     },
                     "400": {
                         "description": "Bad Request",
@@ -1401,6 +1736,56 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/attempts/remaining": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "attempts"
+                ],
+                "summary": "Get remaining attempts for a discipline",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Discipline ID",
+                        "name": "discipline_id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "attempts_allowed": {
+                                    "type": "integer"
+                                },
+                                "attempts_remaining": {
+                                    "type": "integer"
+                                },
+                                "attempts_used": {
+                                    "type": "integer"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/attempts/{attemptId}": {
             "get": {
                 "security": [
@@ -1936,6 +2321,42 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/disciplines/{disciplineId}/test/schedule": {
+            "get": {
+                "tags": [
+                    "student"
+                ],
+                "summary": "Get active schedule for my group",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Discipline ID",
+                        "name": "disciplineId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.TestSchedule"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/disciplines/{id}": {
             "get": {
                 "produces": [
@@ -2417,6 +2838,33 @@ const docTemplate = `{
                             "type": "array",
                             "items": {
                                 "$ref": "#/definitions/models.GroupProgressRow"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/seminarist/materials": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "materials"
+                ],
+                "summary": "List all lecture materials (seminarist)",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.LectureMaterial"
                             }
                         }
                     }
@@ -2994,6 +3442,29 @@ const docTemplate = `{
                 }
             }
         },
+        "models.AttemptOverrideGrantInput": {
+            "type": "object",
+            "required": [
+                "count",
+                "discipline_id",
+                "user_id"
+            ],
+            "properties": {
+                "count": {
+                    "type": "integer",
+                    "minimum": 1
+                },
+                "discipline_id": {
+                    "type": "integer"
+                },
+                "reason": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "integer"
+                }
+            }
+        },
         "models.AttemptQuestionView": {
             "type": "object",
             "properties": {
@@ -3379,6 +3850,17 @@ const docTemplate = `{
                 }
             }
         },
+        "models.Role": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
         "models.StartAttemptInput": {
             "type": "object",
             "required": [
@@ -3439,6 +3921,79 @@ const docTemplate = `{
                 "title": {
                     "type": "string",
                     "minLength": 1
+                }
+            }
+        },
+        "models.TestSchedule": {
+            "type": "object",
+            "properties": {
+                "attempt_time_limit_sec": {
+                    "type": "integer"
+                },
+                "closes_at": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "discipline_id": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "max_attempts": {
+                    "type": "integer"
+                },
+                "opens_at": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "models.TestScheduleCreateInput": {
+            "type": "object",
+            "required": [
+                "attempt_time_limit_sec",
+                "closes_at",
+                "discipline_id",
+                "opens_at",
+                "user_id"
+            ],
+            "properties": {
+                "attempt_time_limit_sec": {
+                    "type": "integer"
+                },
+                "closes_at": {
+                    "type": "string"
+                },
+                "discipline_id": {
+                    "type": "integer"
+                },
+                "opens_at": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "models.TestScheduleUpdateInput": {
+            "type": "object",
+            "properties": {
+                "attempt_time_limit_sec": {
+                    "type": "integer"
+                },
+                "closes_at": {
+                    "type": "string"
+                },
+                "opens_at": {
+                    "type": "string"
                 }
             }
         },

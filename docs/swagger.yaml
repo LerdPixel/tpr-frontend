@@ -49,6 +49,22 @@ definitions:
           $ref: '#/definitions/models.AttemptQuestionView'
         type: array
     type: object
+  models.AttemptOverrideGrantInput:
+    properties:
+      count:
+        minimum: 1
+        type: integer
+      discipline_id:
+        type: integer
+      reason:
+        type: string
+      user_id:
+        type: integer
+    required:
+    - count
+    - discipline_id
+    - user_id
+    type: object
   models.AttemptQuestionView:
     properties:
       answer: {}
@@ -309,6 +325,13 @@ definitions:
     - question_type
     - topic_id
     type: object
+  models.Role:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
   models.StartAttemptInput:
     properties:
       discipline_id:
@@ -350,6 +373,55 @@ definitions:
         type: string
     required:
     - title
+    type: object
+  models.TestSchedule:
+    properties:
+      attempt_time_limit_sec:
+        type: integer
+      closes_at:
+        type: string
+      created_at:
+        type: string
+      discipline_id:
+        type: integer
+      id:
+        type: integer
+      max_attempts:
+        type: integer
+      opens_at:
+        type: string
+      updated_at:
+        type: string
+      user_id:
+        type: integer
+    type: object
+  models.TestScheduleCreateInput:
+    properties:
+      attempt_time_limit_sec:
+        type: integer
+      closes_at:
+        type: string
+      discipline_id:
+        type: integer
+      opens_at:
+        type: string
+      user_id:
+        type: integer
+    required:
+    - attempt_time_limit_sec
+    - closes_at
+    - discipline_id
+    - opens_at
+    - user_id
+    type: object
+  models.TestScheduleUpdateInput:
+    properties:
+      attempt_time_limit_sec:
+        type: integer
+      closes_at:
+        type: string
+      opens_at:
+        type: string
     type: object
   models.TestTopic:
     properties:
@@ -493,6 +565,32 @@ info:
   title: TPR API
   version: 1.0.0
 paths:
+  /api/v1/admin/attempt-overrides:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Grant
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/models.AttemptOverrideGrantInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Grant extra attempts to a student
+      tags:
+      - admin
   /api/v1/admin/disciplines:
     post:
       consumes:
@@ -794,6 +892,21 @@ paths:
       tags:
       - groups
   /api/v1/admin/materials:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.LectureMaterial'
+            type: array
+      security:
+      - ApiKeyAuth: []
+      summary: List all lecture materials (admin)
+      tags:
+      - materials
     post:
       consumes:
       - multipart/form-data
@@ -1000,6 +1113,48 @@ paths:
       summary: Update question
       tags:
       - questions
+  /api/v1/admin/roles/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Returns a role name by its ID (admin only)
+      parameters:
+      - description: Role ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Role'
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Get role by ID
+      tags:
+      - admin
   /api/v1/admin/tests:
     post:
       consumes:
@@ -1109,6 +1264,139 @@ paths:
       summary: Replace test topics mapping
       tags:
       - tests
+  /api/v1/admin/tests/schedules:
+    get:
+      parameters:
+      - description: Discipline ID
+        in: query
+        name: discipline_id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.TestSchedule'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: List schedules for discipline (all users)
+      tags:
+      - admin
+      - seminarist
+    post:
+      consumes:
+      - application/json
+      description: Create per-user schedule window for discipline test (admin/seminarist)
+      parameters:
+      - description: Schedule
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/models.TestScheduleCreateInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              id:
+                type: integer
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "409":
+          description: Conflict
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Create test schedule
+      tags:
+      - admin
+      - seminarist
+  /api/v1/admin/tests/schedules/{id}:
+    delete:
+      parameters:
+      - description: Schedule ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Delete test schedule
+      tags:
+      - admin
+      - seminarist
+    put:
+      consumes:
+      - application/json
+      description: Update times or time limit
+      parameters:
+      - description: Schedule ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Update
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/models.TestScheduleUpdateInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+        "409":
+          description: Conflict
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Update test schedule
+      tags:
+      - admin
+      - seminarist
   /api/v1/admin/topics:
     get:
       produces:
@@ -1506,6 +1794,38 @@ paths:
       summary: Get all questions for attempt
       tags:
       - attempts
+  /api/v1/attempts/remaining:
+    get:
+      parameters:
+      - description: Discipline ID
+        in: query
+        name: discipline_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              attempts_allowed:
+                type: integer
+              attempts_remaining:
+                type: integer
+              attempts_used:
+                type: integer
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Get remaining attempts for a discipline
+      tags:
+      - attempts
   /api/v1/auth/login:
     post:
       consumes:
@@ -1704,6 +2024,29 @@ paths:
       summary: List disciplines
       tags:
       - disciplines
+  /api/v1/disciplines/{disciplineId}/test/schedule:
+    get:
+      parameters:
+      - description: Discipline ID
+        in: path
+        name: disciplineId
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.TestSchedule'
+        "404":
+          description: Not Found
+          schema:
+            properties:
+              error:
+                type: string
+            type: object
+      summary: Get active schedule for my group
+      tags:
+      - student
   /api/v1/disciplines/{id}:
     get:
       parameters:
@@ -2029,6 +2372,22 @@ paths:
       summary: Get group progress [staff]
       tags:
       - progress
+  /api/v1/seminarist/materials:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.LectureMaterial'
+            type: array
+      security:
+      - ApiKeyAuth: []
+      summary: List all lecture materials (seminarist)
+      tags:
+      - materials
   /api/v1/seminarist/progress:
     get:
       parameters:
