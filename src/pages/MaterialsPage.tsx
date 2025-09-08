@@ -2,6 +2,7 @@ import React, { useContext, useEffect, useState } from "react";
 import { observer } from "mobx-react-lite";
 import axios from "axios";
 import { Context } from "../context/index.ts";
+import MyModal from "../components/ui/MyModal/MyModal.tsx";
 
 interface LectureMaterial {
   id: number;
@@ -302,10 +303,6 @@ const MaterialsPage: React.FC = () => {
   };
 
   const handleDelete = async (materialId: number) => {
-    if (!confirm("Вы уверены, что хотите удалить этот материал?")) {
-      return;
-    }
-
     try {
       console.log("MaterialsPage: Deleting material:", materialId);
 
@@ -414,14 +411,46 @@ const MaterialsPage: React.FC = () => {
         <div
           style={{
             background: "#e3e3e3",
-            padding: "16px 0",
-            textAlign: "center",
+            padding: "16px 20px",
             fontSize: 32,
             fontWeight: 700,
             marginBottom: 32,
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            flexWrap: "wrap",
+            gap: "16px",
           }}
         >
-          Учебные материалы
+          <span>Учебные материалы</span>
+
+          {/* Discipline filter in header */}
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <label style={{ fontSize: 16, fontWeight: 600 }}>Дисциплина:</label>
+            <select
+              value={selectedDiscipline || ""}
+              onChange={(e) =>
+                setSelectedDiscipline(
+                  e.target.value ? parseInt(e.target.value) : null
+                )
+              }
+              style={{
+                padding: "8px 12px",
+                borderRadius: 4,
+                border: "1px solid #ddd",
+                fontSize: 16,
+                minWidth: 200,
+                background: "white",
+              }}
+            >
+              <option value="">Все дисциплины</option>
+              {getUniqueDisciplines().map((discipline) => (
+                <option key={discipline.id} value={discipline.id}>
+                  {discipline.name}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
 
         {error && (
@@ -459,35 +488,6 @@ const MaterialsPage: React.FC = () => {
             </button>
           </div>
         )}
-
-        {/* Discipline filter */}
-        <div style={{ marginBottom: 20 }}>
-          <label style={{ display: "block", marginBottom: 8, fontWeight: 600 }}>
-            Фильтр по дисциплине:
-          </label>
-          <select
-            value={selectedDiscipline || ""}
-            onChange={(e) =>
-              setSelectedDiscipline(
-                e.target.value ? parseInt(e.target.value) : null
-              )
-            }
-            style={{
-              padding: "8px 12px",
-              borderRadius: 4,
-              border: "1px solid #ddd",
-              fontSize: 16,
-              minWidth: 200,
-            }}
-          >
-            <option value="">Все дисциплины</option>
-            {getUniqueDisciplines().map((discipline) => (
-              <option key={discipline.id} value={discipline.id}>
-                {discipline.name}
-              </option>
-            ))}
-          </select>
-        </div>
 
         {/* Materials list organized by disciplines */}
         {getUniqueDisciplines().map((discipline) => {
@@ -527,6 +527,28 @@ const MaterialsPage: React.FC = () => {
                       borderRadius: 8,
                       padding: 16,
                       background: "#f9f9f9",
+                      cursor: store.role === "admin" ? "pointer" : "default",
+                      transition: "all 0.2s ease",
+                    }}
+                    onClick={
+                      store.role === "admin"
+                        ? () => openEditModal(material)
+                        : undefined
+                    }
+                    onMouseEnter={(e) => {
+                      if (store.role === "admin") {
+                        e.currentTarget.style.background = "#f0f8ff";
+                        e.currentTarget.style.transform = "translateY(-2px)";
+                        e.currentTarget.style.boxShadow =
+                          "0 4px 12px rgba(0, 0, 0, 0.15)";
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (store.role === "admin") {
+                        e.currentTarget.style.background = "#f9f9f9";
+                        e.currentTarget.style.transform = "translateY(0)";
+                        e.currentTarget.style.boxShadow = "none";
+                      }
                     }}
                   >
                     <h3
@@ -589,42 +611,26 @@ const MaterialsPage: React.FC = () => {
                           fontSize: 14,
                           cursor: "pointer",
                         }}
-                        onClick={() => handleDownload(material)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDownload(material);
+                        }}
                       >
                         Скачать
                       </button>
 
                       {store.role === "admin" && (
-                        <>
-                          <button
-                            style={{
-                              background: "#ff9800",
-                              color: "#fff",
-                              border: "none",
-                              borderRadius: 4,
-                              padding: "8px 16px",
-                              fontSize: 14,
-                              cursor: "pointer",
-                            }}
-                            onClick={() => openEditModal(material)}
-                          >
-                            Редактировать
-                          </button>
-                          <button
-                            style={{
-                              background: "#f44336",
-                              color: "#fff",
-                              border: "none",
-                              borderRadius: 4,
-                              padding: "8px 16px",
-                              fontSize: 14,
-                              cursor: "pointer",
-                            }}
-                            onClick={() => handleDelete(material.id)}
-                          >
-                            Удалить
-                          </button>
-                        </>
+                        <div
+                          style={{
+                            fontSize: 12,
+                            color: "#666",
+                            fontStyle: "italic",
+                            alignSelf: "center",
+                            marginLeft: "8px",
+                          }}
+                        >
+                          Нажмите на материал для редактирования
+                        </div>
                       )}
                     </div>
                   </div>
@@ -855,32 +861,9 @@ const MaterialsPage: React.FC = () => {
         )}
 
         {/* Edit Modal */}
-        {showEditModal && editingMaterial && (
-          <div
-            style={{
-              position: "fixed",
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              background: "rgba(0, 0, 0, 0.5)",
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              zIndex: 1000,
-            }}
-          >
-            <div
-              style={{
-                background: "#fff",
-                borderRadius: 8,
-                padding: 24,
-                width: "90%",
-                maxWidth: 500,
-                maxHeight: "90vh",
-                overflow: "auto",
-              }}
-            >
+        <MyModal visible={showEditModal} setVisible={setShowEditModal}>
+          {editingMaterial && (
+            <div style={{ width: "90vw", maxWidth: 500 }}>
               <h2 style={{ marginBottom: 20, fontSize: 24, fontWeight: 600 }}>
                 Редактировать материал
               </h2>
@@ -959,33 +942,15 @@ const MaterialsPage: React.FC = () => {
               </div>
 
               <div
-                style={{ display: "flex", gap: 12, justifyContent: "flex-end" }}
+                style={{
+                  display: "flex",
+                  gap: 12,
+                  justifyContent: "space-between",
+                }}
               >
                 <button
                   style={{
-                    background: "#ccc",
-                    color: "#333",
-                    border: "none",
-                    borderRadius: 4,
-                    padding: "8px 16px",
-                    fontSize: 16,
-                    cursor: "pointer",
-                  }}
-                  onClick={() => {
-                    setShowEditModal(false);
-                    setEditingMaterial(null);
-                    setEditForm({
-                      title: "",
-                      description: "",
-                      lecture_no: null,
-                    });
-                  }}
-                >
-                  Отмена
-                </button>
-                <button
-                  style={{
-                    background: "#ff9800",
+                    background: "#f44336",
                     color: "#fff",
                     border: "none",
                     borderRadius: 4,
@@ -993,14 +958,69 @@ const MaterialsPage: React.FC = () => {
                     fontSize: 16,
                     cursor: "pointer",
                   }}
-                  onClick={handleEdit}
+                  onClick={() => {
+                    if (
+                      editingMaterial &&
+                      confirm("Вы уверены, что хотите удалить этот материал?")
+                    ) {
+                      handleDelete(editingMaterial.id);
+                      setShowEditModal(false);
+                      setEditingMaterial(null);
+                      setEditForm({
+                        title: "",
+                        description: "",
+                        lecture_no: null,
+                      });
+                    }
+                  }}
                 >
-                  Сохранить
+                  Удалить
                 </button>
+
+                <div style={{ display: "flex", gap: 12 }}>
+                  <button
+                    style={{
+                      background: "#ccc",
+                      color: "#333",
+                      border: "none",
+                      borderRadius: 4,
+                      padding: "8px 16px",
+                      fontSize: 16,
+                      cursor: "pointer",
+                    }}
+                    onClick={() => {
+                      setShowEditModal(false);
+                      setEditingMaterial(null);
+                      setEditForm({
+                        title: "",
+                        description: "",
+                        lecture_no: null,
+                      });
+                    }}
+                  >
+                    Отмена
+                  </button>
+                  <button
+                    style={{
+                      background: "#2196f3",
+                      color: "#fff",
+                      border: "none",
+                      borderRadius: 4,
+                      padding: "8px 16px",
+                      fontSize: 16,
+                      cursor: "pointer",
+                    }}
+                    onClick={() => {
+                      handleEdit();
+                    }}
+                  >
+                    Сохранить
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
+        </MyModal>
       </div>
     </div>
   );
