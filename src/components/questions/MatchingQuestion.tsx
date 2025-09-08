@@ -2,24 +2,19 @@ import { useState, useEffect } from "react";
 import styles from "../../styles/QuestionCreator.module.css";
 
 type LeftItem = {
-  id: number;
+  id: string;
   text: string;
 };
 
 type RightItem = {
-  id: number;
+  id: string;
   text: string;
-};
-
-type CorrectMatch = {
-  leftId: number;
-  rightId: number;
 };
 
 type MatchingData = {
   left: LeftItem[];
   right: RightItem[];
-  correct: CorrectMatch[];
+  correct: Record<string, string>;
 };
 
 interface MatchingQuestionProps {
@@ -33,37 +28,39 @@ const MatchingQuestion: React.FC<MatchingQuestionProps> = ({
 }) => {
   const [leftItems, setLeftItems] = useState<LeftItem[]>(
     data?.left || [
-      { id: 1, text: "" },
-      { id: 2, text: "" },
+      { id: "L1", text: "" },
+      { id: "L2", text: "" },
     ]
   );
 
   const [rightItems, setRightItems] = useState<RightItem[]>(
     data?.right || [
-      { id: 10, text: "" },
-      { id: 11, text: "" },
-      { id: 12, text: "" },
+      { id: "R1", text: "" },
+      { id: "R2", text: "" },
+      { id: "R3", text: "" },
     ]
   );
 
-  const [correctMatches, setCorrectMatches] = useState<CorrectMatch[]>(
-    data?.correct || []
+  const [correctMatches, setCorrectMatches] = useState<Record<string, string>>(
+    data?.correct || {}
   );
 
   // Generate next available ID for left items
   const getNextLeftId = () => {
-    const maxId =
-      leftItems.length > 0 ? Math.max(...leftItems.map((item) => item.id)) : 0;
-    return maxId + 1;
+    const existingNumbers = leftItems
+      .map(item => parseInt(item.id.substring(1)))
+      .filter(num => !isNaN(num));
+    const maxNum = existingNumbers.length > 0 ? Math.max(...existingNumbers) : 0;
+    return `L${maxNum + 1}`;
   };
 
   // Generate next available ID for right items
   const getNextRightId = () => {
-    const maxId =
-      rightItems.length > 0
-        ? Math.max(...rightItems.map((item) => item.id))
-        : 9;
-    return maxId + 1;
+    const existingNumbers = rightItems
+      .map(item => parseInt(item.id.substring(1)))
+      .filter(num => !isNaN(num));
+    const maxNum = existingNumbers.length > 0 ? Math.max(...existingNumbers) : 0;
+    return `R${maxNum + 1}`;
   };
 
   useEffect(() => {
@@ -76,34 +73,35 @@ const MatchingQuestion: React.FC<MatchingQuestionProps> = ({
     setData(newData);
   }, [leftItems, rightItems, correctMatches, setData]);
 
-  const handleLeftTextChange = (id: number, value: string) => {
+  const handleLeftTextChange = (id: string, value: string) => {
     setLeftItems((prev) =>
       prev.map((item) => (item.id === id ? { ...item, text: value } : item))
     );
   };
 
-  const handleRightTextChange = (id: number, value: string) => {
+  const handleRightTextChange = (id: string, value: string) => {
     setRightItems((prev) =>
       prev.map((item) => (item.id === id ? { ...item, text: value } : item))
     );
   };
 
-  const handleMatchChange = (leftId: number, rightId: number) => {
+  const handleMatchChange = (leftId: string, rightId: string) => {
     setCorrectMatches((prev) => {
-      // Remove any existing match for this leftId
-      const filtered = prev.filter((match) => match.leftId !== leftId);
-      // Add new match if rightId is valid (not 0)
-      if (rightId !== 0) {
-        return [...filtered, { leftId, rightId }];
+      const newMatches = { ...prev };
+      if (rightId === "") {
+        // Remove match if empty selection
+        delete newMatches[leftId];
+      } else {
+        // Add/update match
+        newMatches[leftId] = rightId;
       }
-      return filtered;
+      return newMatches;
     });
   };
 
   // Get the current match for a left item
-  const getCurrentMatch = (leftId: number): number => {
-    const match = correctMatches.find((m) => m.leftId === leftId);
-    return match ? match.rightId : 0;
+  const getCurrentMatch = (leftId: string): string => {
+    return correctMatches[leftId] || "";
   };
 
   const addLeftItem = () => {
@@ -128,16 +126,28 @@ const MatchingQuestion: React.FC<MatchingQuestionProps> = ({
     ]);
   };
 
-  const removeLeftItem = (id: number) => {
+  const removeLeftItem = (id: string) => {
     setLeftItems((prev) => prev.filter((item) => item.id !== id));
     // Remove any matches for this left item
-    setCorrectMatches((prev) => prev.filter((match) => match.leftId !== id));
+    setCorrectMatches((prev) => {
+      const newMatches = { ...prev };
+      delete newMatches[id];
+      return newMatches;
+    });
   };
 
-  const removeRightItem = (id: number) => {
+  const removeRightItem = (id: string) => {
     setRightItems((prev) => prev.filter((item) => item.id !== id));
     // Remove any matches for this right item
-    setCorrectMatches((prev) => prev.filter((match) => match.rightId !== id));
+    setCorrectMatches((prev) => {
+      const newMatches = { ...prev };
+      Object.keys(newMatches).forEach(leftId => {
+        if (newMatches[leftId] === id) {
+          delete newMatches[leftId];
+        }
+      });
+      return newMatches;
+    });
   };
 
   return (
@@ -162,10 +172,10 @@ const MatchingQuestion: React.FC<MatchingQuestionProps> = ({
               className={styles.select}
               value={getCurrentMatch(item.id)}
               onChange={(e) =>
-                handleMatchChange(item.id, parseInt(e.target.value))
+                handleMatchChange(item.id, e.target.value)
               }
             >
-              <option value={0}>Соответствующий элемент</option>
+              <option value="">Соответствующий элемент</option>
               {rightItems.map((rightItem) => (
                 <option key={rightItem.id} value={rightItem.id}>
                   {rightItem.text || "Без названия"}

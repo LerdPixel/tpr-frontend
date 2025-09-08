@@ -158,7 +158,7 @@ export default function GradebookPage() {
   const fetchTestSchedules = async () => {
     if (!disciplineId) return;
     console.log("disciplineId=", disciplineId);
-    
+
     try {
       const response = await axios.get(
         `/server/admin/tests/schedules?discipline_id=${disciplineId}`,
@@ -254,14 +254,48 @@ export default function GradebookPage() {
   const fetchGroupProgress = async () => {
     if (!groupId || !disciplineId) return;
     try {
+      console.log(
+        `🔍 DEBUG: Fetching progress for group ${groupId}, discipline ${disciplineId}`
+      );
       const response = await axios.get(
         `/server/seminarist/groups/${groupId}/progress?discipline_id=${disciplineId}`,
         {
           headers: { Authorization: `Bearer ${getAccess()}` },
         }
       );
+
+      console.log(`📡 DEBUG: Server response status:`, response.status);
+      console.log(`📊 DEBUG: Raw server response data:`, response.data);
+
       if (response.status === 200) {
         const progressData = response.data as GroupProgressRow[];
+
+        console.log(
+          `👥 DEBUG: Parsed progress data (${progressData.length} students):`
+        );
+        progressData.forEach((student, index) => {
+          console.log(`🎓 DEBUG: Student ${index + 1}:`, {
+            user_id: student.user_id,
+            name: `${student.first_name} ${student.last_name}`,
+            group_id: student.group_id,
+            progress: {
+              discipline_id: student.progress.discipline_id,
+              labs_points_awarded: student.progress.labs_points_awarded,
+              lecture_points_awarded: student.progress.lecture_points_awarded,
+              test_points_awarded: student.progress.test_points_awarded,
+              total_awarded: student.progress.total_awarded,
+              total_possible: student.progress.total_possible,
+            },
+          });
+        });
+
+        // Focus on test scores specifically
+        const testScores = progressData.map((student) => ({
+          name: `${student.first_name} ${student.last_name}`,
+          test_points_awarded: student.progress.test_points_awarded,
+        }));
+        console.log(`🎯 DEBUG: Test scores summary:`, testScores);
+
         setGroupProgress(progressData);
 
         // Extract attendance data from progress if available
@@ -270,7 +304,9 @@ export default function GradebookPage() {
         await fetchAttendanceData(progressData.map((p) => p.user_id));
       }
     } catch (err: any) {
-      console.error("Error fetching group progress:", err);
+      console.error("❌ DEBUG: Error fetching group progress:", err);
+      console.error("❌ DEBUG: Error response data:", err?.response?.data);
+      console.error("❌ DEBUG: Error response status:", err?.response?.status);
       setError(
         err?.response?.data?.error || "Ошибка при загрузке прогресса группы"
       );
@@ -437,8 +473,7 @@ export default function GradebookPage() {
 
   // Get test schedule for a specific student
   const getStudentTestSchedule = (studentId: number): TestSchedule | null => {
-    if (testSchedules === null)
-      return null;
+    if (testSchedules === null) return null;
     return (
       testSchedules.find((schedule) => schedule.user_id === studentId) || null
     );
@@ -769,6 +804,21 @@ export default function GradebookPage() {
             const studentAttendance = attendance[student.id] || [];
             const testSchedule = getStudentTestSchedule(student.id);
             const hasOpenTest = isTestOpen(testSchedule);
+
+            // Debug logging for each student's test score display in UI
+            console.log(
+              `📊 UI DEBUG: Rendering student ${student.first_name} ${student.last_name}:`,
+              {
+                user_id: student.id,
+                test_points_awarded: progressData?.progress.test_points_awarded,
+                total_awarded: progressData?.progress.total_awarded,
+                has_progress_data: !!progressData,
+                full_progress: progressData?.progress,
+                display_value:
+                  progressData?.progress.test_points_awarded ||
+                  (testSchedule ? "🟡" : ""),
+              }
+            );
 
             return (
               <tr key={student.id}>

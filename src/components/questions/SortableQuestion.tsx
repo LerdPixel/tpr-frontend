@@ -19,52 +19,68 @@ import { useState, useEffect } from "react";
 import MyButton from "../ui/button/MyButton";
 import React from "react";
 
-type Answer = { id: string; text: string };
+type SortableItem = { id: number; text: string };
+
+type SortableData = {
+  items: SortableItem[];
+  correct: number[];
+};
 
 interface SortableQuestionProps {
-  data: any;
-  setData: (data: any) => void;
+  data: SortableData | null;
+  setData: (data: SortableData) => void;
 }
 
 const SortableQuestion: React.FC<SortableQuestionProps> = ({
   data,
   setData,
 }) => {
-  const [options, setOptions] = useState<Answer[]>(
-    data?.options || [
-      { id: "1", text: "" },
-      { id: "2", text: "" },
-      { id: "3", text: "" },
+  const [items, setItems] = useState<SortableItem[]>(
+    data?.items || [
+      { id: 10, text: "" },
+      { id: 11, text: "" },
+      { id: 12, text: "" },
     ]
   );
 
+  // Generate next available ID
+  const getNextId = () => {
+    const maxId = items.length > 0 ? Math.max(...items.map(item => item.id)) : 9;
+    return maxId + 1;
+  };
+
   useEffect(() => {
-    setData({ options , correctOrder : options.map((_, i) => Number(i))});
-  }, [options, setData]);
+    const sortableData: SortableData = {
+      items: items,
+      correct: items.map(item => item.id)
+    };
+    console.log("SortableQuestion data update:", sortableData);
+    setData(sortableData);
+  }, [items, setData]);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
-  const handleAddOption = () => {
-    setOptions([...options, { id: (options.length + 1).toString(), text: "" }]);
+  const handleAddItem = () => {
+    const newId = getNextId();
+    setItems([...items, { id: newId, text: "" }]);
   };
-  const handleTextChange = (id: string, newText: string) => {
-    // setOptions(prev =>
-    //   prev.map(option => (option.id === id ? {...option, text : newText} : option) )
-    // )
-    setOptions((prev) => {
+  
+  const handleTextChange = (id: number, newText: string) => {
+    setItems((prev) => {
       const updated = [...prev];
-      const index = updated.findIndex((a) => a.id === id);
+      const index = updated.findIndex((item) => item.id === id);
       if (index !== -1) {
         updated[index] = { ...updated[index], text: newText };
       }
       return updated;
     });
   };
-  const handleRemoveOption = (i: number) => {
-    const updated = options.filter((_, index) => index !== i);
-    setOptions(updated);
+  
+  const handleRemoveItem = (id: number) => {
+    const updated = items.filter((item) => item.id !== id);
+    setItems(updated);
   };
 
   return (
@@ -74,29 +90,29 @@ const SortableQuestion: React.FC<SortableQuestionProps> = ({
         collisionDetection={closestCenter}
         onDragEnd={({ active, over }) => {
           if (active.id !== over?.id) {
-            const oldIndex = options.findIndex((a) => a.id === active.id);
-            const newIndex = options.findIndex((a) => a.id === over?.id);
-            setOptions(arrayMove(options, oldIndex, newIndex));
+            const oldIndex = items.findIndex((item) => item.id === active.id);
+            const newIndex = items.findIndex((item) => item.id === over?.id);
+            setItems(arrayMove(items, oldIndex, newIndex));
           }
         }}
       >
         <SortableContext
-          items={options.map((a) => a.id)}
+          items={items.map((item) => item.id)}
           strategy={verticalListSortingStrategy}
         >
-          {options.map((answer, index) => (
+          {items.map((item, index) => (
             <SortableItem
-              key={answer.id}
-              id={answer.id}
+              key={item.id}
+              id={item.id}
               index={index}
-              text={answer.text}
+              text={item.text}
               handleTextChange={handleTextChange}
-              handleRemoveOption={handleRemoveOption}
+              handleRemoveItem={handleRemoveItem}
             />
           ))}
         </SortableContext>
       </DndContext>
-      <button onClick={handleAddOption} className={styles.addOption}>
+      <button onClick={handleAddItem} className={styles.addOption}>
         + Добавить вариант
       </button>
     </div>
@@ -108,13 +124,13 @@ const SortableItem = React.memo(function SortableItem({
   index,
   text,
   handleTextChange,
-  handleRemoveOption,
+  handleRemoveItem,
 }: {
-  id: string;
+  id: number;
   index: number;
   text: string;
-  handleTextChange: (id: string, text: string) => void;
-  handleRemoveOption: (index: number) => void;
+  handleTextChange: (id: number, text: string) => void;
+  handleRemoveItem: (id: number) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition } =
     useSortable({ id });
@@ -138,7 +154,7 @@ const SortableItem = React.memo(function SortableItem({
         ≡
       </span>
       <button
-        onClick={() => handleRemoveOption(index)}
+        onClick={() => handleRemoveItem(id)}
         className={styles.removeButton}
       >
         ✕

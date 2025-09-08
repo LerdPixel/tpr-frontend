@@ -156,12 +156,17 @@ const MatchingAnswerComponent: React.FC<{
   answer: any;
   onAnswerChange: (answer: any) => void;
 }> = ({ questionData, answer, onAnswerChange }) => {
-  if (!questionData?.leftItems || !questionData?.rightItems) return null;
+  if (!questionData?.left || !questionData?.right) return null;
 
   const matches = answer || {};
 
-  const setMatch = (leftIndex: number, rightIndex: number) => {
-    const newMatches = { ...matches, [leftIndex]: rightIndex };
+  const setMatch = (leftId: string, rightId: string) => {
+    const newMatches = { ...matches };
+    if (rightId === "") {
+      delete newMatches[leftId];
+    } else {
+      newMatches[leftId] = rightId;
+    }
     onAnswerChange(newMatches);
   };
 
@@ -175,9 +180,9 @@ const MatchingAnswerComponent: React.FC<{
         >
           Сопоставьте:
         </h4>
-        {questionData.leftItems.map((item: string, leftIndex: number) => (
+        {questionData.left.map((leftItem: any) => (
           <div
-            key={leftIndex}
+            key={leftItem.id}
             style={{
               padding: "12px",
               marginBottom: "8px",
@@ -186,7 +191,27 @@ const MatchingAnswerComponent: React.FC<{
               background: "#f9fafb",
             }}
           >
-            {item}
+            <div style={{ marginBottom: "8px", fontWeight: "500" }}>
+              {leftItem.text}
+            </div>
+            <select
+              value={matches[leftItem.id] || ""}
+              onChange={(e) => setMatch(leftItem.id, e.target.value)}
+              style={{
+                width: "100%",
+                padding: "6px",
+                border: "1px solid #d1d5db",
+                borderRadius: "4px",
+                fontSize: "14px",
+              }}
+            >
+              <option value="">Выберите соответствие</option>
+              {questionData.right.map((rightItem: any) => (
+                <option key={rightItem.id} value={rightItem.id}>
+                  {rightItem.text}
+                </option>
+              ))}
+            </select>
           </div>
         ))}
       </div>
@@ -196,32 +221,21 @@ const MatchingAnswerComponent: React.FC<{
         >
           С вариантами:
         </h4>
-        {questionData.rightItems.map((item: string, rightIndex: number) => {
-          const isUsed = Object.values(matches).includes(rightIndex);
+        {questionData.right.map((rightItem: any) => {
+          const isUsed = Object.values(matches).includes(rightItem.id);
           return (
             <div
-              key={rightIndex}
+              key={rightItem.id}
               style={{
                 padding: "12px",
                 marginBottom: "8px",
                 border: "1px solid #e5e7eb",
                 borderRadius: "8px",
                 background: isUsed ? "#f3f4f6" : "#fff",
-                cursor: "pointer",
                 opacity: isUsed ? 0.6 : 1,
               }}
-              onClick={() => {
-                const leftIndex = Object.keys(matches).find(
-                  (key) => matches[key] === rightIndex
-                );
-                if (leftIndex !== undefined) {
-                  const newMatches = { ...matches };
-                  delete newMatches[leftIndex];
-                  onAnswerChange(newMatches);
-                }
-              }}
             >
-              {item}
+              {rightItem.text}
               {isUsed && (
                 <span style={{ marginLeft: "8px", color: "#22c55e" }}>✓</span>
               )}
@@ -240,7 +254,8 @@ const OrderingAnswerComponent: React.FC<{
 }> = ({ questionData, answer, onAnswerChange }) => {
   if (!questionData?.items) return null;
 
-  const orderedItems = answer || questionData.items.slice();
+  // Initialize with the answer if it exists, otherwise use the items in their original order
+  const orderedItems = answer || questionData.items.map((item: any) => item.id);
 
   const moveItem = (fromIndex: number, toIndex: number) => {
     const newItems = [...orderedItems];
@@ -249,14 +264,17 @@ const OrderingAnswerComponent: React.FC<{
     onAnswerChange(newItems);
   };
 
+  // Create a map for quick item lookup
+  const itemsMap = new Map(questionData.items.map((item: any) => [item.id, item.text]));
+
   return (
     <div>
       <p style={{ marginBottom: "16px", color: "#6b7280" }}>
         Расположите элементы в правильном порядке:
       </p>
-      {orderedItems.map((item: string, index: number) => (
+      {orderedItems.map((itemId: number, index: number) => (
         <div
-          key={index}
+          key={itemId}
           style={{
             display: "flex",
             alignItems: "center",
@@ -273,7 +291,9 @@ const OrderingAnswerComponent: React.FC<{
           >
             {index + 1}.
           </span>
-          <span style={{ flex: 1, fontSize: "16px" }}>{item}</span>
+          <span style={{ flex: 1, fontSize: "16px" }}>
+            {itemsMap.get(itemId) as string || `Item ${itemId}`}
+          </span>
           <div style={{ display: "flex", gap: "4px" }}>
             {index > 0 && (
               <button
@@ -1203,7 +1223,7 @@ export default function StudentTestsPage() {
                         />
                       )}
                       {currentAttempt.questions[currentQuestionIndex].question
-                        .question_type === "ordering" && (
+                        .question_type === "sorting" && (
                         <OrderingAnswerComponent
                           questionData={
                             currentAttempt.questions[currentQuestionIndex]

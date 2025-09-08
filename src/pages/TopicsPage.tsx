@@ -35,7 +35,7 @@ const getIconByType = (type: string) => {
       return <FileText className={`${styles.icon} ${styles.purple}`} />;
     case "numeric":
       return <Hash className={`${styles.icon} ${styles.orange}`} />;
-    case "ordering":
+    case "sorting":
       return <ArrowDownAZ className={`${styles.icon} ${styles.pink}`} />;
     case "matching":
       return <Shuffle className={`${styles.icon} ${styles.teal}`} />;
@@ -128,7 +128,7 @@ export default function TopicsPage() {
   const createQuestion = async (question: Omit<IQuestion, "id">) => {
     console.log(question);
     if (question.question_type === "text") {
-      question = {...question, data: { "correct" : question.data.correct[0] || "" } }
+      question = {...question, data: { "correct" : (question.data as any).correct?.[0] || "" } }
     }
     try {
       const response = await axios.post("/server/admin/questions", question, {
