@@ -394,14 +394,12 @@ export default function StudentTestsPage() {
   const [success, setSuccess] = useState<string | null>(null);
 
   // Test taking state
-  const [currentAttemptId, setCurrentAttemptId] = useState<number | null>(
-    null
-  );
+  const [currentAttemptId, setCurrentAttemptId] = useState<number | null>(null);
   const [currentAttempt, setCurrentAttempt] =
     useState<AttemptDetailView | null>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [currentAnswer, setCurrentAnswer] = useState<any>(null);
-  const [saving, setSaving] = useState(false);
+  // Removed saving state as answers are now auto-saved
   const [finishing, setFinishing] = useState(false);
   const [testResults, setTestResults] = useState<{
     score: number;
@@ -555,7 +553,7 @@ export default function StudentTestsPage() {
 
       // Get the attempt ID and start the test
       const attemptId = (response.data as { id: number }).id;
-      setCurrentAttemptId(attemptId)
+      setCurrentAttemptId(attemptId);
       await fetchAttemptData(attemptId);
       setSuccess("Тест начат!");
     } catch (err: any) {
@@ -572,7 +570,7 @@ export default function StudentTestsPage() {
   const fetchAttemptData = async (attemptId: number) => {
     setLoading(true);
     console.log(`Fetching attempt data for attempt ${attemptId}...`);
-    
+
     try {
       const [attemptResponse, questionsResponse] = await Promise.all([
         axios.get(`/server/attempts/${attemptId}`, {
@@ -606,18 +604,14 @@ export default function StudentTestsPage() {
     }
   };
 
-  // Submit answer for current question
-  const submitAnswer = async () => {
-    if (!currentAttempt) return;
+  // Submit answer for current question (automatic)
+  const submitAnswer = async (questionId: number, answer: any) => {
+    if (!currentAttempt || !currentAttemptId) return;
 
-    const currentQuestion = currentAttempt.questions[currentQuestionIndex];
-    if (!currentQuestion) return;
-
-    setSaving(true);
     try {
       const answerData: AnswerSubmitInput = {
-        question_id: currentQuestion.question.id,
-        answer: currentAnswer,
+        question_id: questionId,
+        answer: answer,
       };
 
       const response = await axios.post(
@@ -634,15 +628,13 @@ export default function StudentTestsPage() {
 
       // Update local answers map
       const newAnswers = new Map(answers);
-      newAnswers.set(currentQuestion.question.id, currentAnswer);
+      newAnswers.set(questionId, answer);
       setAnswers(newAnswers);
 
-      setSuccess("Ответ сохранен!");
+      console.log("Answer automatically saved for question", questionId);
     } catch (err: any) {
-      console.error("Error submitting answer:", err);
-      setError(err?.message || "Ошибка при сохранении ответа");
-    } finally {
-      setSaving(false);
+      console.error("Error auto-submitting answer:", err);
+      setError("Ошибка при автоматическом сохранении ответа");
     }
   };
 
@@ -696,12 +688,11 @@ export default function StudentTestsPage() {
     )
       return;
 
-    if (currentAttempt.questions[currentQuestionIndex]) {
+    // Auto-save current answer before switching if there's an answer
+    if (currentAttempt.questions[currentQuestionIndex] && currentAnswer) {
       const currentQuestionId =
         currentAttempt.questions[currentQuestionIndex].question.id;
-      const newAnswers = new Map(answers);
-      newAnswers.set(currentQuestionId, currentAnswer);
-      setAnswers(newAnswers);
+      submitAnswer(currentQuestionId, currentAnswer);
     }
 
     setCurrentQuestionIndex(index);
@@ -726,6 +717,21 @@ export default function StudentTestsPage() {
   useEffect(() => {
     fetchOpenTestSchedules();
   }, []);
+
+  // Auto-submit answers with debouncing
+  useEffect(() => {
+    if (!currentAttempt || !currentAnswer) return;
+
+    const currentQuestion = currentAttempt.questions[currentQuestionIndex];
+    if (!currentQuestion) return;
+
+    // Debounce automatic submission by 1 second
+    const timeoutId = setTimeout(() => {
+      submitAnswer(currentQuestion.question.id, currentAnswer);
+    }, 1000);
+
+    return () => clearTimeout(timeoutId);
+  }, [currentAnswer, currentQuestionIndex, currentAttempt]);
 
   // Update current answer when question changes
   useEffect(() => {
@@ -1233,18 +1239,25 @@ export default function StudentTestsPage() {
                       <ChevronLeft style={{ width: "16px", height: "16px" }} />
                       Назад
                     </button>
-                    <button
-                      onClick={submitAnswer}
-                      disabled={saving}
-                      className={`${styles.btn} ${styles.blue}`}
+                    <div
                       style={{
+                        fontSize: "14px",
+                        color: "#6b7280",
+                        fontStyle: "italic",
                         display: "flex",
                         alignItems: "center",
-                        gap: "8px",
+                        gap: "4px",
                       }}
                     >
-                      {saving ? "Сохранение..." : "Сохранить ответ"}
-                    </button>
+                      <CheckCircle
+                        style={{
+                          width: "16px",
+                          height: "16px",
+                          color: "#22c55e",
+                        }}
+                      />
+                      Ответы сохраняются автоматически
+                    </div>
                     {currentQuestionIndex <
                     currentAttempt.questions.length - 1 ? (
                       <button
