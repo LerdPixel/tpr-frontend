@@ -28,7 +28,6 @@ const studentMenuItems = [
   { label: "Новости", link: "/news" },
   { label: "Дисциплины", link: "/disciplines" },
   { label: "Мои тесты", link: "/student-tests" },
-  { label: "Тесты", link: "/tests" },
   { label: "Лабораторные работы", link: "/labs" },
   { label: "Лекции", link: "/lectures" },
   { label: "Материалы", link: "/materials" },

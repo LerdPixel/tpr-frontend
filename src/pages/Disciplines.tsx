@@ -119,7 +119,8 @@ export default function DisciplinesPage() {
       const response = await axios.get("/server/tests", {
         headers: { Authorization: `Bearer ${getAccess()}` },
       });
-      if (response.status !== 200) throw new Error("Ошибка при загрузке тестов");
+      if (response.status !== 200)
+        throw new Error("Ошибка при загрузке тестов");
       setTests(response.data as Test[]);
     } catch (err: any) {
       console.error("Error fetching tests:", err);
@@ -297,10 +298,17 @@ export default function DisciplinesPage() {
     setError(null);
     setSuccess(null);
 
-    const { name, lecture_count, lecture_points, test_points, test_id } = modalData.data;
+    const { name, lecture_count, lecture_points, test_points, test_id } =
+      modalData.data;
 
     // Validation
-    if (!name || !lecture_count || !lecture_points || !test_points || !test_id) {
+    if (
+      !name ||
+      !lecture_count ||
+      !lecture_points ||
+      !test_points ||
+      !test_id
+    ) {
       setError("Заполните все обязательные поля");
       return;
     }
@@ -320,10 +328,16 @@ export default function DisciplinesPage() {
         test_id: test_id!,
         lab_count: modalLabs.length,
         labs: modalLabs.length > 0 ? modalLabs : [],
-        group_ids: selectedGroups.length > 0 ? selectedGroups.map((group) => group.id) : [],
+        group_ids:
+          selectedGroups.length > 0
+            ? selectedGroups.map((group) => group.id)
+            : [],
       };
 
-      console.log("Discipline data being sent:", JSON.stringify(disciplineData, null, 2));
+      console.log(
+        "Discipline data being sent:",
+        JSON.stringify(disciplineData, null, 2)
+      );
 
       if (modalData.mode === "create") {
         await createDiscipline(disciplineData);
@@ -386,6 +400,23 @@ export default function DisciplinesPage() {
   const openGradebook = (disciplineId: number, groupId: number) => {
     navigate(`/gradesheet/${disciplineId}/${groupId}`);
     setMenu(null);
+  };
+
+  // Handle discipline click - open gradebook directly
+  const handleDisciplineClick = (discipline: Discipline) => {
+    if (!discipline.group_ids || discipline.group_ids.length === 0) {
+      setError("У дисциплины нет назначенных групп");
+      return;
+    }
+
+    // If only one group, navigate directly
+    if (discipline.group_ids.length === 1) {
+      openGradebook(discipline.id, discipline.group_ids[0]);
+    } else {
+      // If multiple groups, open the first one (most common use case)
+      // User can still use the menu to select specific groups
+      openGradebook(discipline.id, discipline.group_ids[0]);
+    }
   };
 
   return (
@@ -509,7 +540,26 @@ export default function DisciplinesPage() {
             </div>
           )}
           {disciplines.map((discipline) => (
-            <div key={discipline.id} className={styles.listItem}>
+            <div
+              key={discipline.id}
+              className={styles.listItem}
+              style={{
+                cursor: "pointer",
+                transition: "all 0.2s ease",
+              }}
+              onClick={() => handleDisciplineClick(discipline)}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "#f8fafc";
+                e.currentTarget.style.transform = "translateY(-1px)";
+                e.currentTarget.style.boxShadow =
+                  "0 4px 12px rgba(0, 0, 0, 0.1)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "";
+                e.currentTarget.style.transform = "translateY(0)";
+                e.currentTarget.style.boxShadow = "";
+              }}
+            >
               <div className={styles.itemMain}>
                 <div className={styles.iconContainer}>
                   <BookOpen className={`${styles.icon} ${styles.blue}`} />
@@ -527,6 +577,18 @@ export default function DisciplinesPage() {
                       style={{ color: "#0056a6", fontWeight: "500" }}
                     >
                       Группы: {getGroupNames(discipline.group_ids)}
+                      {discipline.group_ids.length > 1 && (
+                        <span
+                          style={{
+                            fontSize: "12px",
+                            color: "#666",
+                            fontWeight: "400",
+                            marginLeft: "8px",
+                          }}
+                        >
+                          (нажмите для открытия ведомости)
+                        </span>
+                      )}
                     </div>
                   )}
                   {discipline.test_id && (
@@ -588,11 +650,12 @@ export default function DisciplinesPage() {
 
               <div className={styles.menuContainer}>
                 <button
-                  onClick={() =>
+                  onClick={(e) => {
+                    e.stopPropagation(); // Prevent discipline click
                     setMenu(
                       menu?.id === discipline.id ? null : { id: discipline.id }
-                    )
-                  }
+                    );
+                  }}
                   className={styles.menuBtn}
                 >
                   <MoreVertical className={styles.icon} />
@@ -600,36 +663,57 @@ export default function DisciplinesPage() {
                 {menu?.id === discipline.id && (
                   <div className={styles.dropdown}>
                     {/* Gradebook option for each group */}
-                    {discipline.group_ids && discipline.group_ids.length > 0 && (
-                      <>
-                        {discipline.group_ids.length === 1 ? (
-                          <button
-                            onClick={() => openGradebook(discipline.id, discipline.group_ids![0])}
-                            className={styles.dropdownItem}
-                          >
-                            Открыть ведомость
-                          </button>
-                        ) : (
-                          <div className={styles.submenu}>
-                            <span className={styles.submenuTitle}>Открыть ведомость:</span>
-                            {discipline.group_ids.map((groupId) => {
-                              const group = groups.find(g => g.id === groupId);
-                              return (
-                                <button
-                                  key={groupId}
-                                  onClick={() => openGradebook(discipline.id, groupId)}
-                                  className={styles.dropdownItem}
-                                  style={{ paddingLeft: "20px", fontSize: "14px" }}
-                                >
-                                  {group ? group.name : `Группа ${groupId}`}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        )}
-                        <hr style={{ margin: "4px 0", border: "none", borderTop: "1px solid #e5e7eb" }} />
-                      </>
-                    )}
+                    {discipline.group_ids &&
+                      discipline.group_ids.length > 0 && (
+                        <>
+                          {discipline.group_ids.length === 1 ? (
+                            <button
+                              onClick={() =>
+                                openGradebook(
+                                  discipline.id,
+                                  discipline.group_ids![0]
+                                )
+                              }
+                              className={styles.dropdownItem}
+                            >
+                              Открыть ведомость
+                            </button>
+                          ) : (
+                            <div className={styles.submenu}>
+                              <span className={styles.submenuTitle}>
+                                Открыть ведомость:
+                              </span>
+                              {discipline.group_ids.map((groupId) => {
+                                const group = groups.find(
+                                  (g) => g.id === groupId
+                                );
+                                return (
+                                  <button
+                                    key={groupId}
+                                    onClick={() =>
+                                      openGradebook(discipline.id, groupId)
+                                    }
+                                    className={styles.dropdownItem}
+                                    style={{
+                                      paddingLeft: "20px",
+                                      fontSize: "14px",
+                                    }}
+                                  >
+                                    {group ? group.name : `Группа ${groupId}`}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          )}
+                          <hr
+                            style={{
+                              margin: "4px 0",
+                              border: "none",
+                              borderTop: "1px solid #e5e7eb",
+                            }}
+                          />
+                        </>
+                      )}
                     <button
                       onClick={() => openEditModal(discipline)}
                       className={styles.dropdownItem}
@@ -758,85 +842,85 @@ export default function DisciplinesPage() {
               </div>
             </div>
 
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr",
-                  gap: "12px",
-                }}
-              >
-                <div>
-                  <label
-                    className={styles.label}
-                    style={{
-                      display: "block",
-                      marginBottom: "4px",
-                      fontWeight: "600",
-                    }}
-                  >
-                    Выберите тест *
-                  </label>
-                  {testsLoading ? (
-                    <p style={{ color: "#666", fontSize: "14px" }}>
-                      Загрузка тестов...
-                    </p>
-                  ) : (
-                    <select
-                      value={modalData.data.test_id || ""}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        setModalData({
-                          ...modalData,
-                          data: {
-                            ...modalData.data,
-                            test_id: value === "" ? undefined : parseInt(value),
-                          },
-                        });
-                      }}
-                      className={styles.input}
-                      style={{ padding: "10px" }}
-                    >
-                      <option value="">Выберите тест</option>
-                      {tests.map((test) => (
-                        <option key={test.id} value={test.id}>
-                          {test.title}
-                        </option>
-                      ))}
-                    </select>
-                  )}
-                </div>
-
-                <div>
-                  <label
-                    className={styles.label}
-                    style={{
-                      display: "block",
-                      marginBottom: "4px",
-                      fontWeight: "600",
-                    }}
-                  >
-                    Количество лекций *
-                  </label>
-                  <input
-                    type="number"
-                    value={modalData.data.lecture_count ?? ""}
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: "12px",
+              }}
+            >
+              <div>
+                <label
+                  className={styles.label}
+                  style={{
+                    display: "block",
+                    marginBottom: "4px",
+                    fontWeight: "600",
+                  }}
+                >
+                  Выберите тест *
+                </label>
+                {testsLoading ? (
+                  <p style={{ color: "#666", fontSize: "14px" }}>
+                    Загрузка тестов...
+                  </p>
+                ) : (
+                  <select
+                    value={modalData.data.test_id || ""}
                     onChange={(e) => {
                       const value = e.target.value;
                       setModalData({
                         ...modalData,
                         data: {
                           ...modalData.data,
-                          lecture_count:
-                            value === "" ? undefined : parseInt(value),
+                          test_id: value === "" ? undefined : parseInt(value),
                         },
                       });
                     }}
-                    placeholder="16"
                     className={styles.input}
-                    min="1"
-                  />
-                </div>
+                    style={{ padding: "10px" }}
+                  >
+                    <option value="">Выберите тест</option>
+                    {tests.map((test) => (
+                      <option key={test.id} value={test.id}>
+                        {test.title}
+                      </option>
+                    ))}
+                  </select>
+                )}
               </div>
+
+              <div>
+                <label
+                  className={styles.label}
+                  style={{
+                    display: "block",
+                    marginBottom: "4px",
+                    fontWeight: "600",
+                  }}
+                >
+                  Количество лекций *
+                </label>
+                <input
+                  type="number"
+                  value={modalData.data.lecture_count ?? ""}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setModalData({
+                      ...modalData,
+                      data: {
+                        ...modalData.data,
+                        lecture_count:
+                          value === "" ? undefined : parseInt(value),
+                      },
+                    });
+                  }}
+                  placeholder="16"
+                  className={styles.input}
+                  min="1"
+                />
+              </div>
+            </div>
 
             <div
               style={{
