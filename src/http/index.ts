@@ -1,4 +1,3 @@
-import type { AxiosRequestConfig } from 'axios'
 import axios from 'axios'
 
 export const API_URL = 'http://antonvz.ru:8080'
@@ -8,8 +7,10 @@ const $api = axios.create({
     baseURL : API_URL
 })
 
-$api.interceptors.request.use((config) => {
-    config.headers.Authorization = `Bearer ${localStorage.getItem('token')}`
+$api.interceptors.request.use((config: any) => {
+    if (config.headers) {
+        config.headers.Authorization = `Bearer ${localStorage.getItem('token')}`
+    }
     return config
 })
 

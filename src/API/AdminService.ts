@@ -1,6 +1,3 @@
-import type { IUser } from "@/models/IUser";
-import type { RegData } from "@/models/IUser";
-import type { AuthResponse } from "@/models/response/AuthResponse";
 import axios from "axios"
 
 export default class AdminService {

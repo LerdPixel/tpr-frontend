@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from "react";
+import { useState, useEffect, useContext } from "react";
 import { Context } from "../context/index";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
@@ -11,7 +11,6 @@ import {
   AlertCircle,
   Calendar,
   Play,
-  User,
 } from "lucide-react";
 import styles from "../styles/TopicsPage.module.css";
 
@@ -265,7 +264,9 @@ const OrderingAnswerComponent: React.FC<{
   };
 
   // Create a map for quick item lookup
-  const itemsMap = new Map(questionData.items.map((item: any) => [item.id, item.text]));
+  const itemsMap = new Map(
+    questionData.items.map((item: any) => [item.id, item.text])
+  );
 
   return (
     <div>
@@ -292,7 +293,7 @@ const OrderingAnswerComponent: React.FC<{
             {index + 1}.
           </span>
           <span style={{ flex: 1, fontSize: "16px" }}>
-            {itemsMap.get(itemId) as string || `Item ${itemId}`}
+            {(itemsMap.get(itemId) as string) || `Item ${itemId}`}
           </span>
           <div style={{ display: "flex", gap: "4px" }}>
             {index > 0 && (
@@ -1430,7 +1431,6 @@ export default function StudentTestsPage() {
             >
               {testSchedules.map((schedule) => {
                 const now = new Date();
-                const opens = new Date(schedule.opens_at);
                 const closes = new Date(schedule.closes_at);
                 const timeLeft = Math.max(0, closes.getTime() - now.getTime());
                 const hoursLeft = Math.floor(timeLeft / (1000 * 60 * 60));

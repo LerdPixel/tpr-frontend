@@ -1,13 +1,25 @@
-import React from 'react';
-import styles from "./table.module.css"
+import React from "react";
+import styles from "./table.module.css";
 
-const Table = ({ matrix, rowLabels, columnLabels, tableCl }) => {
+interface TableProps {
+  matrix: (string | number)[][];
+  rowLabels: (string | number)[];
+  columnLabels: (string | number)[];
+  tableCl?: string;
+}
+
+const Table: React.FC<TableProps> = ({
+  matrix,
+  rowLabels,
+  columnLabels,
+  tableCl,
+}) => {
   return (
     <table className={`${styles.table} ${tableCl}`}>
       <thead className={styles.head}>
         <tr>
           <th className={styles.th}></th>
-          {columnLabels.map((label, index) => (
+          {columnLabels.map((label, index: number) => (
             <th key={index} className={styles.th}>
               {label}
             </th>
@@ -15,10 +27,10 @@ const Table = ({ matrix, rowLabels, columnLabels, tableCl }) => {
         </tr>
       </thead>
       <tbody>
-        {matrix.map((row, rowIndex) => (
+        {matrix.map((row, rowIndex: number) => (
           <tr key={rowIndex}>
             <th className={styles.th}>{rowLabels[rowIndex]}</th>
-            {row.map((value, colIndex) => (
+            {row.map((value, colIndex: number) => (
               <td key={colIndex} className={styles.td}>
                 {value}
               </td>

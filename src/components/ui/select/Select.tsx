@@ -10,7 +10,10 @@ interface SelectListProps {
   options: Option[];
   placeholder?: string;
   onChange?: (value: string) => void;
-  textColor? : string;
+  textColor?: string;
+  className?: string;
+  name?: string;
+  value?: number | string;
 }
 
 export const SelectList: React.FC<SelectListProps> = ({
@@ -35,7 +38,6 @@ export const SelectList: React.FC<SelectListProps> = ({
         onChange={handleChange}
         {...props}
       >
-        
         <option value="" disabled>
           {placeholder}
         </option>
@@ -46,6 +48,5 @@ export const SelectList: React.FC<SelectListProps> = ({
         ))}
       </select>
     </div>
-    
   );
 };

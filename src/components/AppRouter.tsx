@@ -3,7 +3,6 @@ import { privateRoutes, publicRoutes } from "../router/index.tsx";
 import { useContext } from "react";
 import { Context } from "../context/index.ts";
 import Loader from "./ui/Loader/loader.tsx";
-import { HardDriveDownload } from "lucide-react";
 import { observer } from "mobx-react-lite";
 
 const AppRouter = () => {

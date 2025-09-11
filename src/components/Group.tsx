@@ -1,16 +1,10 @@
 import { useState } from "react";
 //import styles from "./styles/Student.module.css";
 import type { IGroup } from "./ui/interfaces/IGroup";
-import Edit from "../imgs/editing.png"
-import EditHover from "../imgs/edit.png"
+import Edit from "../imgs/editing.png";
+import EditHover from "../imgs/edit.png";
 import SmartImg from "./ui/SmartImg/SmartImg";
 import styles from "../styles/GroupsPage.module.css";
-
-interface Props {
-    group : IGroup,
-    Click : (id : number) => void
-}
-
 
 interface Props {
   group: IGroup;
@@ -19,10 +13,16 @@ interface Props {
   onArchive: (id: number, archived: boolean) => Promise<void>;
   onClick?: (id: number) => void;
 }
-export default function GroupItem({ group, busyId, onRename, onArchive, onClick }: Props) {
+export default function GroupItem({
+  group,
+  busyId,
+  onRename,
+  onArchive,
+  onClick,
+}: Props) {
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(group.name);
-  const [hovered, setHover] = useState(false)
+  const [hovered, setHover] = useState(false);
 
   const save = async () => {
     if (!name.trim() || name.trim() === group.name) {
@@ -37,8 +37,11 @@ export default function GroupItem({ group, busyId, onRename, onArchive, onClick 
   const isArchived = !!group.archived_at;
 
   return (
-    <tr key={group.id} 
-      className={`${styles.item} ${hovered ? styles.hoveredItem : ""} ${isArchived ? styles.archived : ""}`} 
+    <tr
+      key={group.id}
+      className={`${styles.item} ${hovered ? styles.hoveredItem : ""} ${
+        isArchived ? styles.archived : ""
+      }`}
     >
       {editing ? (
         <td className={styles.editRow}>
@@ -55,7 +58,11 @@ export default function GroupItem({ group, busyId, onRename, onArchive, onClick 
               }
             }}
           />
-          <button disabled={busyId === group.id} onClick={save} className={styles.btn}>
+          <button
+            disabled={busyId === group.id}
+            onClick={save}
+            className={styles.btn}
+          >
             Сохранить
           </button>
           <button
@@ -70,11 +77,11 @@ export default function GroupItem({ group, busyId, onRename, onArchive, onClick 
         </td>
       ) : (
         <>
-          <td       
+          <td
             onMouseEnter={() => setHover(true)}
-            onMouseLeave={() => setHover(false)} 
-            className={styles.info} 
-            onClick={() => onClick(group.id)}
+            onMouseLeave={() => setHover(false)}
+            className={styles.info}
+            onClick={() => onClick?.(group.id)}
           >
             <span className={styles.name}>{group.name}</span>
             <span className={styles.date}>
@@ -83,14 +90,14 @@ export default function GroupItem({ group, busyId, onRename, onArchive, onClick 
             {isArchived && <span className={styles.badge}>Архив</span>}
           </td>
           <td className={styles.actions}>
-            {busyId === group.id ||
-            <SmartImg
+            {busyId === group.id || (
+              <SmartImg
                 InitialImage={Edit}
                 HoverImage={EditHover}
                 onClick={() => setEditing(true)}
                 className={styles.Icon}
-            >
-            </SmartImg>}
+              ></SmartImg>
+            )}
             <button
               disabled={busyId === group.id}
               onClick={() => onArchive(group.id, isArchived)}

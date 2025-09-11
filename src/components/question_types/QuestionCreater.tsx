@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import styles from "./Questions.module.css";
 
 import SingleChoiceQuestion from "./SingleChoiceQuestion";
- import { ShortAnswerQuestion } from './ShortAnswerQuestion';
+import { ShortAnswerQuestion } from "./ShortAnswerQuestion";
 // import { SortingQuestion } from './types/SortingQuestion';
 // import { MatchingQuestion } from './types/MatchingQuestion';
 // import { NumericAnswerQuestion } from './types/NumericAnswerQuestion';
@@ -21,13 +21,16 @@ const QuestionCreator: React.FC = () => {
     "single" | "multiple" | "short" | "numeric" | "ordering" | "matching"
   >("single");
   const [score, setScore] = useState<number>(1);
+  const [questionData, setQuestionData] = useState<any>({});
 
   const renderQuestionComponent = () => {
     switch (questionType) {
       case "single":
         return <SingleChoiceQuestion score={score} setScore={setScore} />;
-      case 'short':
-        return <ShortAnswerQuestion score={score} setScore={setScore} />;
+      case "short":
+        return (
+          <ShortAnswerQuestion onChange={(value) => setQuestionData(value)} />
+        );
       //   case 'numeric':
       //     return <NumericAnswerQuestion score={score} setScore={setScore} />;
       //   case 'sorting':
@@ -40,7 +43,7 @@ const QuestionCreator: React.FC = () => {
   };
 
   return (
-    <div >
+    <div>
       <div className={styles.selectorWrapper}>
         <label htmlFor="type">Тип вопроса:</label>
         <select

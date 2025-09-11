@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import styles from '../../styles/QuestionCreator.module.css';
+import { useEffect, useState } from "react";
+import styles from "../../styles/QuestionCreator.module.css";
 
 interface Props {
   data: {
@@ -12,55 +12,59 @@ interface Props {
 const MultipleChoiceQuestion = ({ data, setData }: Props) => {
   const [isLoading, setIsLoading] = useState(true);
 
-  // Инициализация data
+  // Initialization of data
   useEffect(() => {
     if (!data.options) {
-      setData({ ...data, options: [""] });
+      setData({ ...data, options: [""], correct: data.correct || [] });
     }
     if (!data.correct) {
-      setData({ ...data, correct: [] });
+      setData({ ...data, correct: [], options: data.options || [""] });
     }
     setIsLoading(false);
   }, []);
 
   if (isLoading || !data.options || !data.correct) return null;
 
+  // Now we can safely use data.options and data.correct since we've checked they exist
+  const options = data.options;
+  const correct = data.correct;
+
   const handleTextChange = (index: number, text: string) => {
-    const updated = [...data.options];
+    const updated = [...options];
     updated[index] = text;
-    setData({ ...data, options: updated });
+    setData({ options: updated, correct });
   };
 
   const handleToggleCorrect = (index: number) => {
-    const isCorrect = data.correct.includes(index);
+    const isCorrect = correct.includes(index);
     const updatedCorrect = isCorrect
-      ? data.correct.filter((i) => i !== index)
-      : [...data.correct, index];
-    setData({ ...data, correct: updatedCorrect });
+      ? correct.filter((i) => i !== index)
+      : [...correct, index];
+    setData({ options, correct: updatedCorrect });
   };
 
   const addOption = () => {
-    setData({ ...data, options: [...data.options, ""] });
+    setData({ options: [...options, ""], correct });
   };
 
   const removeOption = (index: number) => {
-    const updatedOptions = data.options.filter((_, i) => i !== index);
+    const updatedOptions = options.filter((_, i) => i !== index);
 
     // Пересчёт correct после удаления
-    const updatedCorrect = data.correct
+    const updatedCorrect = correct
       .filter((i) => i !== index) // убираем удалённый индекс
       .map((i) => (i > index ? i - 1 : i)); // смещаем индексы
 
-    setData({ ...data, options: updatedOptions, correct: updatedCorrect });
+    setData({ options: updatedOptions, correct: updatedCorrect });
   };
 
   return (
     <div className={styles.optionsBlock}>
-      {data.options.map((option, index) => (
+      {options.map((option, index) => (
         <div key={index} className={styles.optionRow}>
           <input
             type="checkbox"
-            checked={data.correct.includes(index)}
+            checked={correct.includes(index)}
             onChange={() => handleToggleCorrect(index)}
           />
           <input

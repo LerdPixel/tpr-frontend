@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import styles from "../../styles/QuestionCreator.module.css";
-import MyButton from "../ui/button/MyButton";
 
 interface ShortAnswerQuestionProps {
   data: any;

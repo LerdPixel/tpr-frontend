@@ -2,16 +2,12 @@ import { useEffect, useRef, useState, useContext, useMemo } from "react";
 import Loader from "../components/ui/Loader/loader.tsx";
 import MyModal from "../components/ui/MyModal/MyModal.tsx";
 import PostFilter from "../components/PostFilter.tsx";
-import PostForm from "../components/PostForm.tsx";
 import PostList from "../components/PostList.tsx";
 import MyButton from "../components/ui/button/MyButton.tsx";
-import { useFetching } from "../hooks/useFetching.ts";
 import { usePosts } from "../hooks/usePosts.ts";
 import { type IPerson } from "../components/ui/interfaces/IPerson.tsx";
 import { type IGroup } from "../components/ui/interfaces/IGroup.tsx";
-import { getPageCount } from "../utils/pages.ts";
 import { Outlet, useParams } from "react-router-dom";
-import { useObserver } from "../hooks/useObserver.ts";
 import { Context } from "../context/index.ts";
 import Student from "../components/Student.tsx";
 import UserForm from "@/components/UserForm.tsx";
@@ -33,12 +29,9 @@ const Posts = () => {
   const [filter, setFilter] = useState({ sort: "", query: "" });
   const [receive, setReceive] = useState(initialReceive);
   const [modal, setModal] = useState(false);
-  const [totalPages, setTotalPages] = useState(0);
-  const [limit, setLimit] = useState(10);
-  const [page, setPage] = useState(1);
   const [groups, setGroups] = useState<IGroup[]>([]);
   const sortedAndSearchedPosts = usePosts(posts, filter.sort, filter.query);
-  const lastElement = useRef();
+  const lastElement = useRef<HTMLDivElement>(null);
   const [groupsLoader, setGroupsLoader] = useState(true);
   const [postError, setPostError] = useState<string | null>(null);
   const { store } = useContext(Context);
@@ -78,7 +71,10 @@ const Posts = () => {
         const students = await usersFromGroups(
           receive.archived
             ? receive.groups
-            : receive.groups.filter((gr) => !("archived_at" in groupFromId(gr)))
+            : receive.groups.filter((gr) => {
+                const group = groupFromId(gr);
+                return group && !("archived_at" in group);
+              })
         );
         setPosts([...pendingStudents, ...students]);
       }
@@ -86,10 +82,6 @@ const Posts = () => {
     if (!groupsLoader) fetchUsers();
   }, [receive, groupsLoader]);
 
-  const createPost = (newPost: IPerson) => {
-    setPosts([...posts, newPost]);
-    setModal(false);
-  };
   const removeStudent = (student: IPerson) => {
     store.delete(student.id);
     setPosts(posts.filter((p: IPerson) => p.id !== student.id));
@@ -112,20 +104,40 @@ const Posts = () => {
   const groupNameFromId = (id: number) =>
     groupFromId(id) == undefined ? "Группа не найдена" : groupFromId(id)!.name;
   const getPending = async () => {
-    const response2 = await store.getPending();
-    if (Array.isArray(response2.data)) {
-      return response2.data;
+    try {
+      const response2 = await store.getPending();
+      if (response2 && Array.isArray((response2 as any).data)) {
+        return (response2 as any).data;
+      }
+      return [];
+    } catch (error) {
+      console.error("Error fetching pending:", error);
+      return [];
     }
-    return [];
   };
   const usersFromGroups = async (selectedGroups: number[]) => {
-    let newPosts = [];
+    let newPosts: IPerson[] = [];
     for (const id of selectedGroups) {
-      const response = await store.getStudents(id);
-      if (response.status == 200) {
-        if (response.data != null) {
-          newPosts.push(...response.data);
+      try {
+        const response = await store.getStudents(id);
+        if (
+          response &&
+          typeof response === "object" &&
+          response &&
+          "status" in response
+        ) {
+          const typedResponse = response as any;
+          if (typedResponse.status == 200) {
+            if (
+              typedResponse.data != null &&
+              Array.isArray(typedResponse.data)
+            ) {
+              newPosts.push(...typedResponse.data);
+            }
+          }
         }
+      } catch (error) {
+        console.error(`Error fetching students for group ${id}:`, error);
       }
     }
     return newPosts;
@@ -180,7 +192,7 @@ const Posts = () => {
       <PostList<IPerson>
         posts={sortedAndSearchedPosts}
         title="Студенты"
-        renderItem={(student, index) => (
+        renderItem={(student) => (
           <Student
             key={student.id}
             student={student}

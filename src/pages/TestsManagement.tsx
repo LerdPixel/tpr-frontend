@@ -1,16 +1,8 @@
-import React, { useState, useEffect, useContext } from "react";
+import { useState, useEffect, useContext } from "react";
 import { Context } from "../context/index";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import {
-  BookOpen,
-  Users,
-  Clock,
-  Plus,
-  MoreVertical,
-  FileText,
-  Play,
-} from "lucide-react";
+import { Clock, Plus, MoreVertical, FileText, Play } from "lucide-react";
 import styles from "../styles/TopicsPage.module.css";
 
 // Types for Test management
@@ -270,12 +262,12 @@ export default function TestsManagementPage() {
       if (response.status !== 201 && response.status !== 200) {
         throw new Error("Ошибка при создании попытки теста");
       }
-      
+
       // Get the attempt ID from response and navigate to attempt page
       const attemptId = (response.data as { id: number }).id;
       setSuccess("Попытка теста создана! Переход к тесту...");
       setAttemptModalData(null);
-      
+
       // Navigate to attempt page
       setTimeout(() => {
         navigate(`/attempt/${attemptId}`);
@@ -325,9 +317,9 @@ export default function TestsManagementPage() {
   };
 
   const openEditModal = async (test: Test) => {
-    const access_token = localStorage.getItem("token")
+    const access_token = localStorage.getItem("token");
     if (access_token == null) {
-        store.refresh() 
+      store.refresh();
     }
     try {
       const response = await axios.get(`/server/tests/${test.id}/topics`);
@@ -410,10 +402,10 @@ export default function TestsManagementPage() {
   };
 
   // Helper function to get topic name by ID
-  const getTopicName = (topicId: number) => {
-    const topic = topics.find((t) => t.id === topicId);
-    return topic ? topic.title : `Тема #${topicId}`;
-  };
+  // const getTopicName = (topicId: number) => {
+  //   const topic = topics.find((t) => t.id === topicId);
+  //   return topic ? topic.title : `Тема #${topicId}`;
+  // };
 
   // Navigate to test attempts
   const openTestAttempts = (testId: number) => {

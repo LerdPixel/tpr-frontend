@@ -1,4 +1,3 @@
-import { MoreVertical } from "lucide-react"; // иконка троеточия
 import { useState } from "react";
 import styles from "./styles/Student.module.css";
 import SmartImg from "./ui/SmartImg/SmartImg";
@@ -12,7 +11,15 @@ import CheckMarkImg from "../imgs/check_mark.png";
 import StudentImg from "../imgs/user.png";
 import SeminaristImg from "../imgs/seminarist.png";
 
-const StudentAva = (student: IPerson, ...props) => {
+interface StudentProps {
+  student: IPerson;
+  remove: (student: IPerson) => void;
+  approve: (student: IPerson) => void;
+  groupFromId: (id: number) => string;
+  onClick: (student: IPerson) => void;
+}
+
+const StudentAva = (student: IPerson, ...props: any[]) => {
   if (student.is_approved) {
     if (student.group_id == 1)
       return <img src={SeminaristImg} {...props}></img>;
@@ -22,7 +29,13 @@ const StudentAva = (student: IPerson, ...props) => {
   }
 };
 
-const Student = ({ student, remove, approve, groupFromId, onClick }) => {
+const Student: React.FC<StudentProps> = ({
+  student,
+  remove,
+  approve,
+  groupFromId,
+  onClick,
+}) => {
   const [open, setOpen] = useState(false);
 
   const studentName = () =>

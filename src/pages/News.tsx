@@ -1,22 +1,20 @@
-import React, { useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import NewsItem from "../components/news/NewsItem";
 import NewsForm from "../components/news/NewsForm";
-import styles from "../components/news/News.module.css"
+import styles from "../components/news/News.module.css";
 import Modal from "../components/news/Modal";
 
 type News = {
   id: number;
   title: string;
   description?: string;
-  fileUrl?: string;      // если приложен файл (URL)
-  testId?: number;       // если выбран тест
-  groupIds: number[];    // id групп, для которых доступна новость
+  fileUrl?: string; // если приложен файл (URL)
+  testId?: number; // если выбран тест
+  groupIds: number[]; // id групп, для которых доступна новость
 };
 
 type Group = { id: number; name: string };
 type Test = { id: number; name: string };
-
-
 
 const mockGroups: Group[] = [
   { id: 1, name: "Б22-534" },
@@ -78,12 +76,14 @@ export default function NewsPage() {
     setModalOpen(true);
   };
   const removeNewsItem = (id: number) => {
-    setNews(prev => prev.filter((item) => item.id != id))
+    setNews((prev) => prev.filter((item) => item.id != id));
   };
   const handleSave = (payload: Omit<News, "id"> & { id?: number }) => {
     if (payload.id) {
       setNews((prev) =>
-        prev.map((n) => (n.id === payload.id ? { ...n, ...payload } as News : n))
+        prev.map((n) =>
+          n.id === payload.id ? ({ ...n, ...payload } as News) : n
+        )
       );
     } else {
       const id = Date.now();
@@ -120,7 +120,9 @@ export default function NewsPage() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
-          <span className={styles.searchIcon} aria-hidden>🔍</span>
+          <span className={styles.searchIcon} aria-hidden>
+            🔍
+          </span>
         </div>
 
         <button className={styles.addBtn} onClick={openCreate}>

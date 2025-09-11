@@ -1,4 +1,3 @@
-import $api from "@/http";
 import type { RegData } from "@/models/IUser";
 import type { AuthResponse } from "@/models/response/AuthResponse";
 import axios from "axios";

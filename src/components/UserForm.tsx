@@ -75,7 +75,10 @@ const UserForm: React.FC<Props> = ({ user, onSave, groups }) => {
         <SelectList
           className={styles.formInput}
           name="group_id"
-          options={groups.map((g) => ({ label: g.name, value: g.id }))}
+          options={groups.map((g) => ({
+            label: g.name,
+            value: g.id.toString(),
+          }))}
           value={formData.group_id}
           onChange={(value) => handleChange("group_id", value)}
           placeholder="Выберите группу"

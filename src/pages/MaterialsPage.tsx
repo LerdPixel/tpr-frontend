@@ -364,10 +364,10 @@ const MaterialsPage: React.FC = () => {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   };
 
-  const getDisciplineName = (disciplineId: number): string => {
-    const discipline = disciplines.find((d) => d.id === disciplineId);
-    return discipline ? discipline.name : `Дисциплина ${disciplineId}`;
-  };
+  // const getDisciplineName = (disciplineId: number): string => {
+  //   const discipline = disciplines.find((d) => d.id === disciplineId);
+  //   return discipline ? discipline.name : `Дисциплина ${disciplineId}`;
+  // };
 
   const getFilteredMaterials = (): LectureMaterial[] => {
     if (selectedDiscipline === null) return materials;

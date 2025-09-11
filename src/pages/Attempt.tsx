@@ -270,7 +270,9 @@ const OrderingAnswerComponent: React.FC<{
   };
 
   // Create a map for quick item lookup
-  const itemsMap = new Map(questionData.items.map((item: any) => [item.id, item.text]));
+  const itemsMap = new Map(
+    questionData.items.map((item: any) => [item.id, item.text])
+  );
 
   return (
     <div>
@@ -297,7 +299,7 @@ const OrderingAnswerComponent: React.FC<{
             {index + 1}.
           </span>
           <span style={{ flex: 1, fontSize: "16px" }}>
-            {itemsMap.get(itemId) as string || `Item ${itemId}`}
+            {(itemsMap.get(itemId) as string) || `Item ${itemId}`}
           </span>
           <div style={{ display: "flex", gap: "4px" }}>
             {index > 0 && (
@@ -511,8 +513,8 @@ export default function AttemptPage() {
       let answerData: AnswerSubmitInput;
       answerData = {
         question_id: currentQuestion.question.id,
-        answer: currentAnswer
-      }
+        answer: currentAnswer,
+      };
       console.log(currentAnswer);
       console.log("Submitting answer:", answerData);
 
@@ -1216,8 +1218,7 @@ export default function AttemptPage() {
                           onAnswerChange={setCurrentAnswer}
                         />
                       )}
-                      {currentQuestion.question.question_type ===
-                        "sorting" && (
+                      {currentQuestion.question.question_type === "sorting" && (
                         <OrderingAnswerComponent
                           questionData={currentQuestion.question.data}
                           answer={currentAnswer}

@@ -11,7 +11,6 @@ const adminMenuItems = [
   { label: "Лабораторные работы", link: "/labs" },
   { label: "Группы", link: "/groups" },
   { label: "Студенты", link: "/users" },
-  { label: "Лекции", link: "/lectures" },
   { label: "Материалы", link: "/materials" },
 ];
 const seminaristMenuItems = [
@@ -21,7 +20,6 @@ const seminaristMenuItems = [
   { label: "Лабораторные работы", link: "/labs" },
   { label: "Группы", link: "/groups" },
   { label: "Студенты", link: "/users" },
-  { label: "Лекции", link: "/lectures" },
   { label: "Материалы", link: "/materials" },
 ];
 const studentMenuItems = [

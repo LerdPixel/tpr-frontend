@@ -12,7 +12,7 @@ const Registration = () => {
   const [error, setError] = useState<string | null>(null);
   const { store } = useContext(Context);
   const [groups, setGroups] = useState<IGroup[]>([]);
-  const [fetchingGroupList, isLoading, postError] = useFetching(async () => {
+  const [fetchingGroupList, isLoading] = useFetching(async () => {
     const response = await store.getGroupList();
     if (response.status == 200) {
       console.log("OK");
@@ -146,7 +146,10 @@ const Registration = () => {
         <div className="select_container">
           {!isLoading && (
             <SelectList
-              options={groups.map((g) => ({ label: g.name, value: g.id }))}
+              options={groups.map((g) => ({
+                label: g.name,
+                value: g.id.toString(),
+              }))}
               onChange={(value) => handleChange("group", value)}
               placeholder="Группа"
             />

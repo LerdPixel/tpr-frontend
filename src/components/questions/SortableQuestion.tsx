@@ -16,7 +16,6 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import styles from "../../styles/QuestionCreator.module.css";
 import { useState, useEffect } from "react";
-import MyButton from "../ui/button/MyButton";
 import React from "react";
 
 type SortableItem = { id: number; text: string };
@@ -45,14 +44,15 @@ const SortableQuestion: React.FC<SortableQuestionProps> = ({
 
   // Generate next available ID
   const getNextId = () => {
-    const maxId = items.length > 0 ? Math.max(...items.map(item => item.id)) : 9;
+    const maxId =
+      items.length > 0 ? Math.max(...items.map((item) => item.id)) : 9;
     return maxId + 1;
   };
 
   useEffect(() => {
     const sortableData: SortableData = {
       items: items,
-      correct: items.map(item => item.id)
+      correct: items.map((item) => item.id),
     };
     console.log("SortableQuestion data update:", sortableData);
     setData(sortableData);
@@ -66,7 +66,7 @@ const SortableQuestion: React.FC<SortableQuestionProps> = ({
     const newId = getNextId();
     setItems([...items, { id: newId, text: "" }]);
   };
-  
+
   const handleTextChange = (id: number, newText: string) => {
     setItems((prev) => {
       const updated = [...prev];
@@ -77,7 +77,7 @@ const SortableQuestion: React.FC<SortableQuestionProps> = ({
       return updated;
     });
   };
-  
+
   const handleRemoveItem = (id: number) => {
     const updated = items.filter((item) => item.id !== id);
     setItems(updated);
