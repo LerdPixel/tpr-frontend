@@ -2,7 +2,7 @@ import { useState, useEffect, useContext } from "react";
 import { Context } from "../context/index";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { Clock, Plus, MoreVertical, FileText, Play } from "lucide-react";
+import { Clock, Plus, MoreVertical, FileText } from "lucide-react";
 import styles from "../styles/TopicsPage.module.css";
 
 // Types for Test management
@@ -40,6 +40,10 @@ interface TestTopic {
   test_id?: number;
 }
 
+interface TestTopicWithTitle extends TestTopic {
+  topic_title?: string;
+}
+
 interface TestTopicsReplaceInput {
   topics: TestTopic[];
 }
@@ -62,14 +66,9 @@ export default function TestsManagementPage() {
     id?: number;
   } | null>(null);
 
-  // Test attempt modal state
-  const [attemptModalData, setAttemptModalData] = useState<{
-    testId: number;
-    selectedDisciplineId: number;
-  } | null>(null);
-
   // Local state for test topics management
-  const [modalTopics, setModalTopics] = useState<TestTopic[]>([]);
+  const [modalTopics, setModalTopics] = useState<TestTopicWithTitle[]>([]);
+  const [loadingTestTopics, setLoadingTestTopics] = useState(false);
 
   // Auto-dismiss error after 5 seconds
   useEffect(() => {
@@ -99,7 +98,9 @@ export default function TestsManagementPage() {
   const fetchDisciplines = async () => {
     setDisciplinesLoading(true);
     try {
-      const response = await axios.get("/server/disciplines");
+      const response = await axios.get("/server/disciplines", {
+        headers: { Authorization: `Bearer ${getAccess()}` },
+      });
       if (response.status !== 200)
         throw new Error("Ошибка при загрузке дисциплин");
       setDisciplines((response.data as Discipline[]) || []);
@@ -266,7 +267,6 @@ export default function TestsManagementPage() {
       // Get the attempt ID from response and navigate to attempt page
       const attemptId = (response.data as { id: number }).id;
       setSuccess("Попытка теста создана! Переход к тесту...");
-      setAttemptModalData(null);
 
       // Navigate to attempt page
       setTimeout(() => {
@@ -316,23 +316,43 @@ export default function TestsManagementPage() {
     });
   };
 
-  const openEditModal = async (test: Test) => {
-    const access_token = localStorage.getItem("token");
-    if (access_token == null) {
-      store.refresh();
-    }
+  const loadTestTopics = async (testId: number) => {
+    setLoadingTestTopics(true);
     try {
-      const response = await axios.get(`/server/tests/${test.id}/topics`);
+      const response = await axios.get(`/server/tests/${testId}/topics`, {
+        headers: { Authorization: `Bearer ${getAccess()}` },
+      });
       if (response.status === 200) {
-        setModalTopics((response.data as TestTopic[]) || []);
+        const testTopics = (response.data as TestTopic[]) || [];
+        // Enrich with topic titles
+        const enrichedTopics: TestTopicWithTitle[] = testTopics.map(
+          (testTopic) => {
+            const topic = topics.find((t) => t.id === testTopic.topic_id);
+            return {
+              ...testTopic,
+              topic_title: topic?.title || `Topic #${testTopic.topic_id}`,
+            };
+          }
+        );
+        setModalTopics(enrichedTopics);
       } else {
         setModalTopics([]);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error fetching test topics:", err);
       setModalTopics([]);
+      if (err.response?.status === 401) {
+        setError("Нет прав доступа. Попробуйте войти заново.");
+      } else {
+        setError(err?.message || "Ошибка при загрузке тем теста");
+      }
+    } finally {
+      setLoadingTestTopics(false);
     }
+  };
 
+  const openEditModal = async (test: Test) => {
+    await loadTestTopics(test.id);
     setModalData({
       mode: "edit",
       id: test.id,
@@ -381,7 +401,11 @@ export default function TestsManagementPage() {
 
   // Test topics management functions
   const addTestTopic = () => {
-    const newTopic: TestTopic = { topic_id: 0, questions_count: 1 };
+    const newTopic: TestTopicWithTitle = {
+      topic_id: 0,
+      questions_count: 1,
+      topic_title: undefined,
+    };
     setModalTopics([...modalTopics, newTopic]);
   };
 
@@ -409,11 +433,8 @@ export default function TestsManagementPage() {
 
   // Navigate to test attempts
   const openTestAttempts = (testId: number) => {
-    setAttemptModalData({
-      testId,
-      selectedDisciplineId: 0,
-    });
-    setMenu(null);
+    // This functionality has been removed as per requirements
+    console.log("Test attempts functionality removed");
   };
 
   const removeTest = async (id: number) => {
@@ -544,7 +565,11 @@ export default function TestsManagementPage() {
           )}
           {(tests || []).map((test) => (
             <div key={test.id} className={styles.listItem}>
-              <div className={styles.itemMain}>
+              <div
+                className={styles.itemMain}
+                onClick={() => openEditModal(test)}
+                style={{ cursor: "pointer" }}
+              >
                 <div className={styles.iconContainer}>
                   <FileText className={`${styles.icon} ${styles.blue}`} />
                 </div>
@@ -574,9 +599,10 @@ export default function TestsManagementPage() {
 
               <div className={styles.menuContainer}>
                 <button
-                  onClick={() =>
-                    setMenu(menu?.id === test.id ? null : { id: test.id })
-                  }
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setMenu(menu?.id === test.id ? null : { id: test.id });
+                  }}
                   className={styles.menuBtn}
                 >
                   <MoreVertical className={styles.icon} />
@@ -584,26 +610,19 @@ export default function TestsManagementPage() {
                 {menu?.id === test.id && (
                   <div className={styles.dropdown}>
                     <button
-                      onClick={() => openTestAttempts(test.id)}
-                      className={styles.dropdownItem}
-                    >
-                      <Play
-                        style={{
-                          width: "16px",
-                          height: "16px",
-                          marginRight: "8px",
-                        }}
-                      />
-                      Открыть попытки
-                    </button>
-                    <button
-                      onClick={() => openEditModal(test)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openEditModal(test);
+                      }}
                       className={styles.dropdownItem}
                     >
                       Редактировать
                     </button>
                     <button
-                      onClick={() => removeTest(test.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeTest(test.id);
+                      }}
                       className={`${styles.dropdownItem} ${styles.danger}`}
                       style={{ color: "#dc2626" }}
                     >
@@ -722,7 +741,7 @@ export default function TestsManagementPage() {
                     onClick={addTestTopic}
                     className={`${styles.btn} ${styles.blue}`}
                     style={{ padding: "6px 12px", fontSize: "14px" }}
-                    disabled={topicsLoading}
+                    disabled={topicsLoading || loadingTestTopics}
                   >
                     <Plus
                       style={{
@@ -735,9 +754,13 @@ export default function TestsManagementPage() {
                   </button>
                 </div>
 
-                {topicsLoading ? (
+                {loadingTestTopics ? (
                   <p style={{ color: "#666", fontSize: "14px" }}>
-                    Загрузка тем...
+                    Загрузка тем теста...
+                  </p>
+                ) : topicsLoading ? (
+                  <p style={{ color: "#666", fontSize: "14px" }}>
+                    Загрузка списка тем...
                   </p>
                 ) : modalTopics.length === 0 ? (
                   <p
@@ -783,13 +806,26 @@ export default function TestsManagementPage() {
                           </label>
                           <select
                             value={testTopic.topic_id}
-                            onChange={(e) =>
-                              updateTestTopic(
-                                index,
-                                "topic_id",
-                                parseInt(e.target.value)
-                              )
-                            }
+                            onChange={(e) => {
+                              const newTopicId = parseInt(e.target.value);
+                              const topic = topics.find(
+                                (t) => t.id === newTopicId
+                              );
+                              updateTestTopic(index, "topic_id", newTopicId);
+                              // Update the topic title as well
+                              setModalTopics((current) =>
+                                current.map((t, i) =>
+                                  i === index
+                                    ? {
+                                        ...t,
+                                        topic_title:
+                                          topic?.title ||
+                                          `Topic #${newTopicId}`,
+                                      }
+                                    : t
+                                )
+                              );
+                            }}
                             className={styles.input}
                             style={{ width: "100%" }}
                           >
@@ -800,8 +836,21 @@ export default function TestsManagementPage() {
                               </option>
                             ))}
                           </select>
+                          {modalData?.mode === "edit" &&
+                            testTopic.topic_title && (
+                              <div
+                                style={{
+                                  fontSize: "12px",
+                                  color: "#666",
+                                  marginTop: "2px",
+                                  fontStyle: "italic",
+                                }}
+                              >
+                                {testTopic.topic_title}
+                              </div>
+                            )}
                         </div>
-                        <div style={{ minWidth: "120px" }}>
+                        <div style={{ minWidth: "140px" }}>
                           <label
                             style={{
                               fontSize: "14px",
@@ -810,7 +859,7 @@ export default function TestsManagementPage() {
                               display: "block",
                             }}
                           >
-                            Количество вопросов:
+                            Вопросов из темы:
                           </label>
                           <input
                             type="number"
@@ -874,86 +923,6 @@ export default function TestsManagementPage() {
                 className={`${styles.btn} ${styles.blue}`}
               >
                 {modalData.mode === "create" ? "Создать" : "Сохранить"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Test Attempt Modal */}
-      {attemptModalData && (
-        <div
-          className={styles.modalOverlay}
-          onClick={() => setAttemptModalData(null)}
-        >
-          <div
-            className={styles.modal}
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              maxWidth: "400px",
-              width: "90vw",
-            }}
-          >
-            <h3 className={styles.modalTitle}>Открыть тест</h3>
-
-            <div>
-              <label
-                className={styles.label}
-                style={{
-                  display: "block",
-                  marginBottom: "8px",
-                  fontWeight: "600",
-                }}
-              >
-                Выберите дисциплину *
-              </label>
-              {disciplinesLoading ? (
-                <p style={{ color: "#666", fontSize: "14px" }}>
-                  Загрузка дисциплин...
-                </p>
-              ) : (
-                <select
-                  value={attemptModalData.selectedDisciplineId}
-                  onChange={(e) =>
-                    setAttemptModalData({
-                      ...attemptModalData,
-                      selectedDisciplineId: parseInt(e.target.value),
-                    })
-                  }
-                  className={styles.input}
-                >
-                  <option value={0}>Выберите дисциплину</option>
-                  {(disciplines || []).map((discipline) => (
-                    <option key={discipline.id} value={discipline.id}>
-                      {discipline.name}
-                    </option>
-                  ))}
-                </select>
-              )}
-            </div>
-
-            <div className={styles.modalActions}>
-              <button
-                onClick={() => setAttemptModalData(null)}
-                className={`${styles.btn} ${styles.gray}`}
-              >
-                Отмена
-              </button>
-              <button
-                onClick={() => {
-                  if (attemptModalData.selectedDisciplineId === 0) {
-                    setError("Выберите дисциплину");
-                    return;
-                  }
-                  startTestAttempt(
-                    attemptModalData.testId,
-                    attemptModalData.selectedDisciplineId
-                  );
-                }}
-                className={`${styles.btn} ${styles.blue}`}
-                disabled={attemptModalData.selectedDisciplineId === 0}
-              >
-                Открыть тест
               </button>
             </div>
           </div>
