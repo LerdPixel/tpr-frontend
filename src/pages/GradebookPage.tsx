@@ -618,7 +618,7 @@ export default function GradebookPage() {
   if (loading) {
     return (
       <div className={styles.container}>
-        <div style={{ textAlign: "center", padding: "40px" }}>
+        <div className={styles.loadingContainer}>
           <p>Загрузка ведомости...</p>
         </div>
       </div>
@@ -628,20 +628,12 @@ export default function GradebookPage() {
   if (error) {
     return (
       <div className={styles.container}>
-        <div style={{ textAlign: "center", padding: "40px", color: "#dc2626" }}>
+        <div className={styles.errorContainer}>
           <h3>Ошибка</h3>
           <p>{error}</p>
           <button
             onClick={() => window.location.reload()}
-            style={{
-              marginTop: "16px",
-              padding: "8px 16px",
-              backgroundColor: "#3b82f6",
-              color: "white",
-              border: "none",
-              borderRadius: "4px",
-              cursor: "pointer",
-            }}
+            className={styles.errorButton}
           >
             Попробовать снова
           </button>
@@ -653,7 +645,7 @@ export default function GradebookPage() {
   if (!discipline || !group) {
     return (
       <div className={styles.container}>
-        <div style={{ textAlign: "center", padding: "40px" }}>
+        <div className={styles.notFoundContainer}>
           <h3>Данные не найдены</h3>
           <p>
             Параметры URL: disciplineId={disciplineId}, groupId={groupId}
@@ -662,15 +654,7 @@ export default function GradebookPage() {
           <p>Группа: {group ? "загружена" : "не найдена"}</p>
           <button
             onClick={() => window.history.back()}
-            style={{
-              marginTop: "16px",
-              padding: "8px 16px",
-              backgroundColor: "#3b82f6",
-              color: "white",
-              border: "none",
-              borderRadius: "4px",
-              cursor: "pointer",
-            }}
+            className={styles.backButton}
           >
             Назад
           </button>
@@ -683,40 +667,14 @@ export default function GradebookPage() {
     <div className={styles.container}>
       {/* Success message */}
       {success && (
-        <div
-          style={{
-            position: "fixed",
-            top: "20px",
-            right: "20px",
-            background: "#dcfce7",
-            color: "#166534",
-            padding: "12px 16px",
-            borderRadius: "8px",
-            border: "1px solid #bbf7d0",
-            zIndex: 1000,
-            boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
-          }}
-        >
+        <div className={styles.successMessage}>
           {success}
         </div>
       )}
 
       {/* Error message */}
       {error && (
-        <div
-          style={{
-            position: "fixed",
-            top: "20px",
-            right: "20px",
-            background: "#fee2e2",
-            color: "#dc2626",
-            padding: "12px 16px",
-            borderRadius: "8px",
-            border: "1px solid #fecaca",
-            zIndex: 1000,
-            boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
-          }}
-        >
+        <div className={styles.errorMessage}>
           {error}
         </div>
       )}
@@ -775,7 +733,7 @@ export default function GradebookPage() {
                     ? clearStudentSelection
                     : selectAllStudents
                 }
-                style={{ marginRight: "8px" }}
+                className={styles.checkboxSpacing}
               />
               Ученик
             </th>
@@ -827,7 +785,7 @@ export default function GradebookPage() {
                     type="checkbox"
                     checked={selectedStudents.has(student.id)}
                     onChange={() => toggleStudentSelection(student.id)}
-                    style={{ marginRight: "8px" }}
+                    className={styles.checkboxSpacing}
                   />
                   {`${student.last_name} ${student.first_name[0]}.${student.patronymic[0]}.`}
                 </td>
@@ -838,15 +796,16 @@ export default function GradebookPage() {
                     return (
                       <td
                         key={i}
-                        className={styles.cell}
+                        className={`${
+                          styles.cell
+                        } ${styles.attendanceCell} ${
+                          attended
+                            ? styles.attendanceCellPresent
+                            : styles.attendanceCellAbsent
+                        }`}
                         onClick={() =>
                           toggleAttendance(student.id, lectureNumber)
                         }
-                        style={{
-                          cursor: "pointer",
-                          backgroundColor: attended ? "#dcfce7" : "#fee2e2",
-                          userSelect: "none",
-                        }}
                       >
                         {attended ? "" : "Н"}
                       </td>
@@ -867,15 +826,16 @@ export default function GradebookPage() {
                         ? styles.testCellOpen
                         : styles.cell
                       : styles.cell
+                  } ${
+                    testSchedule
+                      ? styles.testCellClickable
+                      : styles.testCellDefault
                   }`}
                   onClick={
                     testSchedule
                       ? () => handleTestCellClick(student)
                       : undefined
                   }
-                  style={{
-                    cursor: testSchedule ? "pointer" : "default",
-                  }}
                 >
                   {progressData?.progress.test_points_awarded ||
                     (testSchedule ? "🟡" : "")}
@@ -889,7 +849,7 @@ export default function GradebookPage() {
         </tbody>
       </table>
 
-      <div style={{ marginTop: "20px", fontSize: "14px", color: "#666" }}>
+      <div className={styles.explanationSection}>
         <p>
           <strong>Пояснение:</strong>
         </p>
