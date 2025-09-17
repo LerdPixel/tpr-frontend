@@ -9,6 +9,7 @@ import TopicsPage from "@/pages/TopicsPage.tsx";
 import Disciplines from "@/pages/Disciplines.tsx";
 import Attempt from "@/pages/Attempt.tsx";
 import GradebookPage from "../pages/GradebookPage.tsx";
+import StudentGradebook from "../pages/StudentGradebook.tsx";
 import StudentTests from "../pages/StudentTests.tsx";
 import MaterialsPage from "../pages/MaterialsPage.tsx";
 
@@ -19,6 +20,11 @@ export const privateRoutes = [
   {
     path: "/gradesheet/:disciplineId/:groupId",
     element: <GradebookPage />,
+    exact: true,
+  },
+  {
+    path: "/my-progress/:disciplineId",
+    element: <StudentGradebook />,
     exact: true,
   },
   { path: "/groups", element: <GroupsPage />, exact: true },

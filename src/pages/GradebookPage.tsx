@@ -666,18 +666,10 @@ export default function GradebookPage() {
   return (
     <div className={styles.container}>
       {/* Success message */}
-      {success && (
-        <div className={styles.successMessage}>
-          {success}
-        </div>
-      )}
+      {success && <div className={styles.successMessage}>{success}</div>}
 
       {/* Error message */}
-      {error && (
-        <div className={styles.errorMessage}>
-          {error}
-        </div>
-      )}
+      {error && <div className={styles.errorMessage}>{error}</div>}
 
       <div className={styles.header}>
         <h2 className={styles.title}>
@@ -796,9 +788,7 @@ export default function GradebookPage() {
                     return (
                       <td
                         key={i}
-                        className={`${
-                          styles.cell
-                        } ${styles.attendanceCell} ${
+                        className={`${styles.cell} ${styles.attendanceCell} ${
                           attended
                             ? styles.attendanceCellPresent
                             : styles.attendanceCellAbsent

@@ -35,10 +35,20 @@ const Menu: React.FC = () => {
   const navigate = useNavigate();
   const { store } = useContext(Context);
   const [menuItems, setMenuItems] = useState(studentMenuItems);
-
+  const [menuHeader, setMenuHeader] = useState("");
   useEffect(() => {
-    if (store.role === "seminarist") setMenuItems(seminaristMenuItems);
-    else if (store.role === "admin") setMenuItems(adminMenuItems);
+    if (store.role === "seminarist") {
+      setMenuItems(seminaristMenuItems);
+      setMenuHeader("Меню преподавателя");
+    } else if (store.role === "admin") {
+      setMenuItems(adminMenuItems);
+      setMenuHeader("Меню админариста");
+    } else if (store.role === "student") {
+      setMenuItems(studentMenuItems);
+      setMenuHeader("Меню студента");
+    } else {
+      setMenuHeader("Меню неподтвержденного пользователя");
+    }
   }, [store.role]);
 
   // Set body overflow to hidden for this page
@@ -79,7 +89,7 @@ const Menu: React.FC = () => {
           flexShrink: 0,
         }}
       >
-        Меню преподавателя
+        {menuHeader}
       </div>
       <div
         style={{
