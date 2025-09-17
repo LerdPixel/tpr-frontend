@@ -242,15 +242,15 @@ export default function StudentGradebook() {
         <thead>
           {/* Header row */}
           <tr>
-            <th rowSpan={2}>Student</th>
-            <th colSpan={discipline.lecture_count}>Lectures</th>
+            <th rowSpan={2}>Студент</th>
+            <th colSpan={discipline.lecture_count}>Лекции</th>
             {Array.from({ length: discipline.lab_count || 0 }).map((_, i) => (
               <th key={`labHeader${i}`} rowSpan={2}>
                 Lab{i + 1}
               </th>
             ))}
-            <th rowSpan={2}>Test</th>
-            <th rowSpan={2}>Total</th>
+            <th rowSpan={2}>Тест</th>
+            <th rowSpan={2}>Итог</th>
           </tr>
           {/* Lecture numbers row */}
           <tr>
@@ -291,17 +291,6 @@ export default function StudentGradebook() {
         </tbody>
       </table>
 
-      <div className={styles.explanationSection}>
-        <p>
-          <strong>Explanation:</strong>
-        </p>
-        <p>
-          • Green cells indicate attendance, red cells with "A" indicate absence
-        </p>
-        <p>• Lab and test scores are loaded from the server</p>
-        <p>• This view is read-only - you can only view your progress</p>
-        {progress && <p>• Total possible points: {progress.total_possible}</p>}
-      </div>
     </div>
   );
 }

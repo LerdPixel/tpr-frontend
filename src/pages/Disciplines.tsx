@@ -233,7 +233,7 @@ export default function DisciplinesPage() {
   useEffect(() => {
     fetchDisciplines();
     fetchGroups();
-    fetchTests();
+    if (store.role !== "student") fetchTests();
   }, []);
 
   // Click outside handler for dropdown menus
@@ -398,7 +398,10 @@ export default function DisciplinesPage() {
 
   // Open gradebook for discipline and group
   const openGradebook = (disciplineId: number, groupId: number) => {
-    navigate(`/gradesheet/${disciplineId}/${groupId}`);
+    if (store.role === "student")
+      navigate( `/my-progress/${disciplineId}`)
+    else
+      navigate(`/gradesheet/${disciplineId}/${groupId}`);
     setMenu(null);
   };
 
@@ -516,13 +519,15 @@ export default function DisciplinesPage() {
       <div className={styles.content} style={{ width: "100%" }}>
         <div className={styles.contentHeader}>
           <h2 className={styles.title}>Дисциплины</h2>
-          <button
-            onClick={openCreateModal}
-            className={`${styles.btn} ${styles.blue}`}
-          >
-            <Plus className={styles.icon} />
-            <span style={{ marginLeft: "8px" }}>Добавить дисциплину</span>
-          </button>
+          {(store.role === "admin" || store.role === "seminarist") && (
+            <button
+              onClick={openCreateModal}
+              className={`${styles.btn} ${styles.blue}`}
+            >
+              <Plus className={styles.icon} />
+              <span style={{ marginLeft: "8px" }}>Добавить дисциплину</span>
+            </button>
+          )}
         </div>
 
         {/* Disciplines List */}
@@ -571,27 +576,29 @@ export default function DisciplinesPage() {
                       {discipline.description}
                     </div>
                   )}
-                  {discipline.group_ids && discipline.group_ids.length > 0 && (
-                    <div
-                      className={styles.itemDesc}
-                      style={{ color: "#0056a6", fontWeight: "500" }}
-                    >
-                      Группы: {getGroupNames(discipline.group_ids)}
-                      {discipline.group_ids.length > 1 && (
-                        <span
-                          style={{
-                            fontSize: "12px",
-                            color: "#666",
-                            fontWeight: "400",
-                            marginLeft: "8px",
-                          }}
-                        >
-                          (нажмите для открытия ведомости)
-                        </span>
-                      )}
-                    </div>
-                  )}
-                  {discipline.test_id && (
+                  {store.role !== "student" &&
+                    discipline.group_ids &&
+                    discipline.group_ids.length > 0 && (
+                      <div
+                        className={styles.itemDesc}
+                        style={{ color: "#0056a6", fontWeight: "500" }}
+                      >
+                        Группы: {getGroupNames(discipline.group_ids)}
+                        {discipline.group_ids.length > 1 && (
+                          <span
+                            style={{
+                              fontSize: "12px",
+                              color: "#666",
+                              fontWeight: "400",
+                              marginLeft: "8px",
+                            }}
+                          >
+                            (нажмите для открытия ведомости)
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  {store.role !== "student" && discipline.test_id && (
                     <div
                       className={styles.itemDesc}
                       style={{ color: "#059669", fontWeight: "500" }}
@@ -648,88 +655,92 @@ export default function DisciplinesPage() {
                 </div>
               </div>
 
-              <div className={styles.menuContainer}>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation(); // Prevent discipline click
-                    setMenu(
-                      menu?.id === discipline.id ? null : { id: discipline.id }
-                    );
-                  }}
-                  className={styles.menuBtn}
-                >
-                  <MoreVertical className={styles.icon} />
-                </button>
-                {menu?.id === discipline.id && (
-                  <div className={styles.dropdown}>
-                    {/* Gradebook option for each group */}
-                    {discipline.group_ids &&
-                      discipline.group_ids.length > 0 && (
-                        <>
-                          {discipline.group_ids.length === 1 ? (
-                            <button
-                              onClick={() =>
-                                openGradebook(
-                                  discipline.id,
-                                  discipline.group_ids![0]
-                                )
-                              }
-                              className={styles.dropdownItem}
-                            >
-                              Открыть ведомость
-                            </button>
-                          ) : (
-                            <div className={styles.submenu}>
-                              <span className={styles.submenuTitle}>
-                                Открыть ведомость:
-                              </span>
-                              {discipline.group_ids.map((groupId) => {
-                                const group = groups.find(
-                                  (g) => g.id === groupId
-                                );
-                                return (
-                                  <button
-                                    key={groupId}
-                                    onClick={() =>
-                                      openGradebook(discipline.id, groupId)
-                                    }
-                                    className={styles.dropdownItem}
-                                    style={{
-                                      paddingLeft: "20px",
-                                      fontSize: "14px",
-                                    }}
-                                  >
-                                    {group ? group.name : `Группа ${groupId}`}
-                                  </button>
-                                );
-                              })}
-                            </div>
-                          )}
-                          <hr
-                            style={{
-                              margin: "4px 0",
-                              border: "none",
-                              borderTop: "1px solid #e5e7eb",
-                            }}
-                          />
-                        </>
-                      )}
-                    <button
-                      onClick={() => openEditModal(discipline)}
-                      className={styles.dropdownItem}
-                    >
-                      Редактировать
-                    </button>
-                    <button
-                      onClick={() => removeDiscipline(discipline.id)}
-                      className={`${styles.dropdownItem} ${styles.danger}`}
-                      style={{ color: "#dc2626" }}
-                    >
-                      Удалить
-                    </button>
-                  </div>
-                )}
-              </div>
+              {store.role !== "student" && (
+                <div className={styles.menuContainer}>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation(); // Prevent discipline click
+                      setMenu(
+                        menu?.id === discipline.id
+                          ? null
+                          : { id: discipline.id }
+                      );
+                    }}
+                    className={styles.menuBtn}
+                  >
+                    <MoreVertical className={styles.icon} />
+                  </button>
+                  {menu?.id === discipline.id && (
+                    <div className={styles.dropdown}>
+                      {/* Gradebook option for each group */}
+                      {discipline.group_ids &&
+                        discipline.group_ids.length > 0 && (
+                          <>
+                            {discipline.group_ids.length === 1 ? (
+                              <button
+                                onClick={() =>
+                                  openGradebook(
+                                    discipline.id,
+                                    discipline.group_ids![0]
+                                  )
+                                }
+                                className={styles.dropdownItem}
+                              >
+                                Открыть ведомость
+                              </button>
+                            ) : (
+                              <div className={styles.submenu}>
+                                <span className={styles.submenuTitle}>
+                                  Открыть ведомость:
+                                </span>
+                                {discipline.group_ids.map((groupId) => {
+                                  const group = groups.find(
+                                    (g) => g.id === groupId
+                                  );
+                                  return (
+                                    <button
+                                      key={groupId}
+                                      onClick={() =>
+                                        openGradebook(discipline.id, groupId)
+                                      }
+                                      className={styles.dropdownItem}
+                                      style={{
+                                        paddingLeft: "20px",
+                                        fontSize: "14px",
+                                      }}
+                                    >
+                                      {group ? group.name : `Группа ${groupId}`}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            )}
+                            <hr
+                              style={{
+                                margin: "4px 0",
+                                border: "none",
+                                borderTop: "1px solid #e5e7eb",
+                              }}
+                            />
+                          </>
+                        )}
+                      <button
+                        onClick={() => openEditModal(discipline)}
+                        className={styles.dropdownItem}
+                      >
+                        Редактировать
+                      </button>
+                      <button
+                        onClick={() => removeDiscipline(discipline.id)}
+                        className={`${styles.dropdownItem} ${styles.danger}`}
+                        style={{ color: "#dc2626" }}
+                      >
+                        Удалить
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           ))}
 
