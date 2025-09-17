@@ -288,7 +288,7 @@ export default function GradebookPage() {
 
       if (response.status === 200) {
         console.log(response.data);
-        
+
         const progressData = response.data as GroupProgressRow[];
         progressData.forEach((student, index) => {
           console.log(`🎓 DEBUG: Student ${index + 1}:`, {
@@ -435,7 +435,32 @@ export default function GradebookPage() {
       );
     }
   };
-
+  const finalMark = (score : number | null) => {
+    if (score === null) {
+      return "";
+    }
+    if (score < 60) {
+      return "F " + score;
+    }
+    if (score < 65) {
+      return "E " + score;
+    }
+    if (score < 70) {
+      return "D(уд) " + score;
+    }
+    if (score < 75) {
+      return "D(хор) " + score;
+    }
+    if (score < 80) {
+      return "С " + score;
+    }
+    if (score < 90) {
+      return "В " + score;
+    }
+    else {
+      return "A " + score;
+    }
+  }
   // Load all data on component mount
   useEffect(() => {
     const loadData = async () => {
@@ -803,14 +828,31 @@ export default function GradebookPage() {
               Ученик
             </th>
             <th colSpan={discipline.lecture_count}>Лекции</th>
-            <th rowSpan={2}>Балл за посещения</th>
+            <th
+              rowSpan={2}
+              style={{ whiteSpace: "pre-line", textAlign: "center" }}
+            >
+              {"Балл\nза\nпосещ"}
+            </th>
             {Array.from({ length: discipline.lab_count || 0 }).map((_, i) => (
               <th key={`labHeader${i}`} rowSpan={2}>
                 Лаб{i + 1}
               </th>
             ))}
-            <th rowSpan={2}>Тест</th>
-            <th rowSpan={2}>Итог</th>
+            <th
+              rowSpan={2}
+              style={{ whiteSpace: "pre-line", textAlign: "center" }}
+            >
+              {"Итог\nза\nсеместр"}
+            </th>
+            <th
+              rowSpan={2}
+              style={{ whiteSpace: "pre-line", textAlign: "center" }}
+            >
+              {"Тест\nЭкз\nЗач"}
+            </th>
+
+            <th rowSpan={2}>Оценка</th>
           </tr>
           {/* строка с номерами */}
           <tr>
@@ -886,6 +928,16 @@ export default function GradebookPage() {
                     </td>
                   )
                 )}
+                <td className={styles.cell}>
+                  {(() => {
+                    const lecturePoints =
+                      progressData?.progress.lecture_points_awarded || 0;
+                    const labPoints =
+                      progressData?.progress.labs_points_awarded || 0;
+                    const semesterTotal = lecturePoints + labPoints;
+                    return semesterTotal > 0 ? semesterTotal : "";
+                  })()}
+                </td>
                 <td
                   className={`${styles.cell} ${
                     testSchedule
@@ -907,8 +959,9 @@ export default function GradebookPage() {
                   {progressData?.progress.test_points_awarded ||
                     (testSchedule ? "🟡" : "")}
                 </td>
+
                 <td className={styles.cell}>
-                  {progressData?.progress.total_awarded || ""}
+                  {finalMark(progressData?.progress.total_awarded)}
                 </td>
               </tr>
             );
