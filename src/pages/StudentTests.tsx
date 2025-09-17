@@ -394,6 +394,7 @@ interface AnswerSubmitInput {
 interface TestScheduleWithDetails extends TestSchedule {
   test?: Test;
   discipline?: Discipline;
+  attempts?: Attempt[]; // Add attempts to show existing attempts
 }
 
 export default function StudentTestsPage() {
@@ -410,7 +411,9 @@ export default function StudentTestsPage() {
   const [testSchedules, setTestSchedules] = useState<TestScheduleWithDetails[]>(
     []
   );
+  const [allAttempts, setAllAttempts] = useState<Attempt[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingAttempts, setLoadingAttempts] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
@@ -452,6 +455,39 @@ export default function StudentTestsPage() {
     return access_token;
   };
 
+  // Fetch user's attempts
+  const fetchUserAttempts = async () => {
+    setLoadingAttempts(true);
+    try {
+      const response = await axios.get(`/server/attempts`, {
+        headers: { Authorization: `Bearer ${getAccess()}` },
+      });
+      if (response.status === 200) {
+        const attempts = response.data as Attempt[];
+        setAllAttempts(attempts);
+        console.log("User attempts:", attempts);
+        return attempts;
+      }
+    } catch (err: any) {
+      console.error("Error fetching user attempts:", err);
+      // Don't show error for attempts as it's not critical
+    } finally {
+      setLoadingAttempts(false);
+    }
+    return [];
+  };
+
+  // Continue existing attempt
+  const continueAttempt = async (attemptId: number) => {
+    try {
+      setCurrentAttemptId(attemptId);
+      await fetchAttemptData(attemptId);
+      setSuccess("Продолжение теста!");
+    } catch (err: any) {
+      console.error("Error continuing attempt:", err);
+      setError("Ошибка при продолжении попытки");
+    }
+  };
   // Fetch open test schedules for current student
   const fetchOpenTestSchedules = async () => {
     setLoading(true);
@@ -470,6 +506,9 @@ export default function StudentTestsPage() {
       if (disciplinesResponse.status === 200) {
         const disciplineIds = disciplinesResponse.data as number[];
         console.log("Student discipline IDs:", disciplineIds);
+
+        // Get user's attempts
+        const attempts = await fetchUserAttempts();
 
         // Get test schedules for each discipline
         const schedulePromises = disciplineIds.map(async (disciplineId) => {
@@ -519,11 +558,22 @@ export default function StudentTestsPage() {
                 .catch(() => null),
             ]);
 
+            const test = (testResponse as any)?.data || null;
+            const discipline = (disciplineResponse as any)?.data || null;
+
+            // Filter attempts for this test and discipline
+            const testAttempts = attempts.filter(
+              (attempt) =>
+                attempt.test_id === test?.id &&
+                attempt.discipline_id === disciplineId
+            );
+
             return {
               ...(schedule as any),
               discipline_id: disciplineId,
-              test: (testResponse as any)?.data || null,
-              discipline: (disciplineResponse as any)?.data || null,
+              test,
+              discipline,
+              attempts: testAttempts,
             };
           })
         );
@@ -1594,30 +1644,234 @@ export default function StudentTestsPage() {
                       )}
                     </div>
 
-                    <button
-                      onClick={() => {
-                        if (schedule.test && schedule.discipline) {
-                          startTestAttempt(
-                            schedule.test.id,
-                            schedule.discipline.id
-                          );
-                        }
-                      }}
-                      className={`${styles.btn} ${styles.blue}`}
-                      style={{
-                        width: "100%",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        gap: "8px",
-                        padding: "12px 20px",
-                        fontSize: "16px",
-                        fontWeight: "500",
-                      }}
-                    >
-                      <Play style={{ width: "16px", height: "16px" }} />
-                      Начать тест
-                    </button>
+                    {/* Show existing attempts */}
+                    {schedule.attempts && schedule.attempts.length > 0 && (
+                      <div
+                        style={{
+                          marginBottom: "20px",
+                          padding: "16px",
+                          background: "#f8fafc",
+                          borderRadius: "8px",
+                          border: "1px solid #e2e8f0",
+                        }}
+                      >
+                        <h4
+                          style={{
+                            fontSize: "14px",
+                            fontWeight: "600",
+                            marginBottom: "12px",
+                            color: "#374151",
+                          }}
+                        >
+                          Мои попытки:
+                        </h4>
+                        <div
+                          style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: "8px",
+                          }}
+                        >
+                          {schedule.attempts.map((attempt) => {
+                            const getStatusColor = (status: string) => {
+                              switch (status) {
+                                case "in_progress":
+                                  return {
+                                    bg: "#fef3c7",
+                                    text: "#d97706",
+                                    border: "#fbbf24",
+                                  };
+                                case "finished":
+                                  return {
+                                    bg: "#d1fae5",
+                                    text: "#059669",
+                                    border: "#10b981",
+                                  };
+                                case "failed":
+                                  return {
+                                    bg: "#fee2e2",
+                                    text: "#dc2626",
+                                    border: "#ef4444",
+                                  };
+                                default:
+                                  return {
+                                    bg: "#f3f4f6",
+                                    text: "#6b7280",
+                                    border: "#d1d5db",
+                                  };
+                              }
+                            };
+
+                            const statusColors = getStatusColor(attempt.status);
+                            const canContinue =
+                              attempt.status === "in_progress";
+
+                            return (
+                              <div
+                                key={attempt.id}
+                                style={{
+                                  display: "flex",
+                                  justifyContent: "space-between",
+                                  alignItems: "center",
+                                  padding: "8px 12px",
+                                  background: "#fff",
+                                  borderRadius: "6px",
+                                  border: "1px solid #e5e7eb",
+                                  fontSize: "13px",
+                                }}
+                              >
+                                <div
+                                  style={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: "8px",
+                                  }}
+                                >
+                                  <span
+                                    style={{
+                                      padding: "2px 6px",
+                                      borderRadius: "4px",
+                                      background: statusColors.bg,
+                                      color: statusColors.text,
+                                      border: `1px solid ${statusColors.border}`,
+                                      fontSize: "11px",
+                                      fontWeight: "500",
+                                    }}
+                                  >
+                                    {attempt.status === "in_progress"
+                                      ? "В процессе"
+                                      : attempt.status === "finished"
+                                      ? "Завершен"
+                                      : attempt.status === "failed"
+                                      ? "Не удался"
+                                      : attempt.status}
+                                  </span>
+                                  <span style={{ color: "#6b7280" }}>
+                                    Попытка #{attempt.id}
+                                  </span>
+                                  {attempt.score !== null &&
+                                    attempt.score !== undefined && (
+                                      <span
+                                        style={{
+                                          color: "#374151",
+                                          fontWeight: "500",
+                                        }}
+                                      >
+                                        Балл: {attempt.score}
+                                      </span>
+                                    )}
+                                </div>
+                                {canContinue && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      continueAttempt(attempt.id);
+                                    }}
+                                    style={{
+                                      padding: "4px 8px",
+                                      fontSize: "11px",
+                                      borderRadius: "4px",
+                                      border: "1px solid #3b82f6",
+                                      background: "#3b82f6",
+                                      color: "#fff",
+                                      cursor: "pointer",
+                                      fontWeight: "500",
+                                    }}
+                                  >
+                                    Продолжить
+                                  </button>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Check if user has in-progress attempts */}
+                    {schedule.attempts?.some(
+                      (attempt) => attempt.status === "in_progress"
+                    ) ? (
+                      <div
+                        style={{
+                          width: "100%",
+                          display: "flex",
+                          gap: "8px",
+                        }}
+                      >
+                        <button
+                          onClick={() => {
+                            const inProgressAttempt = schedule.attempts?.find(
+                              (attempt) => attempt.status === "in_progress"
+                            );
+                            if (inProgressAttempt) {
+                              continueAttempt(inProgressAttempt.id);
+                            }
+                          }}
+                          className={`${styles.btn} ${styles.blue}`}
+                          style={{
+                            flex: 1,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            gap: "8px",
+                            padding: "12px 20px",
+                            fontSize: "16px",
+                            fontWeight: "500",
+                          }}
+                        >
+                          <Play style={{ width: "16px", height: "16px" }} />
+                          Продолжить тест
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (schedule.test && schedule.discipline) {
+                              startTestAttempt(
+                                schedule.test.id,
+                                schedule.discipline.id
+                              );
+                            }
+                          }}
+                          className={`${styles.btn} ${styles.gray}`}
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            gap: "8px",
+                            padding: "12px 16px",
+                            fontSize: "14px",
+                            fontWeight: "500",
+                          }}
+                        >
+                          Новая попытка
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => {
+                          if (schedule.test && schedule.discipline) {
+                            startTestAttempt(
+                              schedule.test.id,
+                              schedule.discipline.id
+                            );
+                          }
+                        }}
+                        className={`${styles.btn} ${styles.blue}`}
+                        style={{
+                          width: "100%",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: "8px",
+                          padding: "12px 20px",
+                          fontSize: "16px",
+                          fontWeight: "500",
+                        }}
+                      >
+                        <Play style={{ width: "16px", height: "16px" }} />
+                        Начать тест
+                      </button>
+                    )}
                   </div>
                 );
               })}
