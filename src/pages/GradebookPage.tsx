@@ -240,7 +240,9 @@ export default function GradebookPage() {
   // Get filtered groups based on discipline's group_ids
   const getFilteredGroups = () => {
     if (!discipline?.group_ids || !allGroups.length) return [];
-    return allGroups.filter((group) => discipline.group_ids!.includes(group.id));
+    return allGroups.filter((group) =>
+      discipline.group_ids!.includes(group.id)
+    );
   };
 
   // Handle group change
@@ -285,11 +287,9 @@ export default function GradebookPage() {
       console.log(`📊 DEBUG: Raw server response data:`, response.data);
 
       if (response.status === 200) {
+        console.log(response.data);
+        
         const progressData = response.data as GroupProgressRow[];
-
-        console.log(
-          `👥 DEBUG: Parsed progress data (${progressData.length} students):`
-        );
         progressData.forEach((student, index) => {
           console.log(`🎓 DEBUG: Student ${index + 1}:`, {
             user_id: student.user_id,
@@ -705,7 +705,10 @@ export default function GradebookPage() {
               gap: "20px",
             }}
           >
-            <h2 className={styles.title} style={{ margin: 0, fontSize: "24px" }}>
+            <h2
+              className={styles.title}
+              style={{ margin: 0, fontSize: "24px" }}
+            >
               Ведомость дисциплины "{discipline.name}"
             </h2>
             <div
@@ -746,7 +749,7 @@ export default function GradebookPage() {
             </div>
           </div>
         </div>
-              {/* Controls section */}
+        {/* Controls section */}
         {testData && (
           <div className={styles.controls}>
             <div className={styles.selectionInfo}>
@@ -779,8 +782,6 @@ export default function GradebookPage() {
         )}
       </div>
 
- 
-
       <table className={styles.table}>
         <thead>
           {/* верхняя строка */}
@@ -802,6 +803,7 @@ export default function GradebookPage() {
               Ученик
             </th>
             <th colSpan={discipline.lecture_count}>Лекции</th>
+            <th rowSpan={2}>Балл за посещения</th>
             {Array.from({ length: discipline.lab_count || 0 }).map((_, i) => (
               <th key={`labHeader${i}`} rowSpan={2}>
                 Лаб{i + 1}
@@ -869,11 +871,14 @@ export default function GradebookPage() {
                           toggleAttendance(student.id, lectureNumber)
                         }
                       >
-                        {attended ? "" : "Н"}
+                        {attended ? "+" : "Н"}
                       </td>
                     );
                   }
                 )}
+                <td className={styles.cell}>
+                  {progressData?.progress.lecture_points_awarded || ""}
+                </td>
                 {Array.from({ length: discipline.lab_count || 0 }).map(
                   (_, i) => (
                     <td key={`lab${i}`} className={styles.cell}>
