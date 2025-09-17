@@ -4,7 +4,32 @@ import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
 import TestScheduleModal from "../components/TestScheduleModal";
 import styles from "../styles/Gradebook.module.css";
-
+export const finalMark = (score : number | null) => {
+    if (score === null) {
+      return "";
+    }
+    if (score < 60) {
+      return "F " + score;
+    }
+    if (score < 65) {
+      return "E " + score;
+    }
+    if (score < 70) {
+      return "D(уд) " + score;
+    }
+    if (score < 75) {
+      return "D(хор) " + score;
+    }
+    if (score < 80) {
+      return "С " + score;
+    }
+    if (score < 90) {
+      return "В " + score;
+    }
+    else {
+      return "A " + score;
+    }
+}
 // Types based on API documentation
 interface Discipline {
   id: number;
@@ -435,32 +460,7 @@ export default function GradebookPage() {
       );
     }
   };
-  const finalMark = (score : number | null) => {
-    if (score === null) {
-      return "";
-    }
-    if (score < 60) {
-      return "F " + score;
-    }
-    if (score < 65) {
-      return "E " + score;
-    }
-    if (score < 70) {
-      return "D(уд) " + score;
-    }
-    if (score < 75) {
-      return "D(хор) " + score;
-    }
-    if (score < 80) {
-      return "С " + score;
-    }
-    if (score < 90) {
-      return "В " + score;
-    }
-    else {
-      return "A " + score;
-    }
-  }
+
   // Load all data on component mount
   useEffect(() => {
     const loadData = async () => {

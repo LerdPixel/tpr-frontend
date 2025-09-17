@@ -3,7 +3,7 @@ import { Context } from "../context/index";
 import axios from "axios";
 import { useParams } from "react-router-dom";
 import styles from "../styles/Gradebook.module.css";
-
+import { finalMark } from "./GradebookPage";
 // Types based on API documentation
 interface Discipline {
   id: number;
@@ -225,6 +225,8 @@ export default function StudentGradebook() {
     );
   }
 
+  // Calculate final mark based on total points
+
   const studentName = store.person
     ? `${store.person.last_name} ${store.person.first_name[0]}.${store.person.patronymic[0]}.`
     : "Student";
@@ -244,12 +246,18 @@ export default function StudentGradebook() {
           <tr>
             <th rowSpan={2}>Студент</th>
             <th colSpan={discipline.lecture_count}>Лекции</th>
+            <th rowSpan={2} style={{ whiteSpace: "pre-line", textAlign: "center" }}>
+              {"Балл за\nпосещения"}
+            </th>
             {Array.from({ length: discipline.lab_count || 0 }).map((_, i) => (
               <th key={`labHeader${i}`} rowSpan={2}>
                 Lab{i + 1}
               </th>
             ))}
             <th rowSpan={2}>Тест</th>
+            <th rowSpan={2} style={{ whiteSpace: "pre-line", textAlign: "center" }}>
+              {"Итог за\nсеместр"}
+            </th>
             <th rowSpan={2}>Итог</th>
           </tr>
           {/* Lecture numbers row */}
@@ -278,6 +286,9 @@ export default function StudentGradebook() {
                 </td>
               );
             })}
+            <td className={styles.cell}>
+              {progress?.lecture_points_awarded || ""}
+            </td>
             {Array.from({ length: discipline.lab_count || 0 }).map((_, i) => (
               <td key={`lab${i}`} className={styles.cell}>
                 {progress?.labs_points_awarded || ""}
@@ -286,7 +297,21 @@ export default function StudentGradebook() {
             <td className={styles.cell}>
               {progress?.test_points_awarded || ""}
             </td>
-            <td className={styles.cell}>{progress?.total_awarded || ""}</td>
+            <td className={styles.cell}>
+              {(() => {
+                const lecturePoints = progress?.lecture_points_awarded || 0;
+                const labPoints = progress?.labs_points_awarded || 0;
+                const semesterTotal = lecturePoints + labPoints;
+                return semesterTotal > 0 ? semesterTotal : "";
+              })()}
+            </td>
+            <td className={styles.cell}>
+              {(() => {
+                const totalPoints = progress?.total_awarded || 0;
+                const maxPoints = progress?.total_possible || 0;
+                return finalMark(totalPoints);
+              })()}
+            </td>
           </tr>
         </tbody>
       </table>
