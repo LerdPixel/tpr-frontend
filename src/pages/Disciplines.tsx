@@ -593,7 +593,6 @@ export default function DisciplinesPage() {
                               marginLeft: "8px",
                             }}
                           >
-                            (нажмите для открытия ведомости)
                           </span>
                         )}
                       </div>

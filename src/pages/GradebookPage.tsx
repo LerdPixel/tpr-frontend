@@ -1,7 +1,7 @@
 import { useState, useEffect, useContext } from "react";
 import { Context } from "../context/index";
 import axios from "axios";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import TestScheduleModal from "../components/TestScheduleModal";
 import styles from "../styles/Gradebook.module.css";
 
@@ -16,6 +16,7 @@ interface Discipline {
   test_id: number;
   lab_count?: number;
   labs?: DisciplineLabComponent[];
+  group_ids?: number[];
 }
 
 interface Test {
@@ -103,12 +104,14 @@ export default function GradebookPage() {
     groupId: string;
   }>();
   const { store } = useContext(Context);
+  const navigate = useNavigate();
 
   // State
   const [discipline, setDiscipline] = useState<Discipline | null>(null);
   const [students, setStudents] = useState<Student[]>([]);
   const [groupProgress, setGroupProgress] = useState<GroupProgressRow[]>([]);
   const [group, setGroup] = useState<Group | null>(null);
+  const [allGroups, setAllGroups] = useState<Group[]>([]);
   const [attendance, setAttendance] = useState<Record<number, number[]>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -209,16 +212,17 @@ export default function GradebookPage() {
     }
   };
 
-  // Fetch group data
+  // Fetch group data and filter by discipline
   const fetchGroup = async () => {
     if (!groupId) return;
     console.log("Fetching group:", groupId);
     try {
-      // Get all groups since there's no individual group endpoint
+      // Get all groups from /server/groups endpoint
       const response = await axios.get(`/server/groups`);
       console.log("Groups response:", response);
       if (response.status === 200) {
         const groups = response.data as Group[];
+        setAllGroups(groups);
         const targetGroup = groups.find((g) => g.id === parseInt(groupId));
         console.log("Found group:", targetGroup);
         if (targetGroup) {
@@ -230,6 +234,19 @@ export default function GradebookPage() {
     } catch (err: any) {
       console.error("Error fetching group:", err);
       setError(err?.response?.data?.error || "Ошибка при загрузке группы");
+    }
+  };
+
+  // Get filtered groups based on discipline's group_ids
+  const getFilteredGroups = () => {
+    if (!discipline?.group_ids || !allGroups.length) return [];
+    return allGroups.filter((group) => discipline.group_ids!.includes(group.id));
+  };
+
+  // Handle group change
+  const handleGroupChange = (newGroupId: string) => {
+    if (newGroupId && newGroupId !== groupId && disciplineId) {
+      navigate(`/gradesheet/${disciplineId}/${newGroupId}`);
     }
   };
 
@@ -671,43 +688,98 @@ export default function GradebookPage() {
       {/* Error message */}
       {error && <div className={styles.errorMessage}>{error}</div>}
 
+      {/* Header with improved styling */}
       <div className={styles.header}>
-        <h2 className={styles.title}>
-          Ведомость дисциплины "{discipline.name}" (группа: {group.name})
-        </h2>
-        <div className={styles.controls}>
-          {testData && (
-            <>
-              <div className={styles.selectionInfo}>
-                Выбрано студентов: {selectedStudents.size}
-                {selectedStudents.size > 0 && (
-                  <button
-                    onClick={clearStudentSelection}
-                    className={styles.clearBtn}
-                  >
-                    Очистить
-                  </button>
-                )}
-                <button
-                  onClick={selectAllStudents}
-                  className={styles.selectAllBtn}
-                >
-                  Выбрать всех
-                </button>
-              </div>
-              <button
-                onClick={openTestModal}
-                disabled={selectedStudents.size === 0}
-                className={`${styles.openTestBtn} ${
-                  selectedStudents.size === 0 ? styles.disabled : ""
-                }`}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            width: "100%",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "20px",
+            }}
+          >
+            <h2 className={styles.title} style={{ margin: 0, fontSize: "24px" }}>
+              Ведомость дисциплины "{discipline.name}"
+            </h2>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "12px",
+              }}
+            >
+              <label
+                style={{
+                  color: "#000",
+                  fontWeight: 600,
+                  fontSize: "16px",
+                }}
               >
-                Открыть тест
-              </button>
-            </>
-          )}
+                Группа:
+              </label>
+              <select
+                value={groupId || ""}
+                onChange={(e) => handleGroupChange(e.target.value)}
+                style={{
+                  background: "#fff",
+                  border: "1px solid #ccc",
+                  borderRadius: "4px",
+                  padding: "6px 10px",
+                  fontSize: "14px",
+                  cursor: "pointer",
+                  minWidth: "120px",
+                }}
+              >
+                {getFilteredGroups().map((g) => (
+                  <option key={g.id} value={g.id}>
+                    {g.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
         </div>
+              {/* Controls section */}
+        {testData && (
+          <div className={styles.controls}>
+            <div className={styles.selectionInfo}>
+              Выбрано студентов: {selectedStudents.size}
+              {selectedStudents.size > 0 && (
+                <button
+                  onClick={clearStudentSelection}
+                  className={styles.clearBtn}
+                >
+                  Очистить
+                </button>
+              )}
+              <button
+                onClick={selectAllStudents}
+                className={styles.selectAllBtn}
+              >
+                Выбрать всех
+              </button>
+            </div>
+            <button
+              onClick={openTestModal}
+              disabled={selectedStudents.size === 0}
+              className={`${styles.openTestBtn} ${
+                selectedStudents.size === 0 ? styles.disabled : ""
+              }`}
+            >
+              Открыть тест
+            </button>
+          </div>
+        )}
       </div>
+
+ 
 
       <table className={styles.table}>
         <thead>
