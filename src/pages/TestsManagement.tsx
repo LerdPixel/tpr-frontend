@@ -1141,18 +1141,6 @@ export default function TestsManagementPage() {
                                   {testTopic.topic_title}
                                 </div>
                               )}
-                            {testTopic.topic_id > 0 && testTopic.totalQuestionsInTopic !== undefined && (
-                              <div
-                                style={{
-                                  fontSize: "12px",
-                                  color: "#059669",
-                                  marginTop: "4px",
-                                  fontWeight: "500",
-                                }}
-                              >
-                                📊 Всего вопросов в теме: {testTopic.totalQuestionsInTopic}
-                              </div>
-                            )}
                           </div>
                           <div style={{ minWidth: "140px" }}>
                             <label
@@ -1172,22 +1160,29 @@ export default function TestsManagementPage() {
                                 gap: "8px",
                               }}
                             >
-                              <input
-                                type="number"
-                                value={testTopic.questions_count ?? ""}
-                                onChange={(e) => {
-                                  const value = e.target.value;
-                                  updateTestTopic(
-                                    index,
-                                    "questions_count",
-                                    value === "" ? 0 : parseInt(value)
-                                  );
-                                }}
-                                placeholder="1"
-                                className={styles.input}
-                                style={{ width: "80px" }}
-                                min="1"
-                              />
+                              <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                                <input
+                                  type="number"
+                                  value={testTopic.questions_count ?? ""}
+                                  onChange={(e) => {
+                                    const value = e.target.value;
+                                    updateTestTopic(
+                                      index,
+                                      "questions_count",
+                                      value === "" ? 0 : parseInt(value)
+                                    );
+                                  }}
+                                  placeholder="1"
+                                  className={styles.input}
+                                  style={{ width: "60px" }}
+                                  min="1"
+                                />
+                                {testTopic.totalQuestionsInTopic !== undefined && (
+                                  <span style={{ fontSize: "12px", color: "#6b7280" }}>
+                                    / {testTopic.totalQuestionsInTopic}
+                                  </span>
+                                )}
+                              </div>
                               {testTopic.topic_id > 0 && (
                                 <button
                                   type="button"
@@ -1254,41 +1249,6 @@ export default function TestsManagementPage() {
                                 Типы вопросов для темы
                               </div>
                               
-                              {/* Display available questions by type */}
-                              {testTopic.questionsByType && Object.keys(testTopic.questionsByType).length > 0 && (
-                                <div
-                                  style={{
-                                    fontSize: "12px",
-                                    color: "#6b7280",
-                                    marginBottom: "12px",
-                                    padding: "8px",
-                                    backgroundColor: "#f3f4f6",
-                                    borderRadius: "4px",
-                                    border: "1px solid #e5e7eb",
-                                  }}
-                                >
-                                  <div style={{ fontWeight: "500", marginBottom: "4px" }}>
-                                    📈 Доступно вопросов по типам:
-                                  </div>
-                                  <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
-                                    {Object.entries(testTopic.questionsByType).map(([type, count]) => (
-                                      <span
-                                        key={type}
-                                        style={{
-                                          fontSize: "11px",
-                                          padding: "2px 6px",
-                                          backgroundColor: count > 0 ? "#dcfce7" : "#fef2f2",
-                                          color: count > 0 ? "#166534" : "#dc2626",
-                                          borderRadius: "3px",
-                                          border: `1px solid ${count > 0 ? "#bbf7d0" : "#fecaca"}`,
-                                        }}
-                                      >
-                                        {questionTypesData[type as keyof typeof questionTypesData]}: {count}
-                                      </span>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
 
                               <div
                                 style={{
@@ -1326,30 +1286,37 @@ export default function TestsManagementPage() {
                                           ]
                                         }
                                       </label>
-                                      <input
-                                        type="number"
-                                        value={
-                                          testTopic.typeQuotas?.[
-                                            questionType
-                                          ] || ""
-                                        }
-                                        onChange={(e) => {
-                                          const value = e.target.value;
-                                          updateTypeQuota(
-                                            index,
-                                            questionType,
-                                            value === "" ? 0 : parseInt(value)
-                                          );
-                                        }}
-                                        placeholder="0"
-                                        className={styles.input}
-                                        style={{
-                                          width: "60px",
-                                          padding: "4px 6px",
-                                          fontSize: "13px",
-                                        }}
-                                        min="0"
-                                      />
+                                      <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                                        <input
+                                          type="number"
+                                          value={
+                                            testTopic.typeQuotas?.[
+                                              questionType
+                                            ] || ""
+                                          }
+                                          onChange={(e) => {
+                                            const value = e.target.value;
+                                            updateTypeQuota(
+                                              index,
+                                              questionType,
+                                              value === "" ? 0 : parseInt(value)
+                                            );
+                                          }}
+                                          placeholder="0"
+                                          className={styles.input}
+                                          style={{
+                                            width: "50px",
+                                            padding: "4px 6px",
+                                            fontSize: "13px",
+                                          }}
+                                          min="0"
+                                        />
+                                        {testTopic.questionsByType?.[questionType] !== undefined && (
+                                          <span style={{ fontSize: "11px", color: "#6b7280" }}>
+                                            / {testTopic.questionsByType[questionType]}
+                                          </span>
+                                        )}
+                                      </div>
                                     </div>
                                   )
                                 )}
