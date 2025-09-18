@@ -48,6 +48,27 @@ interface TestTopicsReplaceInput {
   topics: TestTopic[];
 }
 
+interface QuestionTypeQuota {
+  topic_id: number;
+  types: Record<string, number>;
+}
+
+interface TypeQuotasReplaceInput {
+  quotas: QuestionTypeQuota[];
+}
+
+interface TestTypeQuotaResponse {
+  question_type: string;
+  questions_count: number;
+  test_id: number;
+  topic_id: number;
+}
+
+interface TestTopicWithQuotas extends TestTopicWithTitle {
+  typeQuotas?: Record<string, number>;
+  showTypeSelection?: boolean;
+}
+
 export default function TestsManagementPage() {
   const { store } = useContext(Context);
   const navigate = useNavigate();
@@ -67,8 +88,19 @@ export default function TestsManagementPage() {
   } | null>(null);
 
   // Local state for test topics management
-  const [modalTopics, setModalTopics] = useState<TestTopicWithTitle[]>([]);
+  const [modalTopics, setModalTopics] = useState<TestTopicWithQuotas[]>([]);
   const [loadingTestTopics, setLoadingTestTopics] = useState(false);
+  const [typeQuotas, setTypeQuotas] = useState<QuestionTypeQuota[]>([]);
+
+  // Available question types
+  const questionTypes = {
+    single_choice: "Один ответ",
+    multiple_choice: "Несколько вариантов",
+    text: "Краткий ответ",
+    numeric: "Числовой",
+    sorting: "Сортировка",
+    matching: "Соответствие",
+  };
 
   // Auto-dismiss error after 5 seconds
   useEffect(() => {
@@ -165,10 +197,26 @@ export default function TestsManagementPage() {
         throw new Error("Ошибка при создании теста");
       }
 
+      const testId = (response.data as { id: number }).id;
+
       // If there are topics to assign, update them
       if (modalTopics.length > 0) {
-        const testId = (response.data as { id: number }).id;
         await updateTestTopics(testId, modalTopics);
+
+        // If there are type quotas, update them as well
+        const typeQuotasToSave = modalTopics
+          .filter(
+            (topic) =>
+              topic.typeQuotas && Object.keys(topic.typeQuotas).length > 0
+          )
+          .map((topic) => ({
+            topic_id: topic.topic_id,
+            types: topic.typeQuotas!,
+          }));
+
+        if (typeQuotasToSave.length > 0) {
+          await updateTestTypeQuotas(testId, typeQuotasToSave);
+        }
       }
 
       await fetchTests();
@@ -201,6 +249,19 @@ export default function TestsManagementPage() {
       if (modalTopics.length >= 0) {
         // Allow empty array to clear topics
         await updateTestTopics(id, modalTopics);
+
+        // Update type quotas
+        const typeQuotasToSave = modalTopics
+          .filter(
+            (topic) =>
+              topic.typeQuotas && Object.keys(topic.typeQuotas).length > 0
+          )
+          .map((topic) => ({
+            topic_id: topic.topic_id,
+            types: topic.typeQuotas!,
+          }));
+
+        await updateTestTypeQuotas(id, typeQuotasToSave);
       }
 
       await fetchTests();
@@ -215,6 +276,7 @@ export default function TestsManagementPage() {
   const updateTestTopics = async (testId: number, topics: TestTopic[]) => {
     try {
       const topicsData: TestTopicsReplaceInput = { topics };
+      console.log("Updating test topics::::", topicsData);
       const response = await axios.put(
         `/server/admin/tests/${testId}/topics`,
         topicsData,
@@ -227,8 +289,80 @@ export default function TestsManagementPage() {
       }
     } catch (err: any) {
       console.error("Error updating test topics:", err);
-      setError(err?.message || "Ошибка при обновлении тем теста");
-      throw err;
+      throw new Error(
+        err?.response?.data?.error || "Ошибка при обновлении тем теста"
+      );
+    }
+  };
+
+  // Update test type quotas
+  const updateTestTypeQuotas = async (
+    testId: number,
+    quotas: QuestionTypeQuota[]
+  ) => {
+    try {
+      const quotasData: TypeQuotasReplaceInput = { quotas };
+      console.log("quotasData : ->", quotasData);
+
+      const response = await axios.put(
+        `/server/admin/tests/${testId}/type-quotas`,
+        quotasData,
+        {
+          headers: { Authorization: `Bearer ${getAccess()}` },
+        }
+      );
+      if (response.status !== 200) {
+        throw new Error("Ошибка при обновлении квот типов вопросов");
+      }
+    } catch (err: any) {
+      console.error("Error updating test type quotas:", err);
+      throw new Error(
+        err?.response?.data?.error ||
+          "Ошибка при обновлении квот типов вопросов"
+      );
+    }
+  };
+
+  // Load test type quotas
+  const loadTestTypeQuotas = async (testId: number) => {
+    try {
+      const response = await axios.get(`/server/tests/${testId}/type-quotas`, {
+        headers: { Authorization: `Bearer ${getAccess()}` },
+      });
+      if (response.status === 200) {
+        const quotasResponse = (response.data as TestTypeQuotaResponse[]) || [];
+        // Convert response to QuestionTypeQuota format
+        const quotasMap = new Map<number, Record<string, number>>();
+        quotasResponse.forEach((quota) => {
+          if (!quotasMap.has(quota.topic_id)) {
+            quotasMap.set(quota.topic_id, {});
+          }
+          quotasMap.get(quota.topic_id)![quota.question_type] =
+            quota.questions_count;
+        });
+
+        const quotas: QuestionTypeQuota[] = Array.from(quotasMap.entries()).map(
+          ([topic_id, types]) => ({
+            topic_id,
+            types,
+          })
+        );
+        setTypeQuotas(quotas);
+
+        // Update modalTopics with type quotas
+        setModalTopics((current) =>
+          current.map((topic) => {
+            const quota = quotas.find((q) => q.topic_id === topic.topic_id);
+            return {
+              ...topic,
+              typeQuotas: quota?.types || {},
+            };
+          })
+        );
+      }
+    } catch (err: any) {
+      console.error("Error fetching test type quotas:", err);
+      setTypeQuotas([]);
     }
   };
 
@@ -353,6 +487,7 @@ export default function TestsManagementPage() {
 
   const openEditModal = async (test: Test) => {
     await loadTestTopics(test.id);
+    await loadTestTypeQuotas(test.id);
     setModalData({
       mode: "edit",
       id: test.id,
@@ -422,6 +557,69 @@ export default function TestsManagementPage() {
       modalTopics.map((topic, i) =>
         i === index ? { ...topic, [field]: value } : topic
       )
+    );
+  };
+
+  // Toggle type selection visibility for a topic
+  const toggleTypeSelection = (index: number) => {
+    setModalTopics((current) =>
+      current.map((topic, i) =>
+        i === index
+          ? {
+              ...topic,
+              showTypeSelection: !topic.showTypeSelection,
+              typeQuotas: topic.typeQuotas || {},
+            }
+          : topic
+      )
+    );
+  };
+
+  // Update type quota for a specific topic and question type
+  const updateTypeQuota = (
+    topicIndex: number,
+    questionType: string,
+    count: number
+  ) => {
+    setModalTopics((current) =>
+      current.map((topic, i) => {
+        if (i === topicIndex) {
+          const newTypeQuotas = {
+            ...topic.typeQuotas,
+            [questionType]: count,
+          };
+
+          // Calculate total from type quotas
+          const totalFromTypes = Object.values(newTypeQuotas).reduce(
+            (sum, val) => sum + (val || 0),
+            0
+          );
+
+          return {
+            ...topic,
+            typeQuotas: newTypeQuotas,
+            questions_count: totalFromTypes, // Update total to match sum of types
+          };
+        }
+        return topic;
+      })
+    );
+  };
+
+  // Get available question types for a topic (placeholder - in real app this would come from API)
+  const getTopicQuestionTypes = (topicId: number): string[] => {
+    // For now, return all available types. In a real implementation,
+    // this would be fetched from an API endpoint specific to the topic
+    return Object.keys(questionTypes);
+  };
+
+  // Calculate total questions from type quotas
+  const getTotalFromTypeQuotas = (
+    typeQuotas: Record<string, number> = {}
+  ): number => {
+    return Object.values(typeQuotas).reduce(
+      (sum, count) => sum + (count || 0),
+      0
     );
   };
 
@@ -781,119 +979,294 @@ export default function TestsManagementPage() {
                     }}
                   >
                     {modalTopics.map((testTopic, index) => (
-                      <div
-                        key={index}
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "12px",
-                          padding: "12px",
-                          border: "1px solid #e5e7eb",
-                          borderRadius: "6px",
-                          backgroundColor: "#f9fafb",
-                        }}
-                      >
-                        <div style={{ flex: 1 }}>
-                          <label
-                            style={{
-                              fontSize: "14px",
-                              fontWeight: "500",
-                              marginBottom: "4px",
-                              display: "block",
-                            }}
-                          >
-                            Тема:
-                          </label>
-                          <select
-                            value={testTopic.topic_id}
-                            onChange={(e) => {
-                              const newTopicId = parseInt(e.target.value);
-                              const topic = topics.find(
-                                (t) => t.id === newTopicId
-                              );
-                              updateTestTopic(index, "topic_id", newTopicId);
-                              // Update the topic title as well
-                              setModalTopics((current) =>
-                                current.map((t, i) =>
-                                  i === index
-                                    ? {
-                                        ...t,
-                                        topic_title:
-                                          topic?.title ||
-                                          `Topic #${newTopicId}`,
-                                      }
-                                    : t
-                                )
-                              );
-                            }}
-                            className={styles.input}
-                            style={{ width: "100%" }}
-                          >
-                            <option value={0}>Выберите тему</option>
-                            {topics?.map((topic) => (
-                              <option key={topic.id} value={topic.id}>
-                                {topic.title}
-                              </option>
-                            ))}
-                          </select>
-                          {modalData?.mode === "edit" &&
-                            testTopic.topic_title && (
-                              <div
-                                style={{
-                                  fontSize: "12px",
-                                  color: "#666",
-                                  marginTop: "2px",
-                                  fontStyle: "italic",
-                                }}
-                              >
-                                {testTopic.topic_title}
-                              </div>
-                            )}
-                        </div>
-                        <div style={{ minWidth: "140px" }}>
-                          <label
-                            style={{
-                              fontSize: "14px",
-                              fontWeight: "500",
-                              marginBottom: "4px",
-                              display: "block",
-                            }}
-                          >
-                            Вопросов из темы:
-                          </label>
-                          <input
-                            type="number"
-                            value={testTopic.questions_count ?? ""}
-                            onChange={(e) => {
-                              const value = e.target.value;
-                              updateTestTopic(
-                                index,
-                                "questions_count",
-                                value === "" ? 0 : parseInt(value)
-                              );
-                            }}
-                            placeholder="1"
-                            className={styles.input}
-                            style={{ width: "100%" }}
-                            min="1"
-                          />
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => removeTestTopic(index)}
+                      <div key={index}>
+                        <div
                           style={{
-                            background: "#dc2626",
-                            color: "white",
-                            border: "none",
-                            borderRadius: "4px",
-                            padding: "6px 8px",
-                            cursor: "pointer",
-                            fontSize: "12px",
-                            alignSelf: "flex-end",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "12px",
+                            padding: "12px",
+                            border: "1px solid #e5e7eb",
+                            borderRadius: "6px",
+                            backgroundColor: "#f9fafb",
                           }}
                         >
-                          Удалить
-                        </button>
+                          <div style={{ flex: 1 }}>
+                            <label
+                              style={{
+                                fontSize: "14px",
+                                fontWeight: "500",
+                                marginBottom: "4px",
+                                display: "block",
+                              }}
+                            >
+                              Тема:
+                            </label>
+                            <select
+                              value={testTopic.topic_id}
+                              onChange={(e) => {
+                                const newTopicId = parseInt(e.target.value);
+                                const topic = topics.find(
+                                  (t) => t.id === newTopicId
+                                );
+                                updateTestTopic(index, "topic_id", newTopicId);
+                                // Update the topic title as well
+                                setModalTopics((current) =>
+                                  current.map((t, i) =>
+                                    i === index
+                                      ? {
+                                          ...t,
+                                          topic_title:
+                                            topic?.title ||
+                                            `Topic #${newTopicId}`,
+                                        }
+                                      : t
+                                  )
+                                );
+                              }}
+                              className={styles.input}
+                              style={{ width: "100%" }}
+                            >
+                              <option value={0}>Выберите тему</option>
+                              {topics?.map((topic) => (
+                                <option key={topic.id} value={topic.id}>
+                                  {topic.title}
+                                </option>
+                              ))}
+                            </select>
+                            {modalData?.mode === "edit" &&
+                              testTopic.topic_title && (
+                                <div
+                                  style={{
+                                    fontSize: "12px",
+                                    color: "#666",
+                                    marginTop: "2px",
+                                    fontStyle: "italic",
+                                  }}
+                                >
+                                  {testTopic.topic_title}
+                                </div>
+                              )}
+                          </div>
+                          <div style={{ minWidth: "140px" }}>
+                            <label
+                              style={{
+                                fontSize: "14px",
+                                fontWeight: "500",
+                                marginBottom: "4px",
+                                display: "block",
+                              }}
+                            >
+                              Вопросов из темы:
+                            </label>
+                            <div
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "8px",
+                              }}
+                            >
+                              <input
+                                type="number"
+                                value={testTopic.questions_count ?? ""}
+                                onChange={(e) => {
+                                  const value = e.target.value;
+                                  updateTestTopic(
+                                    index,
+                                    "questions_count",
+                                    value === "" ? 0 : parseInt(value)
+                                  );
+                                }}
+                                placeholder="1"
+                                className={styles.input}
+                                style={{ width: "80px" }}
+                                min="1"
+                              />
+                              {testTopic.topic_id > 0 && (
+                                <button
+                                  type="button"
+                                  onClick={() => toggleTypeSelection(index)}
+                                  style={{
+                                    background: testTopic.showTypeSelection
+                                      ? "#10b981"
+                                      : "#6b7280",
+                                    color: "white",
+                                    border: "none",
+                                    borderRadius: "4px",
+                                    padding: "4px 8px",
+                                    cursor: "pointer",
+                                    fontSize: "12px",
+                                    whiteSpace: "nowrap",
+                                  }}
+                                  title="Настроить типы вопросов"
+                                >
+                                  {testTopic.showTypeSelection
+                                    ? "Скрыть типы"
+                                    : "Типы"}
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => removeTestTopic(index)}
+                            style={{
+                              background: "#dc2626",
+                              color: "white",
+                              border: "none",
+                              borderRadius: "4px",
+                              padding: "6px 8px",
+                              cursor: "pointer",
+                              fontSize: "12px",
+                              alignSelf: "flex-end",
+                            }}
+                          >
+                            Удалить
+                          </button>
+                        </div>
+
+                        {/* Question Type Selection */}
+                        {testTopic.showTypeSelection &&
+                          testTopic.topic_id > 0 && (
+                            <div
+                              style={{
+                                marginTop: "12px",
+                                padding: "12px",
+                                border: "1px solid #d1d5db",
+                                borderRadius: "6px",
+                                backgroundColor: "#ffffff",
+                              }}
+                            >
+                              <div
+                                style={{
+                                  fontSize: "14px",
+                                  fontWeight: "600",
+                                  marginBottom: "8px",
+                                  color: "#374151",
+                                }}
+                              >
+                                Типы вопросов для темы
+                              </div>
+
+                              <div
+                                style={{
+                                  display: "grid",
+                                  gridTemplateColumns:
+                                    "repeat(auto-fit, minmax(200px, 1fr))",
+                                  gap: "8px",
+                                  marginBottom: "8px",
+                                }}
+                              >
+                                {getTopicQuestionTypes(testTopic.topic_id).map(
+                                  (questionType) => (
+                                    <div
+                                      key={questionType}
+                                      style={{
+                                        display: "flex",
+                                        alignItems: "center",
+                                        gap: "8px",
+                                        padding: "6px",
+                                        border: "1px solid #e5e7eb",
+                                        borderRadius: "4px",
+                                        backgroundColor: "#f9fafb",
+                                      }}
+                                    >
+                                      <label
+                                        style={{
+                                          fontSize: "13px",
+                                          flex: 1,
+                                          fontWeight: "500",
+                                        }}
+                                      >
+                                        {
+                                          questionTypes[
+                                            questionType as keyof typeof questionTypes
+                                          ]
+                                        }
+                                      </label>
+                                      <input
+                                        type="number"
+                                        value={
+                                          testTopic.typeQuotas?.[
+                                            questionType
+                                          ] || ""
+                                        }
+                                        onChange={(e) => {
+                                          const value = e.target.value;
+                                          updateTypeQuota(
+                                            index,
+                                            questionType,
+                                            value === "" ? 0 : parseInt(value)
+                                          );
+                                        }}
+                                        placeholder="0"
+                                        className={styles.input}
+                                        style={{
+                                          width: "60px",
+                                          padding: "4px 6px",
+                                          fontSize: "13px",
+                                        }}
+                                        min="0"
+                                      />
+                                    </div>
+                                  )
+                                )}
+                              </div>
+
+                              {/* Summary and validation */}
+                              {testTopic.typeQuotas &&
+                                Object.keys(testTopic.typeQuotas).length >
+                                  0 && (
+                                  <div
+                                    style={{
+                                      fontSize: "12px",
+                                      padding: "6px 8px",
+                                      borderRadius: "4px",
+                                      backgroundColor:
+                                        getTotalFromTypeQuotas(
+                                          testTopic.typeQuotas
+                                        ) === testTopic.questions_count
+                                          ? "#dcfce7"
+                                          : "#fef2f2",
+                                      color:
+                                        getTotalFromTypeQuotas(
+                                          testTopic.typeQuotas
+                                        ) === testTopic.questions_count
+                                          ? "#166534"
+                                          : "#dc2626",
+                                      border: `1px solid ${
+                                        getTotalFromTypeQuotas(
+                                          testTopic.typeQuotas
+                                        ) === testTopic.questions_count
+                                          ? "#bbf7d0"
+                                          : "#fecaca"
+                                      }`,
+                                    }}
+                                  >
+                                    Сумма по типам:{" "}
+                                    {getTotalFromTypeQuotas(
+                                      testTopic.typeQuotas
+                                    )}{" "}
+                                    / Общее количество:{" "}
+                                    {testTopic.questions_count}
+                                    {getTotalFromTypeQuotas(
+                                      testTopic.typeQuotas
+                                    ) !== testTopic.questions_count && (
+                                      <span
+                                        style={{
+                                          display: "block",
+                                          marginTop: "2px",
+                                          fontWeight: "500",
+                                        }}
+                                      >
+                                        ⚠️ Количество вопросов по типам должно
+                                        равняться общему количеству!
+                                      </span>
+                                    )}
+                                  </div>
+                                )}
+                            </div>
+                          )}
                       </div>
                     ))}
                   </div>

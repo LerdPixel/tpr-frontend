@@ -89,12 +89,9 @@ export default function StudentGradebook() {
     if (!disciplineId) return;
 
     try {
-      const response = await axios.get(
-        `/server/progress/${disciplineId}`,
-        {
-          headers: { Authorization: `Bearer ${getAccess()}` },
-        }
-      );
+      const response = await axios.get(`/server/progress/${disciplineId}`, {
+        headers: { Authorization: `Bearer ${getAccess()}` },
+      });
       if (response.status === 200) {
         setProgress(response.data as StudentProgress);
       }
@@ -246,7 +243,10 @@ export default function StudentGradebook() {
           <tr>
             <th rowSpan={2}>Студент</th>
             <th colSpan={discipline.lecture_count}>Лекции</th>
-            <th rowSpan={2} style={{ whiteSpace: "pre-line", textAlign: "center" }}>
+            <th
+              rowSpan={2}
+              style={{ whiteSpace: "pre-line", textAlign: "center" }}
+            >
               {"Балл за\nпосещения"}
             </th>
             {Array.from({ length: discipline.lab_count || 0 }).map((_, i) => (
@@ -255,7 +255,10 @@ export default function StudentGradebook() {
               </th>
             ))}
             <th rowSpan={2}>Тест</th>
-            <th rowSpan={2} style={{ whiteSpace: "pre-line", textAlign: "center" }}>
+            <th
+              rowSpan={2}
+              style={{ whiteSpace: "pre-line", textAlign: "center" }}
+            >
               {"Итог за\nсеместр"}
             </th>
             <th rowSpan={2}>Итог</th>
@@ -315,7 +318,6 @@ export default function StudentGradebook() {
           </tr>
         </tbody>
       </table>
-
     </div>
   );
 }
