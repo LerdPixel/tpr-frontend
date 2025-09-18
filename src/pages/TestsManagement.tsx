@@ -4,6 +4,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { Clock, Plus, MoreVertical, FileText } from "lucide-react";
 import styles from "../styles/TopicsPage.module.css";
+import { questionTypes } from "../components/questions/questionTypesData.tsx";
 
 // Types for Test management
 interface Test {
@@ -70,7 +71,12 @@ interface TestTopicWithQuotas extends TestTopicWithTitle {
   totalQuestionsInTopic?: number;
   questionsByType?: Record<string, number>;
 }
-
+const objectMap = (obj, fn) =>
+  Object.fromEntries(
+    Object.entries(obj).map(
+      ([k, v], i) => [k, fn(v, k, i)]
+    )
+  )
 export default function TestsManagementPage() {
   const { store } = useContext(Context);
   const navigate = useNavigate();
@@ -94,15 +100,9 @@ export default function TestsManagementPage() {
   const [loadingTestTopics, setLoadingTestTopics] = useState(false);
   const [typeQuotas, setTypeQuotas] = useState<QuestionTypeQuota[]>([]);
 
+
   // Available question types
-  const questionTypes = {
-    single_choice: "Один ответ",
-    multiple_choice: "Несколько вариантов",
-    text: "Краткий ответ",
-    numeric: "Числовой",
-    sorting: "Сортировка",
-    matching: "Соответствие",
-  };
+  const questionTypesData = objectMap(questionTypes, (v) => v[0]);
 
   // Auto-dismiss error after 5 seconds
   useEffect(() => {
@@ -623,7 +623,7 @@ export default function TestsManagementPage() {
   const getTopicQuestionTypes = (topicId: number): string[] => {
     // For now, return all available types. In a real implementation,
     // this would be fetched from an API endpoint specific to the topic
-    return Object.keys(questionTypes);
+    return Object.keys(questionTypesData);
   };
 
   // Fetch total question count for a topic
@@ -648,7 +648,7 @@ export default function TestsManagementPage() {
     
     try {
       // Fetch count for each question type
-      const typePromises = Object.keys(questionTypes).map(async (type) => {
+      const typePromises = Object.keys(questionTypesData).map(async (type) => {
         try {
           const response = await axios.get(
             `/server/admin/topics/${topicId}/questions/count-by-type?type=${type}`,
@@ -1283,7 +1283,7 @@ export default function TestsManagementPage() {
                                           border: `1px solid ${count > 0 ? "#bbf7d0" : "#fecaca"}`,
                                         }}
                                       >
-                                        {questionTypes[type as keyof typeof questionTypes]}: {count}
+                                        {questionTypesData[type as keyof typeof questionTypesData]}: {count}
                                       </span>
                                     ))}
                                   </div>
@@ -1321,8 +1321,8 @@ export default function TestsManagementPage() {
                                         }}
                                       >
                                         {
-                                          questionTypes[
-                                            questionType as keyof typeof questionTypes
+                                          questionTypesData[
+                                            questionType as keyof typeof questionTypesData
                                           ]
                                         }
                                       </label>
