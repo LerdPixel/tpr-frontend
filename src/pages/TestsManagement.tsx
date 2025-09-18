@@ -67,6 +67,8 @@ interface TestTypeQuotaResponse {
 interface TestTopicWithQuotas extends TestTopicWithTitle {
   typeQuotas?: Record<string, number>;
   showTypeSelection?: boolean;
+  totalQuestionsInTopic?: number;
+  questionsByType?: Record<string, number>;
 }
 
 export default function TestsManagementPage() {
@@ -438,6 +440,16 @@ export default function TestsManagementPage() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // Load question statistics for topics when modalTopics changes in edit mode
+  useEffect(() => {
+    if (modalData?.mode === "edit" && modalTopics.length > 0) {
+      const topicsToLoad = modalTopics.filter(topic => topic.topic_id > 0 && topic.totalQuestionsInTopic === undefined);
+      topicsToLoad.forEach(topic => {
+        loadTopicQuestionStats(topic.topic_id);
+      });
+    }
+  }, [modalTopics, modalData?.mode]);
+
   // Modal handlers
   const openCreateModal = () => {
     setModalTopics([]);
@@ -488,6 +500,7 @@ export default function TestsManagementPage() {
   const openEditModal = async (test: Test) => {
     await loadTestTopics(test.id);
     await loadTestTypeQuotas(test.id);
+    
     setModalData({
       mode: "edit",
       id: test.id,
@@ -611,6 +624,82 @@ export default function TestsManagementPage() {
     // For now, return all available types. In a real implementation,
     // this would be fetched from an API endpoint specific to the topic
     return Object.keys(questionTypes);
+  };
+
+  // Fetch total question count for a topic
+  const fetchTopicQuestionCount = async (topicId: number): Promise<number> => {
+    try {
+      const response = await axios.get(`/server/admin/topics/${topicId}/questions/count`, {
+        headers: { Authorization: `Bearer ${getAccess()}` },
+      });
+      if (response.status === 200) {
+        return (response.data as { count: number }).count;
+      }
+      return 0;
+    } catch (err: any) {
+      console.error("Error fetching topic question count:", err);
+      return 0;
+    }
+  };
+
+  // Fetch question count by type for a topic
+  const fetchTopicQuestionCountByType = async (topicId: number): Promise<Record<string, number>> => {
+    const counts: Record<string, number> = {};
+    
+    try {
+      // Fetch count for each question type
+      const typePromises = Object.keys(questionTypes).map(async (type) => {
+        try {
+          const response = await axios.get(
+            `/server/admin/topics/${topicId}/questions/count-by-type?type=${type}`,
+            {
+              headers: { Authorization: `Bearer ${getAccess()}` },
+            }
+          );
+          if (response.status === 200) {
+            counts[type] = (response.data as { count: number }).count;
+          } else {
+            counts[type] = 0;
+          }
+        } catch (err: any) {
+          console.error(`Error fetching count for type ${type}:`, err);
+          counts[type] = 0;
+        }
+      });
+
+      await Promise.all(typePromises);
+      return counts;
+    } catch (err: any) {
+      console.error("Error fetching topic question counts by type:", err);
+      return {};
+    }
+  };
+
+  // Load question statistics for a topic
+  const loadTopicQuestionStats = async (topicId: number) => {
+    if (topicId <= 0) return;
+
+    try {
+      const [totalCount, countsByType] = await Promise.all([
+        fetchTopicQuestionCount(topicId),
+        fetchTopicQuestionCountByType(topicId),
+      ]);
+
+      // Update the modalTopics with the statistics
+      setModalTopics((current) =>
+        current.map((topic) =>
+          topic.topic_id === topicId
+            ? {
+                ...topic,
+                totalQuestionsInTopic: totalCount,
+                questionsByType: countsByType,
+              }
+            : topic
+        )
+      );
+    } catch (err: any) {
+      console.error("Error loading topic question stats:", err);
+    }
   };
 
   // Calculate total questions from type quotas
@@ -1004,7 +1093,7 @@ export default function TestsManagementPage() {
                             </label>
                             <select
                               value={testTopic.topic_id}
-                              onChange={(e) => {
+                              onChange={async (e) => {
                                 const newTopicId = parseInt(e.target.value);
                                 const topic = topics.find(
                                   (t) => t.id === newTopicId
@@ -1023,6 +1112,11 @@ export default function TestsManagementPage() {
                                       : t
                                   )
                                 );
+                                
+                                // Load question statistics for the selected topic
+                                if (newTopicId > 0) {
+                                  await loadTopicQuestionStats(newTopicId);
+                                }
                               }}
                               className={styles.input}
                               style={{ width: "100%" }}
@@ -1047,6 +1141,18 @@ export default function TestsManagementPage() {
                                   {testTopic.topic_title}
                                 </div>
                               )}
+                            {testTopic.topic_id > 0 && testTopic.totalQuestionsInTopic !== undefined && (
+                              <div
+                                style={{
+                                  fontSize: "12px",
+                                  color: "#059669",
+                                  marginTop: "4px",
+                                  fontWeight: "500",
+                                }}
+                              >
+                                📊 Всего вопросов в теме: {testTopic.totalQuestionsInTopic}
+                              </div>
+                            )}
                           </div>
                           <div style={{ minWidth: "140px" }}>
                             <label
@@ -1147,6 +1253,42 @@ export default function TestsManagementPage() {
                               >
                                 Типы вопросов для темы
                               </div>
+                              
+                              {/* Display available questions by type */}
+                              {testTopic.questionsByType && Object.keys(testTopic.questionsByType).length > 0 && (
+                                <div
+                                  style={{
+                                    fontSize: "12px",
+                                    color: "#6b7280",
+                                    marginBottom: "12px",
+                                    padding: "8px",
+                                    backgroundColor: "#f3f4f6",
+                                    borderRadius: "4px",
+                                    border: "1px solid #e5e7eb",
+                                  }}
+                                >
+                                  <div style={{ fontWeight: "500", marginBottom: "4px" }}>
+                                    📈 Доступно вопросов по типам:
+                                  </div>
+                                  <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+                                    {Object.entries(testTopic.questionsByType).map(([type, count]) => (
+                                      <span
+                                        key={type}
+                                        style={{
+                                          fontSize: "11px",
+                                          padding: "2px 6px",
+                                          backgroundColor: count > 0 ? "#dcfce7" : "#fef2f2",
+                                          color: count > 0 ? "#166534" : "#dc2626",
+                                          borderRadius: "3px",
+                                          border: `1px solid ${count > 0 ? "#bbf7d0" : "#fecaca"}`,
+                                        }}
+                                      >
+                                        {questionTypes[type as keyof typeof questionTypes]}: {count}
+                                      </span>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
 
                               <div
                                 style={{
