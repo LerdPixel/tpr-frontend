@@ -1,25 +1,9 @@
 import React, { useState } from "react";
 import styles from "../styles/QuestionCreator.module.css";
-import SingleChoice from "../components/questions/SingleChoice.tsx";
-import NumericAnswer from "../components/questions/NumericAnswer.tsx";
-import SortableQuestion from "../components/questions/SortableQuestion.tsx";
-import MatchingQuestion from "../components/questions/MatchingQuestion.tsx";
-import MultipleChoiceQuestion from "../components/questions/MultipleChoiceQuestion.tsx";
-import ShortAnswerQuestion from "../components/questions/ShortAnswerQuestion.tsx";
 import PointsInput from "../components/ui/pointsInput/PointsInput.tsx";
 import type IQuestion from "@/components/ui/interfaces/IQuestion.tsx";
+import { questionTypes } from "../components/questions/questionTypesData.tsx";
 
-const questionTypes = {
-  single_choice: ["Один ответ", "Создание вопроса с одним вариантом ответа"],
-  multiple_choice: [
-    "Несколько вариантов",
-    "Создание вопроса с несколькими ответами",
-  ],
-  text: ["Краткий ответ", "Создание вопроса с коротким ответом"],
-  numeric: ["Числовой", "Создание вопроса с численным ответом"],
-  sorting: ["Сортировка", "Создание вопроса на упорядочивание"],
-  matching: ["Соответствие", "Создание вопроса на соответствие"],
-} as const;
 
 type QuestionType = keyof typeof questionTypes;
 
@@ -34,8 +18,9 @@ const QuestionCreator: React.FC<QuestionCreatorProps> = ({
   modalData,
   setModalData,
 }) => {
-  const qType = modalData?.data?.question_type || "single";
+  const qType = modalData?.data?.question_type || "single_choice";
   const [questionType, setQuestionType] = useState<QuestionType>(qType);
+  console.log(questionType);
   const [questionText, setQuestionText] = useState(
     modalData?.data?.question_text || ""
   );
@@ -59,23 +44,11 @@ const QuestionCreator: React.FC<QuestionCreatorProps> = ({
     saveQuestion(newQuestion);
   };
   const renderQuestionComponent = () => {
-    switch (questionType) {
-      case "single_choice":
-        return <SingleChoice data={data} setData={setData} />;
-      case "numeric":
-        return <NumericAnswer data={data} setData={setData} />;
-      case "sorting":
-        return <SortableQuestion data={data} setData={setData} />;
-      case "matching":
-        return <MatchingQuestion data={data} setData={setData} />;
-      case "multiple_choice":
-        return <MultipleChoiceQuestion data={data} setData={setData} />;
-      case "text":
-        return <ShortAnswerQuestion data={data} setData={setData} />;
-      default:
-        setModalData(null);
-        return null;
+    if (questionType in questionTypes) {
+      return questionTypes[questionType][2](data, setData);
     }
+    setModalData(null);
+    return null;
   };
   return (
     <div className={styles.container}>
