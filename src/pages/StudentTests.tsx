@@ -493,7 +493,6 @@ export default function StudentTestsPage() {
     setLoading(true);
     try {
       console.log("Fetching student disciplines...");
-      // First, get student's discipline IDs
       const disciplinesResponse = await axios.get(
         `/server/disciplines/my-ids`,
         {
@@ -509,7 +508,8 @@ export default function StudentTestsPage() {
 
         // Get user's attempts
         const attempts = await fetchUserAttempts();
-
+        console.log("Attempts:", attempts);
+        
         // Get test schedules for each discipline
         const schedulePromises = disciplineIds.map(async (disciplineId) => {
           try {
@@ -557,17 +557,19 @@ export default function StudentTestsPage() {
                 })
                 .catch(() => null),
             ]);
-
+            console.log("testResponse, disciplineResponse", testResponse, disciplineResponse);
+            
             const test = (testResponse as any)?.data || null;
             const discipline = (disciplineResponse as any)?.data || null;
 
             // Filter attempts for this test and discipline
-            const testAttempts = attempts.filter(
+            const testAttempts = attempts?.filter(
               (attempt) =>
                 attempt.test_id === test?.id &&
                 attempt.discipline_id === disciplineId
             );
-
+            console.log("testAttempts", testAttempts);
+            
             return {
               ...(schedule as any),
               discipline_id: disciplineId,

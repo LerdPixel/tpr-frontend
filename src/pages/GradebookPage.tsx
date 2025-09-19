@@ -991,7 +991,7 @@ export default function GradebookPage() {
             <div className={styles.modalBody}>
               <div className={styles.formGroup}>
                 <label className={styles.label}>
-                  Время открытия:
+                  Время открытия попытки:
                   <input
                     type="datetime-local"
                     value={testModalData.opensAt}
@@ -1008,7 +1008,7 @@ export default function GradebookPage() {
 
               <div className={styles.formGroup}>
                 <label className={styles.label}>
-                  Время закрытия:
+                  Время закрытия попытки (после которого тест нельзя открыть):
                   <input
                     type="datetime-local"
                     value={testModalData.closesAt}
