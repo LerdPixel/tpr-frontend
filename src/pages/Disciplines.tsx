@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import styles from "../styles/TopicsPage.module.css";
 import GroupSelector from "../components/GroupSelector";
+import DisciplineForm from "../components/DisciplineForm";
 import type { IGroup } from "../components/ui/interfaces/IGroup";
 
 // Types for Discipline
@@ -31,6 +32,7 @@ interface Discipline {
 interface DisciplineLabComponent {
   lab_id: number;
   points: number;
+  title?: string; // Add title for lab name
 }
 
 interface DisciplineCreateInput {
@@ -49,6 +51,15 @@ interface Test {
   id: number;
   title: string;
   description?: string;
+}
+
+// Lab interface based on the API documentation
+interface Lab {
+  id: number;
+  title: string;
+  description?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export default function DisciplinesPage() {
@@ -155,13 +166,60 @@ export default function DisciplinesPage() {
     }
   };
 
+  // Create lab through API
+  const createLab = async (title: string): Promise<number> => {
+    try {
+      const response = await axios.post<{id: number}>(
+        "/api/v1/admin/labs", 
+        { title },
+        {
+          headers: { Authorization: `Bearer ${getAccess()}` },
+          baseURL: "http://antonvz.ru:8080"
+        }
+      );
+      if (response.status === 201) {
+        return response.data.id;
+      }
+      throw new Error("Failed to create lab");
+    } catch (err: any) {
+      console.error("Error creating lab:", err);
+      throw err;
+    }
+  };
+
   // Create discipline
   const createDiscipline = async (disciplineData: DisciplineCreateInput) => {
     try {
       console.log("Creating discipline with data:", disciplineData);
+      
+      // First create labs if any
+      const labsWithIds: DisciplineLabComponent[] = [];
+      for (const lab of modalLabs) {
+        if (lab.title) {
+          try {
+            const labId = await createLab(lab.title);
+            labsWithIds.push({
+              lab_id: labId,
+              points: lab.points,
+              title: lab.title
+            });
+          } catch (err) {
+            setError(`Ошибка при создании лабораторной работы "${lab.title}"`);
+            throw err;
+          }
+        }
+      }
+      
+      // Update discipline data with real lab IDs
+      const disciplineDataWithLabs: DisciplineCreateInput = {
+        ...disciplineData,
+        lab_count: labsWithIds.length,
+        labs: labsWithIds.length > 0 ? labsWithIds : []
+      };
+      
       const response = await axios.post(
         "/server/admin/disciplines",
-        disciplineData,
+        disciplineDataWithLabs,
         {
           headers: { Authorization: `Bearer ${getAccess()}` },
         }
@@ -194,9 +252,17 @@ export default function DisciplinesPage() {
     disciplineData: DisciplineCreateInput
   ) => {
     try {
+      // For update, we'll just send the existing lab IDs and points
+      // In a real implementation, you might want to handle lab updates separately
+      const disciplineDataWithLabs: DisciplineCreateInput = {
+        ...disciplineData,
+        lab_count: modalLabs.length,
+        labs: modalLabs.length > 0 ? modalLabs : []
+      };
+      
       const response = await axios.put(
         `/server/admin/disciplines/${id}`,
-        disciplineData,
+        disciplineDataWithLabs,
         {
           headers: { Authorization: `Bearer ${getAccess()}` },
         }
@@ -318,6 +384,18 @@ export default function DisciplinesPage() {
       return;
     }
 
+    // Validate labs
+    for (const lab of modalLabs) {
+      if (!lab.title || lab.title.trim() === "") {
+        setError("У всех лабораторных работ должны быть названия");
+        return;
+      }
+      if (lab.points < 0) {
+        setError("Баллы за лабораторные работы не могут быть отрицательными");
+        return;
+      }
+    }
+
     try {
       const disciplineData: DisciplineCreateInput = {
         name: name!,
@@ -366,24 +444,6 @@ export default function DisciplinesPage() {
     return test ? test.title : `Тест #${testId}`;
   };
 
-  // Laboratory work management functions
-  const addLab = () => {
-    const newLabId =
-      modalLabs.length > 0
-        ? Math.max(...modalLabs.map((lab) => lab.lab_id)) + 1
-        : 1;
-    setModalLabs([...modalLabs, { lab_id: newLabId, points: 10 }]);
-  };
-
-  const removeLab = (labId: number) => {
-    setModalLabs(modalLabs.filter((lab) => lab.lab_id !== labId));
-  };
-
-  const updateLabPoints = (labId: number, points: number) => {
-    setModalLabs(
-      modalLabs.map((lab) => (lab.lab_id === labId ? { ...lab, points } : lab))
-    );
-  };
 
   // Helper function to get total lab points
   const getTotalLabPoints = (labs: DisciplineLabComponent[] = []) => {
@@ -756,403 +816,21 @@ export default function DisciplinesPage() {
         </div>
       </div>
 
-      {/* Modal for Create/Edit */}
-      {modalData && (
-        <div className={styles.modalOverlay} onClick={closeModal}>
-          <div
-            className={styles.modal}
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              maxWidth: "600px",
-              width: "90vw",
-              maxHeight: "90vh",
-              overflow: "auto",
-              display: "flex",
-              flexDirection: "column",
-            }}
-          >
-            <h3 className={styles.modalTitle}>
-              {modalData.mode === "create"
-                ? "Создать дисциплину"
-                : "Редактировать дисциплину"}
-            </h3>
-
-            <div style={{ overflow: "auto", flex: 1, paddingRight: "8px" }}>
-              <div>
-                <label
-                  className={styles.label}
-                  style={{
-                    display: "block",
-                    marginBottom: "4px",
-                    fontWeight: "600",
-                  }}
-                >
-                  Название дисциплины *
-                </label>
-                <input
-                  type="text"
-                  value={modalData.data.name || ""}
-                  onChange={(e) =>
-                    setModalData({
-                      ...modalData,
-                      data: { ...modalData.data, name: e.target.value },
-                    })
-                  }
-                  placeholder="Например: Математический анализ"
-                  className={styles.input}
-                />
-              </div>
-
-              <div>
-                <label
-                  className={styles.label}
-                  style={{
-                    display: "block",
-                    marginBottom: "4px",
-                    fontWeight: "600",
-                  }}
-                >
-                  Описание (необязательно)
-                </label>
-                <textarea
-                  value={modalData.data.description || ""}
-                  onChange={(e) =>
-                    setModalData({
-                      ...modalData,
-                      data: { ...modalData.data, description: e.target.value },
-                    })
-                  }
-                  placeholder="Краткое описание дисциплины"
-                  className={styles.textarea}
-                />
-              </div>
-
-              <div>
-                <label
-                  className={styles.label}
-                  style={{
-                    display: "block",
-                    marginBottom: "8px",
-                    fontWeight: "600",
-                  }}
-                >
-                  Выберите группы
-                </label>
-                {groupsLoading ? (
-                  <p style={{ color: "#666", fontSize: "14px" }}>
-                    Загрузка групп...
-                  </p>
-                ) : (
-                  <GroupSelector
-                    groups={groups}
-                    setSelectedGroups={setSelectedGroups}
-                    initialSelected={selectedGroups}
-                  />
-                )}
-              </div>
-            </div>
-
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
-                gap: "12px",
-              }}
-            >
-              <div>
-                <label
-                  className={styles.label}
-                  style={{
-                    display: "block",
-                    marginBottom: "4px",
-                    fontWeight: "600",
-                  }}
-                >
-                  Выберите тест *
-                </label>
-                {testsLoading ? (
-                  <p style={{ color: "#666", fontSize: "14px" }}>
-                    Загрузка тестов...
-                  </p>
-                ) : (
-                  <select
-                    value={modalData.data.test_id || ""}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      setModalData({
-                        ...modalData,
-                        data: {
-                          ...modalData.data,
-                          test_id: value === "" ? undefined : parseInt(value),
-                        },
-                      });
-                    }}
-                    className={styles.input}
-                    style={{ padding: "10px" }}
-                  >
-                    <option value="">Выберите тест</option>
-                    {tests.map((test) => (
-                      <option key={test.id} value={test.id}>
-                        {test.title}
-                      </option>
-                    ))}
-                  </select>
-                )}
-              </div>
-
-              <div>
-                <label
-                  className={styles.label}
-                  style={{
-                    display: "block",
-                    marginBottom: "4px",
-                    fontWeight: "600",
-                  }}
-                >
-                  Количество лекций *
-                </label>
-                <input
-                  type="number"
-                  value={modalData.data.lecture_count ?? ""}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    setModalData({
-                      ...modalData,
-                      data: {
-                        ...modalData.data,
-                        lecture_count:
-                          value === "" ? undefined : parseInt(value),
-                      },
-                    });
-                  }}
-                  placeholder="16"
-                  className={styles.input}
-                  min="1"
-                />
-              </div>
-            </div>
-
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
-                gap: "12px",
-              }}
-            >
-              <div>
-                <label
-                  className={styles.label}
-                  style={{
-                    display: "block",
-                    marginBottom: "4px",
-                    fontWeight: "600",
-                  }}
-                >
-                  Максимальные баллы за лекции *
-                </label>
-                <input
-                  type="number"
-                  value={modalData.data.lecture_points ?? ""}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    setModalData({
-                      ...modalData,
-                      data: {
-                        ...modalData.data,
-                        lecture_points:
-                          value === "" ? undefined : parseInt(value),
-                      },
-                    });
-                  }}
-                  placeholder="40"
-                  className={styles.input}
-                  min="1"
-                />
-              </div>
-
-              <div>
-                <label
-                  className={styles.label}
-                  style={{
-                    display: "block",
-                    marginBottom: "4px",
-                    fontWeight: "600",
-                  }}
-                >
-                  Максимальные баллы за тесты *
-                </label>
-                <input
-                  type="number"
-                  value={modalData.data.test_points ?? ""}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    setModalData({
-                      ...modalData,
-                      data: {
-                        ...modalData.data,
-                        test_points: value === "" ? undefined : parseInt(value),
-                      },
-                    });
-                  }}
-                  placeholder="60"
-                  className={styles.input}
-                  min="1"
-                />
-              </div>
-            </div>
-
-            {/* Laboratory Works Section */}
-            <div style={{ marginTop: "16px" }}>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  marginBottom: "12px",
-                }}
-              >
-                <label
-                  className={styles.label}
-                  style={{
-                    fontWeight: "600",
-                  }}
-                >
-                  Лабораторные работы (количество: {modalLabs.length})
-                </label>
-                <button
-                  type="button"
-                  onClick={addLab}
-                  className={`${styles.btn} ${styles.blue}`}
-                  style={{ padding: "6px 12px", fontSize: "14px" }}
-                >
-                  <Plus
-                    style={{
-                      width: "16px",
-                      height: "16px",
-                      marginRight: "4px",
-                    }}
-                  />
-                  Добавить лабу
-                </button>
-              </div>
-
-              {modalLabs.length === 0 ? (
-                <p
-                  style={{
-                    color: "#666",
-                    fontSize: "14px",
-                    fontStyle: "italic",
-                  }}
-                >
-                  Нет лабораторных работ. Нажмите "Добавить лабу" для создания.
-                </p>
-              ) : (
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "8px",
-                  }}
-                >
-                  {modalLabs.map((lab, index) => (
-                    <div
-                      key={lab.lab_id}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "12px",
-                        padding: "12px",
-                        border: "1px solid #e5e7eb",
-                        borderRadius: "6px",
-                        backgroundColor: "#f9fafb",
-                      }}
-                    >
-                      <span style={{ fontWeight: "500", minWidth: "120px" }}>
-                        Лабораторная {index + 1}:
-                      </span>
-                      <input
-                        type="number"
-                        value={lab.points ?? ""}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          updateLabPoints(
-                            lab.lab_id,
-                            value === "" ? 0 : parseInt(value)
-                          );
-                        }}
-                        placeholder="Баллы"
-                        className={styles.input}
-                        style={{ width: "100px" }}
-                        min="0"
-                      />
-                      <span style={{ fontSize: "14px", color: "#666" }}>
-                        баллов
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => removeLab(lab.lab_id)}
-                        style={{
-                          background: "#dc2626",
-                          color: "white",
-                          border: "none",
-                          borderRadius: "4px",
-                          padding: "6px 8px",
-                          cursor: "pointer",
-                          fontSize: "12px",
-                        }}
-                      >
-                        Удалить
-                      </button>
-                    </div>
-                  ))}
-
-                  {modalLabs.length > 0 && (
-                    <div
-                      style={{
-                        marginTop: "8px",
-                        padding: "8px 12px",
-                        backgroundColor: "#eff6ff",
-                        borderRadius: "6px",
-                        fontSize: "14px",
-                        fontWeight: "500",
-                        color: "#1d4ed8",
-                      }}
-                    >
-                      Общие баллы за лабораторные:{" "}
-                      {getTotalLabPoints(modalLabs)}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-
-            <div
-              className={styles.modalActions}
-              style={{
-                position: "sticky",
-                bottom: 0,
-                backgroundColor: "white",
-                borderTop: "1px solid #e5e7eb",
-                paddingTop: "16px",
-                marginTop: "16px",
-              }}
-            >
-              <button
-                onClick={closeModal}
-                className={`${styles.btn} ${styles.gray}`}
-              >
-                Отмена
-              </button>
-              <button
-                onClick={saveModal}
-                className={`${styles.btn} ${styles.blue}`}
-              >
-                {modalData.mode === "create" ? "Создать" : "Сохранить"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Discipline Form Modal */}
+      <DisciplineForm
+        modalData={modalData}
+        groups={groups}
+        tests={tests}
+        selectedGroups={selectedGroups}
+        modalLabs={modalLabs}
+        groupsLoading={groupsLoading}
+        testsLoading={testsLoading}
+        onClose={closeModal}
+        onSave={saveModal}
+        onDataChange={(data) => setModalData({ ...modalData!, data })}
+        onSelectedGroupsChange={setSelectedGroups}
+        onModalLabsChange={setModalLabs}
+      />
     </div>
   );
 }
