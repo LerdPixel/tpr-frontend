@@ -7,7 +7,7 @@
         "contact": {},
         "version": "1.0.0"
     },
-    "host": "http://antonvz.ru:8080",
+    "host": "antonvz.ru:8080",
     "basePath": "/",
     "paths": {
         "/api/v1/admin/attempt-overrides": {
@@ -508,6 +508,213 @@
                     },
                     "500": {
                         "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/admin/labs": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "labs"
+                ],
+                "summary": "Get all labs",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.Lab"
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "labs"
+                ],
+                "summary": "Create lab",
+                "parameters": [
+                    {
+                        "description": "Lab",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.LabCreateInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "integer"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/admin/labs/{id}": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "labs"
+                ],
+                "summary": "Get lab by ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Lab ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.Lab"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "labs"
+                ],
+                "summary": "Update lab",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Lab ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Lab",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.LabUpdateInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "labs"
+                ],
+                "summary": "Delete lab",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Lab ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
                         "schema": {
                             "type": "object",
                             "properties": {
@@ -2808,6 +3015,74 @@
                 }
             }
         },
+        "/api/v1/lab-submission": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "labs"
+                ],
+                "summary": "Get student's lab submission",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Discipline ID",
+                        "name": "disciplineId",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Lab ID",
+                        "name": "labId",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.LabSubmission"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/labs": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "labs"
+                ],
+                "summary": "Get labs (for student)",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.Lab"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/materials/{id}": {
             "get": {
                 "security": [
@@ -3440,6 +3715,66 @@
                             "type": "array",
                             "items": {
                                 "$ref": "#/definitions/models.GroupProgressRow"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/seminarist/lab-submissions": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "labs"
+                ],
+                "summary": "Get lab submissions for discipline",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Discipline ID",
+                        "name": "disciplineId",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Lab ID",
+                        "name": "labId",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.LabSubmissionWithDetails"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/seminarist/labs": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "labs"
+                ],
+                "summary": "Get labs (for seminarist)",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.Lab"
                             }
                         }
                     }
@@ -4511,6 +4846,139 @@
                 },
                 "user_id": {
                     "type": "integer"
+                }
+            }
+        },
+        "models.Lab": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.LabCreateInput": {
+            "type": "object",
+            "required": [
+                "title"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.LabSubmission": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "discipline_id": {
+                    "type": "integer"
+                },
+                "feedback": {
+                    "type": "string"
+                },
+                "file_url": {
+                    "type": "string"
+                },
+                "grade": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "lab_id": {
+                    "type": "integer"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "submission_date": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "models.LabSubmissionWithDetails": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "discipline_id": {
+                    "type": "integer"
+                },
+                "feedback": {
+                    "type": "string"
+                },
+                "file_url": {
+                    "type": "string"
+                },
+                "grade": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "lab_id": {
+                    "type": "integer"
+                },
+                "lab_title": {
+                    "type": "string"
+                },
+                "max_points": {
+                    "type": "integer"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "student_name": {
+                    "type": "string"
+                },
+                "submission_date": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "models.LabUpdateInput": {
+            "type": "object",
+            "required": [
+                "title"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
                 }
             }
         },

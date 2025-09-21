@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect, useContext, useRef } from "react";
 import { Context } from "../context/index";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
@@ -431,6 +431,8 @@ export default function StudentTestsPage() {
     percentage: number;
   } | null>(null);
   const [answers, setAnswers] = useState<Map<number, any>>(new Map());
+  const [timeLeft, setTimeLeft] = useState<number | null>(null);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Auto-dismiss messages
   useEffect(() => {
@@ -483,6 +485,18 @@ export default function StudentTestsPage() {
       setCurrentAttemptId(attemptId);
       await fetchAttemptData(attemptId);
       setSuccess("Продолжение теста!");
+
+      // Continue timer
+      const attempt = allAttempts.find((a) => a.id === attemptId);
+      if (attempt) {
+        const schedule = testSchedules.find(
+          (s) => s.test?.id === attempt.test_id && s.discipline?.id === attempt.discipline_id
+        );
+        if (schedule?.attempt_time_limit_sec) {
+          startTimer(attemptId, schedule.attempt_time_limit_sec);
+        }
+      }
+
     } catch (err: any) {
       console.error("Error continuing attempt:", err);
       setError("Ошибка при продолжении попытки");
@@ -629,6 +643,15 @@ export default function StudentTestsPage() {
       setCurrentAttemptId(attemptId);
       await fetchAttemptData(attemptId);
       setSuccess("Тест начат!");
+
+      // Start timer
+      const schedule = testSchedules.find(
+        (s) => s.test?.id === testId && s.discipline?.id === disciplineId
+      );
+      if (schedule?.attempt_time_limit_sec) {
+        startTimer(attemptId, schedule.attempt_time_limit_sec);
+      }
+
     } catch (err: any) {
       console.error("Error starting test attempt:", err);
       if (err.response?.data?.error) {
@@ -816,6 +839,53 @@ export default function StudentTestsPage() {
     }
   }, [currentQuestionIndex, currentAttempt, answers]);
 
+  // Timer functions
+  const startTimer = (attemptId: number, timeLimitSeconds: number) => {
+    clearTimer(); // Clear any existing timer
+
+    const storedStartTime = localStorage.getItem(`attemptStartTime-${attemptId}`);
+    let startTime: number;
+
+    if (storedStartTime) {
+      startTime = parseInt(storedStartTime, 10);
+    } else {
+      startTime = Date.now();
+      localStorage.setItem(`attemptStartTime-${attemptId}`, startTime.toString());
+    }
+
+    const calculateTimeLeft = () => {
+      const elapsedTime = Math.floor((Date.now() - startTime) / 1000);
+      const remaining = timeLimitSeconds - elapsedTime;
+      if (remaining <= 0) {
+        setTimeLeft(0);
+        clearTimer();
+        finishTest(); // Auto-finish test when time runs out
+      } else {
+        setTimeLeft(remaining);
+      }
+    };
+
+    calculateTimeLeft(); // Initial calculation
+    timerRef.current = setInterval(calculateTimeLeft, 1000);
+  };
+
+  const clearTimer = () => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+    if (currentAttemptId) {
+      localStorage.removeItem(`attemptStartTime-${currentAttemptId}`);
+    }
+  };
+
+  useEffect(() => {
+    // Clear timer when component unmounts or test is exited
+    return () => {
+      clearTimer();
+    };
+  }, [currentAttempt]); // Dependency on currentAttempt to reset timer when exiting test
+
   if (loading && !currentAttempt) {
     return (
       <div className={styles.page}>
@@ -961,6 +1031,28 @@ export default function StudentTestsPage() {
                   />
                   Статус: {currentAttempt.attempt.status}
                 </div>
+                {timeLeft !== null && (
+                  <div
+                    className={styles.itemMeta}
+                    style={{
+                      color: timeLeft < 300 ? "#dc2626" : "#6b7280", // Red if less than 5 minutes
+                      fontWeight: timeLeft < 300 ? "600" : "400",
+                    }}
+                  >
+                    <Clock
+                      className={`${styles.icon}`}
+                      style={{
+                        width: "16px",
+                        height: "16px",
+                        display: "inline",
+                        marginRight: "4px",
+                        color: timeLeft < 300 ? "#dc2626" : "#6b7280",
+                      }}
+                    />
+                    Осталось: {Math.floor(timeLeft / 60)}
+                    мин {timeLeft % 60} сек
+                  </div>
+                )}
                 {currentAttempt.attempt.score !== null &&
                   currentAttempt.attempt.score !== undefined && (
                     <div className={styles.itemMeta}>
@@ -973,6 +1065,7 @@ export default function StudentTestsPage() {
               onClick={() => {
                 setCurrentAttempt(null);
                 setTestResults(null);
+                clearTimer(); // Clear timer when exiting test
                 fetchOpenTestSchedules();
               }}
               className={`${styles.btn} ${styles.gray}`}
