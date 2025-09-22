@@ -4,32 +4,31 @@ import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
 import TestScheduleModal from "../components/TestScheduleModal";
 import styles from "../styles/Gradebook.module.css";
-export const finalMark = (score : number | null) => {
-    if (score === null) {
-      return "";
-    }
-    if (score < 60) {
-      return "F " + score;
-    }
-    if (score < 65) {
-      return "E " + score;
-    }
-    if (score < 70) {
-      return "D(уд) " + score;
-    }
-    if (score < 75) {
-      return "D(хор) " + score;
-    }
-    if (score < 80) {
-      return "С " + score;
-    }
-    if (score < 90) {
-      return "В " + score;
-    }
-    else {
-      return "A " + score;
-    }
-}
+export const finalMark = (score: number | null) => {
+  if (score === null) {
+    return "";
+  }
+  if (score < 60) {
+    return "F " + score;
+  }
+  if (score < 65) {
+    return "E " + score;
+  }
+  if (score < 70) {
+    return "D(уд) " + score;
+  }
+  if (score < 75) {
+    return "D(хор) " + score;
+  }
+  if (score < 80) {
+    return "С " + score;
+  }
+  if (score < 90) {
+    return "В " + score;
+  } else {
+    return "A " + score;
+  }
+};
 // Types based on API documentation
 interface Discipline {
   id: number;
@@ -76,9 +75,19 @@ interface TestScheduleCreateInput {
   attempt_time_limit_sec: number;
 }
 
+// Lab interface based on the API documentation
+interface Lab {
+  id: number;
+  title: string;
+  description?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
 interface DisciplineLabComponent {
   lab_id: number;
   points: number;
+  title?: string; // Add title property for lab names
 }
 
 interface Group {
@@ -229,7 +238,38 @@ export default function GradebookPage() {
       console.log("Discipline response:", response);
       if (response.status === 200) {
         console.log("Discipline data:", response.data);
-        setDiscipline(response.data as Discipline);
+        const disciplineData = response.data as Discipline;
+
+        // Fetch lab details if labs exist
+        if (disciplineData.labs && disciplineData.labs.length > 0) {
+          // Fetch details for each lab
+          const labDetailsPromises = disciplineData.labs.map(async (lab) => {
+            try {
+              const labResponse = await axios.get<Lab>(
+                `/api/v1/admin/labs/${lab.lab_id}`,
+                {
+                  headers: { Authorization: `Bearer ${getAccess()}` },
+                  baseURL: "http://antonvz.ru:8080",
+                }
+              );
+              if (labResponse.status === 200) {
+                return {
+                  ...lab,
+                  title: labResponse.data.title,
+                };
+              }
+              return lab;
+            } catch (err) {
+              console.error(`Error fetching lab ${lab.lab_id}:`, err);
+              return lab;
+            }
+          });
+
+          const labsWithTitles = await Promise.all(labDetailsPromises);
+          disciplineData.labs = labsWithTitles;
+        }
+
+        setDiscipline(disciplineData);
       }
     } catch (err: any) {
       console.error("Error fetching discipline:", err);
@@ -834,11 +874,16 @@ export default function GradebookPage() {
             >
               {"Балл\nза\nпосещ"}
             </th>
-            {Array.from({ length: discipline.lab_count || 0 }).map((_, i) => (
+            {discipline.labs?.map((lab, i) => (
               <th key={`labHeader${i}`} rowSpan={2}>
-                Лаб{i + 1}
+                {lab.title || `Лаб${i + 1}`}
               </th>
-            ))}
+            )) ||
+              Array.from({ length: discipline.lab_count || 0 }).map((_, i) => (
+                <th key={`labHeader${i}`} rowSpan={2}>
+                  Лаб{i + 1}
+                </th>
+              ))}
             <th
               rowSpan={2}
               style={{ whiteSpace: "pre-line", textAlign: "center" }}
