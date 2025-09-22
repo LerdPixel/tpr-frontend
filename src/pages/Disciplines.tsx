@@ -169,12 +169,12 @@ export default function DisciplinesPage() {
   // Create lab through API
   const createLab = async (title: string): Promise<number> => {
     try {
-      const response = await axios.post<{id: number}>(
-        "/api/v1/admin/labs", 
+      const response = await axios.post<{ id: number }>(
+        "/api/v1/admin/labs",
         { title },
         {
           headers: { Authorization: `Bearer ${getAccess()}` },
-          baseURL: "http://antonvz.ru:8080"
+          baseURL: "http://antonvz.ru:8080",
         }
       );
       if (response.status === 201) {
@@ -191,7 +191,7 @@ export default function DisciplinesPage() {
   const createDiscipline = async (disciplineData: DisciplineCreateInput) => {
     try {
       console.log("Creating discipline with data:", disciplineData);
-      
+
       // First create labs if any
       const labsWithIds: DisciplineLabComponent[] = [];
       for (const lab of modalLabs) {
@@ -201,7 +201,7 @@ export default function DisciplinesPage() {
             labsWithIds.push({
               lab_id: labId,
               points: lab.points,
-              title: lab.title
+              title: lab.title,
             });
           } catch (err) {
             setError(`Ошибка при создании лабораторной работы "${lab.title}"`);
@@ -209,14 +209,14 @@ export default function DisciplinesPage() {
           }
         }
       }
-      
+
       // Update discipline data with real lab IDs
       const disciplineDataWithLabs: DisciplineCreateInput = {
         ...disciplineData,
         lab_count: labsWithIds.length,
-        labs: labsWithIds.length > 0 ? labsWithIds : []
+        labs: labsWithIds.length > 0 ? labsWithIds : [],
       };
-      
+
       const response = await axios.post(
         "/server/admin/disciplines",
         disciplineDataWithLabs,
@@ -257,9 +257,9 @@ export default function DisciplinesPage() {
       const disciplineDataWithLabs: DisciplineCreateInput = {
         ...disciplineData,
         lab_count: modalLabs.length,
-        labs: modalLabs.length > 0 ? modalLabs : []
+        labs: modalLabs.length > 0 ? modalLabs : [],
       };
-      
+
       const response = await axios.put(
         `/server/admin/disciplines/${id}`,
         disciplineDataWithLabs,
@@ -444,7 +444,6 @@ export default function DisciplinesPage() {
     return test ? test.title : `Тест #${testId}`;
   };
 
-
   // Helper function to get total lab points
   const getTotalLabPoints = (labs: DisciplineLabComponent[] = []) => {
     return labs.reduce((total, lab) => total + lab.points, 0);
@@ -458,10 +457,8 @@ export default function DisciplinesPage() {
 
   // Open gradebook for discipline and group
   const openGradebook = (disciplineId: number, groupId: number) => {
-    if (store.role === "student")
-      navigate( `/my-progress/${disciplineId}`)
-    else
-      navigate(`/gradesheet/${disciplineId}/${groupId}`);
+    if (store.role === "student") navigate(`/my-progress/${disciplineId}`);
+    else navigate(`/gradesheet/${disciplineId}/${groupId}`);
     setMenu(null);
   };
 
@@ -652,8 +649,7 @@ export default function DisciplinesPage() {
                               fontWeight: "400",
                               marginLeft: "8px",
                             }}
-                          >
-                          </span>
+                          ></span>
                         )}
                       </div>
                     )}
