@@ -470,6 +470,7 @@ export default function GradebookPage() {
         discipline_id: parseInt(disciplineId),
         lecture_no: lecture,
       };
+
       console.log("Sending attendance data:", attendanceData);
 
       if (isCurrentlyAttended) {
@@ -509,6 +510,9 @@ export default function GradebookPage() {
         console.log("Updated attendance state:", updated);
         return updated;
       });
+
+      // Fetch updated progress data from server
+      await fetchGroupProgress();
 
       setSuccess(
         isCurrentlyAttended
