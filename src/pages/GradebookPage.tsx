@@ -167,6 +167,8 @@ export default function GradebookPage() {
     null
   );
   const [showScheduleModal, setShowScheduleModal] = useState(false);
+  // State to track individual lab grades for each student
+  const [labGrades, setLabGrades] = useState<Record<string, number>>({});
 
   // Auto-dismiss messages
   useEffect(() => {
@@ -380,6 +382,27 @@ export default function GradebookPage() {
 
         setGroupProgress(progressData);
 
+        // Initialize lab grades state with existing data (only if discipline is loaded)
+        if (discipline?.labs && discipline.labs.length > 0) {
+          const initialLabGrades: Record<string, number> = {};
+          progressData.forEach((student) => {
+            const totalLabsPoints = student.progress.labs_points_awarded || 0;
+            const pointsPerLab = Math.floor(
+              totalLabsPoints / discipline.labs.length
+            );
+            const remainder = totalLabsPoints % discipline.labs.length;
+
+            discipline.labs.forEach((lab, index) => {
+              const key = `${student.user_id}-${lab.lab_id}`;
+              // Distribute points evenly, with remainder going to first labs
+              const points =
+                index < remainder ? pointsPerLab + 1 : pointsPerLab;
+              initialLabGrades[key] = points;
+            });
+          });
+          setLabGrades(initialLabGrades);
+        }
+
         // Extract attendance data from progress if available
         // Note: The API doesn't seem to include attendance in GroupProgressRow,
         // so we'll need to fetch it separately for each student
@@ -447,7 +470,6 @@ export default function GradebookPage() {
         discipline_id: parseInt(disciplineId),
         lecture_no: lecture,
       };
-
       console.log("Sending attendance data:", attendanceData);
 
       if (isCurrentlyAttended) {
@@ -497,6 +519,67 @@ export default function GradebookPage() {
       console.error("Error toggling attendance:", err);
       setError(
         err?.response?.data?.error || "Ошибка при изменении посещаемости"
+      );
+    }
+  };
+
+  // Update lab grade for a student
+  const updateLabGrade = async (
+    studentId: number,
+    labId: number,
+    grade: number
+  ) => {
+    // Don't send zero grades to the server
+    if (grade === 0) {
+      setLabGrades((prev) => ({
+        ...prev,
+        [`${studentId}-${labId}`]: grade,
+      }));
+      return;
+    }
+
+    if (!disciplineId) return;
+
+    try {
+      // Prepare the data for the API call
+      const labGradeData = {
+        user_id: studentId,
+        lab_id: labId,
+        discipline_id: parseInt(disciplineId),
+        grade: grade,
+      };
+
+      // Send the data to the server
+      const response = await axios.post(
+        "/api/v1/admin/progress/lab-grade",
+        labGradeData,
+        {
+          headers: {
+            Authorization: `Bearer ${getAccess()}`,
+            "Content-Type": "application/json",
+          },
+          baseURL: "http://antonvz.ru:8080",
+        }
+      );
+
+      if (response.status === 200) {
+        // Update local state
+        const key = `${studentId}-${labId}`;
+        setLabGrades((prev) => ({
+          ...prev,
+          [key]: grade,
+        }));
+
+        // Fetch updated progress data from server instead of calculating locally
+        await fetchGroupProgress();
+
+        setSuccess("Баллы за лабораторную работу сохранены");
+      }
+    } catch (err: any) {
+      console.error("Error updating lab grade:", err);
+      setError(
+        err?.response?.data?.error ||
+          "Ошибка при сохранении баллов за лабораторную работу"
       );
     }
   };
@@ -966,22 +1049,65 @@ export default function GradebookPage() {
                 <td className={styles.cell}>
                   {progressData?.progress.lecture_points_awarded || ""}
                 </td>
-                {Array.from({ length: discipline.lab_count || 0 }).map(
-                  (_, i) => (
+                {(discipline.labs?.length
+                  ? discipline.labs
+                  : Array.from(
+                      { length: discipline.lab_count || 0 },
+                      (_, i) => i
+                    )
+                ).map((lab, i) => {
+                  // Determine if this is a real lab object or a placeholder
+                  const isRealLab =
+                    typeof lab === "object" && lab !== null && "lab_id" in lab;
+                  const labId = isRealLab
+                    ? (lab as DisciplineLabComponent).lab_id
+                    : (lab as number);
+                  const key = `${student.id}-${labId}`;
+
+                  // Get current grade - either from state or from progress data
+                  const currentGrade =
+                    key in labGrades
+                      ? labGrades[key]
+                      : progressData?.progress.labs_points_awarded || 0;
+
+                  return (
                     <td key={`lab${i}`} className={styles.cell}>
-                      {progressData?.progress.labs_points_awarded || ""}
+                      <input
+                        type="number"
+                        min="0"
+                        value={currentGrade}
+                        onChange={(e) => {
+                          const newGrade = parseInt(e.target.value) || 0;
+                          setLabGrades((prev) => ({
+                            ...prev,
+                            [key]: newGrade,
+                          }));
+                        }}
+                        onBlur={(e) => {
+                          const newGrade = parseInt(e.target.value) || 0;
+                          // Only send to server if it's a real lab and grade is not zero
+                          if (isRealLab && newGrade > 0) {
+                            updateLabGrade(student.id, labId, newGrade);
+                          } else if (isRealLab && newGrade === 0) {
+                            // For zero grades, we still update the local state but don't send to server
+                            setLabGrades((prev) => ({
+                              ...prev,
+                              [key]: newGrade,
+                            }));
+                          }
+                        }}
+                        className={styles.input}
+                        style={{
+                          width: "60px",
+                          textAlign: "center",
+                          padding: "2px",
+                        }}
+                      />
                     </td>
-                  )
-                )}
+                  );
+                })}
                 <td className={styles.cell}>
-                  {(() => {
-                    const lecturePoints =
-                      progressData?.progress.lecture_points_awarded || 0;
-                    const labPoints =
-                      progressData?.progress.labs_points_awarded || 0;
-                    const semesterTotal = lecturePoints + labPoints;
-                    return semesterTotal > 0 ? semesterTotal : "";
-                  })()}
+                  {progressData?.progress.total_awarded || ""}
                 </td>
                 <td
                   className={`${styles.cell} ${
