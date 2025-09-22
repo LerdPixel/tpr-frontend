@@ -490,13 +490,14 @@ export default function StudentTestsPage() {
       const attempt = allAttempts.find((a) => a.id === attemptId);
       if (attempt) {
         const schedule = testSchedules.find(
-          (s) => s.test?.id === attempt.test_id && s.discipline?.id === attempt.discipline_id
+          (s) =>
+            s.test?.id === attempt.test_id &&
+            s.discipline?.id === attempt.discipline_id
         );
         if (schedule?.attempt_time_limit_sec) {
           startTimer(attemptId, schedule.attempt_time_limit_sec);
         }
       }
-
     } catch (err: any) {
       console.error("Error continuing attempt:", err);
       setError("Ошибка при продолжении попытки");
@@ -523,7 +524,7 @@ export default function StudentTestsPage() {
         // Get user's attempts
         const attempts = await fetchUserAttempts();
         console.log("Attempts:", attempts);
-        
+
         // Get test schedules for each discipline
         const schedulePromises = disciplineIds.map(async (disciplineId) => {
           try {
@@ -571,8 +572,12 @@ export default function StudentTestsPage() {
                 })
                 .catch(() => null),
             ]);
-            console.log("testResponse, disciplineResponse", testResponse, disciplineResponse);
-            
+            console.log(
+              "testResponse, disciplineResponse",
+              testResponse,
+              disciplineResponse
+            );
+
             const test = (testResponse as any)?.data || null;
             const discipline = (disciplineResponse as any)?.data || null;
 
@@ -583,7 +588,7 @@ export default function StudentTestsPage() {
                 attempt.discipline_id === disciplineId
             );
             console.log("testAttempts", testAttempts);
-            
+
             return {
               ...(schedule as any),
               discipline_id: disciplineId,
@@ -651,7 +656,6 @@ export default function StudentTestsPage() {
       if (schedule?.attempt_time_limit_sec) {
         startTimer(attemptId, schedule.attempt_time_limit_sec);
       }
-
     } catch (err: any) {
       console.error("Error starting test attempt:", err);
       if (err.response?.data?.error) {
@@ -843,14 +847,19 @@ export default function StudentTestsPage() {
   const startTimer = (attemptId: number, timeLimitSeconds: number) => {
     clearTimer(); // Clear any existing timer
 
-    const storedStartTime = localStorage.getItem(`attemptStartTime-${attemptId}`);
+    const storedStartTime = localStorage.getItem(
+      `attemptStartTime-${attemptId}`
+    );
     let startTime: number;
 
     if (storedStartTime) {
       startTime = parseInt(storedStartTime, 10);
     } else {
       startTime = Date.now();
-      localStorage.setItem(`attemptStartTime-${attemptId}`, startTime.toString());
+      localStorage.setItem(
+        `attemptStartTime-${attemptId}`,
+        startTime.toString()
+      );
     }
 
     const calculateTimeLeft = () => {
@@ -1219,7 +1228,8 @@ export default function StudentTestsPage() {
                         marginBottom: "4px",
                       }}
                     >
-                      {testResults.percentage}%
+                      {testResults.score}%{" "}
+                      {/* Changed from testResults.percentage to testResults.score */}
                     </div>
                     <div
                       style={{
@@ -1228,7 +1238,7 @@ export default function StudentTestsPage() {
                         fontWeight: "500",
                       }}
                     >
-                      Процент
+                      Процент {/* Kept the label as requested */}
                     </div>
                   </div>
                 </div>

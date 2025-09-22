@@ -8,8 +8,7 @@ interface LectureMaterial {
   id: number;
   title: string;
   description?: string;
-  discipline_id: number;
-  lecture_no?: number;
+  discipline_ids: number[]; // Changed from discipline_id to discipline_ids array
   file_name: string;
   size_bytes: number;
   mime_type: string;
@@ -37,15 +36,14 @@ interface Discipline {
 interface UploadForm {
   title: string;
   description: string;
-  discipline_id: number;
-  lecture_no: number | null;
+  discipline_ids: number[]; // Changed from discipline_id to discipline_ids array
   file: File | null;
 }
 
 interface EditForm {
   title: string;
   description: string;
-  lecture_no: number | null;
+  discipline_ids: number[]; // Changed from lecture_no to discipline_ids array
 }
 
 const MaterialsPage: React.FC = () => {
@@ -65,15 +63,14 @@ const MaterialsPage: React.FC = () => {
   const [uploadForm, setUploadForm] = useState<UploadForm>({
     title: "",
     description: "",
-    discipline_id: 0,
-    lecture_no: null,
+    discipline_ids: [], // Changed from discipline_id to discipline_ids array
     file: null,
   });
 
   const [editForm, setEditForm] = useState<EditForm>({
     title: "",
     description: "",
-    lecture_no: null,
+    discipline_ids: [], // Changed from lecture_no to discipline_ids array
   });
 
   const getAccess = () => {
@@ -212,7 +209,11 @@ const MaterialsPage: React.FC = () => {
   };
 
   const handleUpload = async () => {
-    if (!uploadForm.title || !uploadForm.discipline_id || !uploadForm.file) {
+    if (
+      !uploadForm.title ||
+      uploadForm.discipline_ids.length === 0 ||
+      !uploadForm.file
+    ) {
       setError("Заполните все обязательные поля");
       return;
     }
@@ -223,10 +224,12 @@ const MaterialsPage: React.FC = () => {
       const formData = new FormData();
       formData.append("title", uploadForm.title);
       formData.append("description", uploadForm.description);
-      formData.append("discipline_id", uploadForm.discipline_id.toString());
-      if (uploadForm.lecture_no !== null) {
-        formData.append("lecture_no", uploadForm.lecture_no.toString());
-      }
+
+      // Append each discipline ID as a separate parameter
+      uploadForm.discipline_ids.forEach((id) => {
+        formData.append("discipline_ids[]", id.toString());
+      });
+
       formData.append("file", uploadForm.file);
 
       const response = await axios.post("/server/admin/materials", formData, {
@@ -245,8 +248,7 @@ const MaterialsPage: React.FC = () => {
       setUploadForm({
         title: "",
         description: "",
-        discipline_id: 0,
-        lecture_no: null,
+        discipline_ids: [], // Reset to empty array
         file: null,
       });
 
@@ -275,7 +277,7 @@ const MaterialsPage: React.FC = () => {
         {
           title: editForm.title,
           description: editForm.description,
-          lecture_no: editForm.lecture_no,
+          discipline_ids: editForm.discipline_ids, // Changed from lecture_no to discipline_ids
         },
         {
           headers: { Authorization: `Bearer ${getAccess()}` },
@@ -292,7 +294,7 @@ const MaterialsPage: React.FC = () => {
       setEditForm({
         title: "",
         description: "",
-        lecture_no: null,
+        discipline_ids: [], // Changed from lecture_no to discipline_ids
       });
 
       await loadMaterials();
@@ -351,7 +353,7 @@ const MaterialsPage: React.FC = () => {
     setEditForm({
       title: material.title,
       description: material.description || "",
-      lecture_no: material.lecture_no || null,
+      discipline_ids: material.discipline_ids || [], // Changed from lecture_no to discipline_ids
     });
     setShowEditModal(true);
   };
@@ -371,14 +373,63 @@ const MaterialsPage: React.FC = () => {
 
   const getFilteredMaterials = (): LectureMaterial[] => {
     if (selectedDiscipline === null) return materials;
-    return materials.filter((m) => m.discipline_id === selectedDiscipline);
+    return materials.filter(
+      (m) =>
+        m.discipline_ids &&
+        Array.isArray(m.discipline_ids) &&
+        m.discipline_ids.includes(selectedDiscipline)
+    );
   };
 
   const getUniqueDisciplines = (): Discipline[] => {
     const materialDisciplineIds = [
-      ...new Set(materials.map((m) => m.discipline_id)),
+      ...new Set(materials.flatMap((m) => m.discipline_ids)),
     ];
     return disciplines.filter((d) => materialDisciplineIds.includes(d.id));
+  };
+
+  // Function to handle discipline selection in upload form
+  const handleUploadDisciplineChange = (disciplineId: number) => {
+    setUploadForm((prev) => {
+      const newDisciplineIds = prev.discipline_ids.includes(disciplineId)
+        ? prev.discipline_ids.filter((id) => id !== disciplineId)
+        : [...prev.discipline_ids, disciplineId];
+
+      return {
+        ...prev,
+        discipline_ids: newDisciplineIds,
+      };
+    });
+  };
+
+  // Function to handle discipline selection in edit form
+  const handleEditDisciplineChange = (disciplineId: number) => {
+    setEditForm((prev) => {
+      const newDisciplineIds = prev.discipline_ids.includes(disciplineId)
+        ? prev.discipline_ids.filter((id) => id !== disciplineId)
+        : [...prev.discipline_ids, disciplineId];
+
+      return {
+        ...prev,
+        discipline_ids: newDisciplineIds,
+      };
+    });
+  };
+
+  // Function to get discipline names by IDs
+  const getDisciplineNames = (
+    disciplineIds: number[] | null | undefined
+  ): string => {
+    if (!disciplineIds || !Array.isArray(disciplineIds)) {
+      return "Без дисциплины";
+    }
+
+    return disciplineIds
+      .map((id) => {
+        const discipline = disciplines.find((d) => d.id === id);
+        return discipline ? discipline.name : `ID: ${id}`;
+      })
+      .join(", ");
   };
 
   if (loading) {
@@ -489,158 +540,146 @@ const MaterialsPage: React.FC = () => {
           </div>
         )}
 
-        {/* Materials list organized by disciplines */}
-        {getUniqueDisciplines().map((discipline) => {
-          const disciplineMaterials = getFilteredMaterials().filter(
-            (m) => m.discipline_id === discipline.id
-          );
+        {/* Display all materials in a simple list */}
+        {materials.length > 0 ? (
+          <div style={{ marginBottom: 40 }}>
+            <h2
+              style={{
+                fontSize: 24,
+                fontWeight: 600,
+                marginBottom: 16,
+                color: "#0056a6",
+                borderBottom: "2px solid #0056a6",
+                paddingBottom: 8,
+              }}
+            >
+              Все материалы
+            </h2>
 
-          if (disciplineMaterials.length === 0) return null;
-
-          return (
-            <div key={discipline.id} style={{ marginBottom: 40 }}>
-              <h2
-                style={{
-                  fontSize: 24,
-                  fontWeight: 600,
-                  marginBottom: 16,
-                  color: "#0056a6",
-                  borderBottom: "2px solid #0056a6",
-                  paddingBottom: 8,
-                }}
-              >
-                📁 {discipline.name}
-              </h2>
-
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
-                  gap: 16,
-                }}
-              >
-                {disciplineMaterials.map((material) => (
-                  <div
-                    key={material.id}
-                    style={{
-                      border: "1px solid #ddd",
-                      borderRadius: 8,
-                      padding: 16,
-                      background: "#f9f9f9",
-                      cursor: store.role === "admin" ? "pointer" : "default",
-                      transition: "all 0.2s ease",
-                    }}
-                    onClick={
-                      store.role === "admin"
-                        ? () => openEditModal(material)
-                        : undefined
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
+                gap: 16,
+              }}
+            >
+              {getFilteredMaterials().map((material) => (
+                <div
+                  key={material.id}
+                  style={{
+                    border: "1px solid #ddd",
+                    borderRadius: 8,
+                    padding: 16,
+                    background: "#f9f9f9",
+                    cursor: store.role === "admin" ? "pointer" : "default",
+                    transition: "all 0.2s ease",
+                  }}
+                  onClick={
+                    store.role === "admin"
+                      ? () => openEditModal(material)
+                      : undefined
+                  }
+                  onMouseEnter={(e) => {
+                    if (store.role === "admin") {
+                      e.currentTarget.style.background = "#f0f8ff";
+                      e.currentTarget.style.transform = "translateY(-2px)";
+                      e.currentTarget.style.boxShadow =
+                        "0 4px 12px rgba(0, 0, 0, 0.15)";
                     }
-                    onMouseEnter={(e) => {
-                      if (store.role === "admin") {
-                        e.currentTarget.style.background = "#f0f8ff";
-                        e.currentTarget.style.transform = "translateY(-2px)";
-                        e.currentTarget.style.boxShadow =
-                          "0 4px 12px rgba(0, 0, 0, 0.15)";
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (store.role === "admin") {
-                        e.currentTarget.style.background = "#f9f9f9";
-                        e.currentTarget.style.transform = "translateY(0)";
-                        e.currentTarget.style.boxShadow = "none";
-                      }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (store.role === "admin") {
+                      e.currentTarget.style.background = "#f9f9f9";
+                      e.currentTarget.style.transform = "translateY(0)";
+                      e.currentTarget.style.boxShadow = "none";
+                    }
+                  }}
+                >
+                  <h3
+                    style={{
+                      fontSize: 18,
+                      fontWeight: 600,
+                      marginBottom: 8,
+                      color: "#333",
                     }}
                   >
-                    <h3
+                    {material.title}
+                  </h3>
+
+                  {material.description && (
+                    <p
                       style={{
-                        fontSize: 18,
-                        fontWeight: 600,
+                        fontSize: 14,
+                        color: "#666",
                         marginBottom: 8,
-                        color: "#333",
                       }}
                     >
-                      {material.title}
-                    </h3>
+                      {material.description}
+                    </p>
+                  )}
 
-                    {material.description && (
-                      <p
-                        style={{
-                          fontSize: 14,
-                          color: "#666",
-                          marginBottom: 8,
-                        }}
-                      >
-                        {material.description}
-                      </p>
-                    )}
-
-                    <div
-                      style={{
-                        fontSize: 12,
-                        color: "#888",
-                        marginBottom: 12,
-                      }}
-                    >
-                      <div>📄 {material.file_name}</div>
-                      <div>📊 {formatFileSize(material.size_bytes)}</div>
-                      {material.lecture_no && (
-                        <div>📚 Лекция №{material.lecture_no}</div>
-                      )}
-                      <div>
-                        📅{" "}
-                        {new Date(material.created_at).toLocaleDateString(
-                          "ru-RU"
-                        )}
-                      </div>
-                    </div>
-
-                    <div
-                      style={{
-                        display: "flex",
-                        gap: 8,
-                        flexWrap: "wrap",
-                      }}
-                    >
-                      <button
-                        style={{
-                          background: "#2196f3",
-                          color: "#fff",
-                          border: "none",
-                          borderRadius: 4,
-                          padding: "8px 16px",
-                          fontSize: 14,
-                          cursor: "pointer",
-                        }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDownload(material);
-                        }}
-                      >
-                        Скачать
-                      </button>
-
-                      {store.role === "admin" && (
-                        <div
-                          style={{
-                            fontSize: 12,
-                            color: "#666",
-                            fontStyle: "italic",
-                            alignSelf: "center",
-                            marginLeft: "8px",
-                          }}
-                        >
-                          Нажмите на материал для редактирования
-                        </div>
+                  <div
+                    style={{
+                      fontSize: 12,
+                      color: "#888",
+                      marginBottom: 12,
+                    }}
+                  >
+                    <div>📄 {material.file_name}</div>
+                    <div>📊 {formatFileSize(material.size_bytes)}</div>
+                    <div>📚 {getDisciplineNames(material.discipline_ids)}</div>
+                    <div>
+                      📅{" "}
+                      {new Date(material.created_at).toLocaleDateString(
+                        "ru-RU"
                       )}
                     </div>
                   </div>
-                ))}
-              </div>
-            </div>
-          );
-        })}
 
-        {materials.length === 0 && (
+                  <div
+                    style={{
+                      display: "flex",
+                      gap: 8,
+                      flexWrap: "wrap",
+                    }}
+                  >
+                    <button
+                      style={{
+                        background: "#2196f3",
+                        color: "#fff",
+                        border: "none",
+                        borderRadius: 4,
+                        padding: "8px 16px",
+                        fontSize: 14,
+                        cursor: "pointer",
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDownload(material);
+                      }}
+                    >
+                      Скачать
+                    </button>
+
+                    {store.role === "admin" && (
+                      <div
+                        style={{
+                          fontSize: 12,
+                          color: "#666",
+                          fontStyle: "italic",
+                          alignSelf: "center",
+                          marginLeft: "8px",
+                        }}
+                      >
+                        Нажмите на материал для редактирования
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
           <div
             style={{
               textAlign: "center",
@@ -736,59 +775,43 @@ const MaterialsPage: React.FC = () => {
                 <label
                   style={{ display: "block", marginBottom: 4, fontWeight: 600 }}
                 >
-                  Дисциплина *
+                  Дисциплины * (выберите одну или несколько)
                 </label>
-                <select
-                  value={uploadForm.discipline_id}
-                  onChange={(e) =>
-                    setUploadForm({
-                      ...uploadForm,
-                      discipline_id: parseInt(e.target.value),
-                    })
-                  }
+                <div
                   style={{
-                    width: "100%",
-                    padding: "8px 12px",
-                    borderRadius: 4,
                     border: "1px solid #ddd",
-                    fontSize: 16,
+                    borderRadius: 4,
+                    padding: 12,
+                    maxHeight: 200,
+                    overflowY: "auto",
                   }}
                 >
-                  <option value={0}>Выберите дисциплину</option>
                   {disciplines.map((discipline) => (
-                    <option key={discipline.id} value={discipline.id}>
-                      {discipline.name}
-                    </option>
+                    <div
+                      key={discipline.id}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        marginBottom: 8,
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        id={`upload-discipline-${discipline.id}`}
+                        checked={uploadForm.discipline_ids.includes(
+                          discipline.id
+                        )}
+                        onChange={() =>
+                          handleUploadDisciplineChange(discipline.id)
+                        }
+                        style={{ marginRight: 8 }}
+                      />
+                      <label htmlFor={`upload-discipline-${discipline.id}`}>
+                        {discipline.name}
+                      </label>
+                    </div>
                   ))}
-                </select>
-              </div>
-
-              <div style={{ marginBottom: 16 }}>
-                <label
-                  style={{ display: "block", marginBottom: 4, fontWeight: 600 }}
-                >
-                  Номер лекции
-                </label>
-                <input
-                  type="number"
-                  value={uploadForm.lecture_no || ""}
-                  onChange={(e) =>
-                    setUploadForm({
-                      ...uploadForm,
-                      lecture_no: e.target.value
-                        ? parseInt(e.target.value)
-                        : null,
-                    })
-                  }
-                  style={{
-                    width: "100%",
-                    padding: "8px 12px",
-                    borderRadius: 4,
-                    border: "1px solid #ddd",
-                    fontSize: 16,
-                  }}
-                  min={1}
-                />
+                </div>
               </div>
 
               <div style={{ marginBottom: 20 }}>
@@ -833,8 +856,7 @@ const MaterialsPage: React.FC = () => {
                     setUploadForm({
                       title: "",
                       description: "",
-                      discipline_id: 0,
-                      lecture_no: null,
+                      discipline_ids: [],
                       file: null,
                     });
                   }}
@@ -913,32 +935,47 @@ const MaterialsPage: React.FC = () => {
                 />
               </div>
 
-              <div style={{ marginBottom: 20 }}>
+              <div style={{ marginBottom: 16 }}>
                 <label
                   style={{ display: "block", marginBottom: 4, fontWeight: 600 }}
                 >
-                  Номер лекции
+                  Дисциплины * (выберите одну или несколько)
                 </label>
-                <input
-                  type="number"
-                  value={editForm.lecture_no || ""}
-                  onChange={(e) =>
-                    setEditForm({
-                      ...editForm,
-                      lecture_no: e.target.value
-                        ? parseInt(e.target.value)
-                        : null,
-                    })
-                  }
+                <div
                   style={{
-                    width: "100%",
-                    padding: "8px 12px",
-                    borderRadius: 4,
                     border: "1px solid #ddd",
-                    fontSize: 16,
+                    borderRadius: 4,
+                    padding: 12,
+                    maxHeight: 200,
+                    overflowY: "auto",
                   }}
-                  min={1}
-                />
+                >
+                  {disciplines.map((discipline) => (
+                    <div
+                      key={discipline.id}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        marginBottom: 8,
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        id={`edit-discipline-${discipline.id}`}
+                        checked={editForm.discipline_ids.includes(
+                          discipline.id
+                        )}
+                        onChange={() =>
+                          handleEditDisciplineChange(discipline.id)
+                        }
+                        style={{ marginRight: 8 }}
+                      />
+                      <label htmlFor={`edit-discipline-${discipline.id}`}>
+                        {discipline.name}
+                      </label>
+                    </div>
+                  ))}
+                </div>
               </div>
 
               <div
@@ -969,7 +1006,7 @@ const MaterialsPage: React.FC = () => {
                       setEditForm({
                         title: "",
                         description: "",
-                        lecture_no: null,
+                        discipline_ids: [],
                       });
                     }
                   }}
@@ -994,7 +1031,7 @@ const MaterialsPage: React.FC = () => {
                       setEditForm({
                         title: "",
                         description: "",
-                        lecture_no: null,
+                        discipline_ids: [],
                       });
                     }}
                   >
